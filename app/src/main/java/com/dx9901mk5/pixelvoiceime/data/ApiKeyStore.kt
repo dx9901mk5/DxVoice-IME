@@ -67,8 +67,10 @@ class ApiKeyStore(context: Context) {
         private const val PREFS_NAME_FALLBACK = "pixelvoice_prefs_fallback"
         private const val KEY_API_KEY = "gemini_api_key"
         private const val KEY_MODEL = "gemini_model"
-        const val DEFAULT_MODEL = "gemini-2.5-flash"
+        const val DEFAULT_MODEL = "gemini-4-hydrogen"
         val PRESET_MODELS = listOf(
+            "gemini-4-hydrogen",
+
             "gemini-2.5-flash",
             "gemini-2.5-flash-lite",
             "gemini-2.5-pro",

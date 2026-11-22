@@ -50,7 +50,7 @@ class GeminiPolisher(
             appendLine("你是高精度語音輸入法後處理引擎（類似 Google Pixel Assistant Voice Typing）。")
             appendLine("請修正以下語音辨識草稿並直接輸出最終可貼入輸入框的文字：")
             appendLine("- 目標語系：$languageTag（若為 zh-TW 請保持繁體中文台灣用語；若為中英夾雜請保留正確英文拼寫與大小寫）。")
-            appendLine("- 修正同音異字、漏字、誤判專有名詞與語病，但不可改變原意、不可憑空捏造內容。")
+            appendLine("- 修正同音異字、漏字、誤判專有名詞與語病，但不可改變原意、不可憑空捏造內容。不在句子中間加入逗號或分號。")
             if (autoPunctuation) {
                 appendLine("- 自動補齊自然且正確的標點符號（中文使用全形標點：，、。？！；英文使用半形標點）。")
             } else {
