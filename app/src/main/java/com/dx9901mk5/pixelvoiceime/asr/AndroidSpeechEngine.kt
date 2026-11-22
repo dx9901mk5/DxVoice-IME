@@ -27,6 +27,8 @@ class AndroidSpeechEngine(
 
     private var recognizer: SpeechRecognizer? = null
     private var lastPartial: String = ""
+    private var lastPartialChangeAtMs: Long = 0L
+    private val pauseBreakLengths = mutableListOf<Int>()
     private var active: Boolean = false
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -67,6 +69,8 @@ class AndroidSpeechEngine(
         }
 
         lastPartial = ""
+        lastPartialChangeAtMs = 0L
+        pauseBreakLengths.clear()
         active = true
 
         val useOnDevice = !forceStandardRecognizer &&
@@ -148,9 +152,11 @@ class AndroidSpeechEngine(
                 active = false
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val best = matches?.firstOrNull()?.trim().orEmpty().ifBlank { lastPartial }
+                val withPauses = applyPauseCommas(best)
                 lastPartial = ""
-                if (best.isNotBlank()) {
-                    callbacks.onFinal(best)
+                pauseBreakLengths.clear()
+                if (withPauses.isNotBlank()) {
+                    callbacks.onFinal(withPauses)
                 } else {
                     callbacks.onError(SpeechRecognizer.ERROR_NO_MATCH, "沒有辨識到文字")
                 }
@@ -161,6 +167,21 @@ class AndroidSpeechEngine(
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val text = matches?.firstOrNull()?.trim().orEmpty()
                 if (text.isNotBlank()) {
+                    val now = System.currentTimeMillis()
+                    if (lastPartial.isNotBlank() &&
+                        text.length > lastPartial.length &&
+                        text != lastPartial &&
+                        lastPartialChangeAtMs > 0L &&
+                        now - lastPartialChangeAtMs >= 450L
+                    ) {
+                        val lastCh = lastPartial.last()
+                        if (lastCh !in setOf('，', '。', '？', '！', ',', '.', '?', '!', '；', ';')) {
+                            pauseBreakLengths.add(lastPartial.length)
+                        }
+                    }
+                    if (text != lastPartial) {
+                        lastPartialChangeAtMs = now
+                    }
                     lastPartial = text
                     callbacks.onPartial(text)
                 }
@@ -186,6 +207,31 @@ class AndroidSpeechEngine(
             )
         }
         sr.startListening(intent)
+    }
+
+    private fun applyPauseCommas(text: String): String {
+        if (text.isBlank() || pauseBreakLengths.isEmpty()) return text
+        val punctSet = setOf('，', '。', '？', '！', ',', '.', '?', '!', '；', ';', '、')
+        val sb = StringBuilder(text)
+        var offset = 0
+        for (rawIdx in pauseBreakLengths.distinct().sorted()) {
+            val idx = rawIdx + offset
+            if (idx <= 0 || idx >= sb.length) continue
+            val prev = sb[idx - 1]
+            val next = sb[idx]
+            if (prev !in punctSet && next !in punctSet && !prev.isWhitespace()) {
+                val isCjkBoundary = prev.code > 127 || next.code > 127
+                if (isCjkBoundary) {
+                    if (next.isWhitespace()) {
+                        sb.setCharAt(idx, '，')
+                    } else {
+                        sb.insert(idx, '，')
+                        offset++
+                    }
+                }
+            }
+        }
+        return sb.toString()
     }
 
     fun finishListening() {
