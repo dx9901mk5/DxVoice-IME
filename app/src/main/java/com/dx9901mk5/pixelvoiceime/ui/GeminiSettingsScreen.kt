@@ -186,27 +186,46 @@ fun GeminiSettingsScreen(
 
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "語音修潤管線",
+                    text = "語音辨識與處理模式（選擇本機或走 API）",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     FilterChip(
-                        selected = config.polishMode == PolishMode.FAST_TEXT,
-                        onClick = { prefs.update { it.copy(polishMode = PolishMode.FAST_TEXT) } },
-                        label = { Text("極速文字修潤 (推薦)") }
+                        selected = !config.geminiPolishEnabled,
+                        onClick = { prefs.update { it.copy(geminiPolishEnabled = false) } },
+                        label = { Text("純本機語音 (不走 API)") }
                     )
                     FilterChip(
-                        selected = config.polishMode == PolishMode.AUDIO_MULTIMODAL,
-                        onClick = { prefs.update { it.copy(polishMode = PolishMode.AUDIO_MULTIMODAL) } },
-                        label = { Text("多模態音訊精修") }
+                        selected = config.geminiPolishEnabled && config.polishMode == PolishMode.FAST_TEXT,
+                        onClick = {
+                            prefs.update {
+                                it.copy(geminiPolishEnabled = true, polishMode = PolishMode.FAST_TEXT)
+                            }
+                        },
+                        label = { Text("本機語音 + Gemini 修潤 (推薦)") }
+                    )
+                    FilterChip(
+                        selected = config.geminiPolishEnabled && config.polishMode == PolishMode.AUDIO_MULTIMODAL,
+                        onClick = {
+                            prefs.update {
+                                it.copy(geminiPolishEnabled = true, polishMode = PolishMode.AUDIO_MULTIMODAL)
+                            }
+                        },
+                        label = { Text("純走 Gemini 音訊 API") }
                     )
                 }
                 Text(
-                    text = if (config.polishMode == PolishMode.FAST_TEXT) {
-                        "先即時離線轉寫顯示草稿，說完瞬間送 Gemini 修正錯字與標點，延遲最低。"
-                    } else {
-                        "直接錄製 16kHz WAV 音訊送交 Gemini 聆聽轉錄與標點，無 GMS 裝置也完美運作。"
+                    text = when {
+                        !config.geminiPolishEnabled ->
+                            "完全使用裝置內建/系統語音辨識，不呼叫 Gemini API，僅於本機補上結尾標點。"
+                        config.polishMode == PolishMode.FAST_TEXT ->
+                            "先以本機/系統語音即時轉寫草稿，說完立即送 Gemini API 修正錯字與標點，延遲最低。"
+                        else ->
+                            "直接錄製 16kHz WAV 音訊送交 Gemini API 聆聽轉錄與標點，完全不依賴系統語音服務。"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

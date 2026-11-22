@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -26,6 +28,7 @@ class AndroidSpeechEngine(
     private var recognizer: SpeechRecognizer? = null
     private var lastPartial: String = ""
     private var active: Boolean = false
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     fun isAvailable(): Boolean {
         if (SpeechRecognizer.isRecognitionAvailable(context)) return true
@@ -43,6 +46,7 @@ class AndroidSpeechEngine(
             languageTag = languageTag,
             preferOffline = preferOffline,
             silenceTimeoutMs = silenceTimeoutMs,
+            forceStandardRecognizer = false,
             allowOnlineFallback = preferOffline || !SpeechRecognizer.isRecognitionAvailable(context),
             callbacks = callbacks
         )
@@ -52,6 +56,7 @@ class AndroidSpeechEngine(
         languageTag: String,
         preferOffline: Boolean,
         silenceTimeoutMs: Long,
+        forceStandardRecognizer: Boolean,
         allowOnlineFallback: Boolean,
         callbacks: Callbacks
     ) {
@@ -64,7 +69,8 @@ class AndroidSpeechEngine(
         lastPartial = ""
         active = true
 
-        val useOnDevice = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        val useOnDevice = !forceStandardRecognizer &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             SpeechRecognizer.isOnDeviceRecognitionAvailable(context) &&
             (preferOffline || !SpeechRecognizer.isRecognitionAvailable(context))
 
@@ -95,17 +101,23 @@ class AndroidSpeechEngine(
             override fun onError(error: Int) {
                 if (!active) return
                 active = false
-                if ((error == 12 || error == 13) &&
-                    allowOnlineFallback &&
+                if (allowOnlineFallback &&
+                    (error == 12 || error == 13 ||
+                        error == SpeechRecognizer.ERROR_CLIENT ||
+                        error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) &&
                     SpeechRecognizer.isRecognitionAvailable(context)
                 ) {
-                    startInternal(
-                        languageTag = languageTag,
-                        preferOffline = false,
-                        silenceTimeoutMs = silenceTimeoutMs,
-                        allowOnlineFallback = false,
-                        callbacks = callbacks
-                    )
+                    stop()
+                    mainHandler.post {
+                        startInternal(
+                            languageTag = languageTag,
+                            preferOffline = false,
+                            silenceTimeoutMs = silenceTimeoutMs,
+                            forceStandardRecognizer = true,
+                            allowOnlineFallback = false,
+                            callbacks = callbacks
+                        )
+                    }
                     return
                 }
                 // If we already captured partial speech and hit speech-timeout/no-match, emit partial!
@@ -186,6 +198,7 @@ class AndroidSpeechEngine(
 
     fun stop() {
         active = false
+        mainHandler.removeCallbacksAndMessages(null)
         try {
             recognizer?.cancel()
             recognizer?.destroy()

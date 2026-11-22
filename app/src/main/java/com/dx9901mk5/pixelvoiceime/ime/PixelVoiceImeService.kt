@@ -177,12 +177,13 @@ class PixelVoiceImeService : InputMethodService() {
         val offlineReady = app.modelManager.isLanguageOfflineReady(activeLang.bcp47)
         val hasApiKey = app.apiKeyStore.hasApiKey.value
 
-        val shouldUseAudioCapture = hasApiKey &&
+        val shouldUseAudioCapture = config.geminiPolishEnabled &&
+            hasApiKey &&
             (config.polishMode == PolishMode.AUDIO_MULTIMODAL || !speechEngine.isAvailable())
 
-        if (!hasApiKey && !speechEngine.isAvailable()) {
+        if (!shouldUseAudioCapture && !speechEngine.isAvailable()) {
             sessionState.value = VoiceSessionState.Error(
-                "此裝置未偵測到系統/本機語音辨識服務，請開啟系統語音服務或設定 Gemini API Key"
+                "此裝置未偵測到系統/本機語音辨識服務，請開啟系統語音服務或改用 Gemini 音訊 API 模式"
             )
             return
         }
