@@ -39,6 +39,22 @@ class AndroidSpeechEngine(
         silenceTimeoutMs: Long,
         callbacks: Callbacks
     ) {
+        startInternal(
+            languageTag = languageTag,
+            preferOffline = preferOffline,
+            silenceTimeoutMs = silenceTimeoutMs,
+            allowOnlineFallback = preferOffline || !SpeechRecognizer.isRecognitionAvailable(context),
+            callbacks = callbacks
+        )
+    }
+
+    private fun startInternal(
+        languageTag: String,
+        preferOffline: Boolean,
+        silenceTimeoutMs: Long,
+        allowOnlineFallback: Boolean,
+        callbacks: Callbacks
+    ) {
         stop()
         if (!isAvailable()) {
             callbacks.onError(SpeechRecognizer.ERROR_CLIENT, "此裝置未安裝系統語音辨識服務")
@@ -79,6 +95,19 @@ class AndroidSpeechEngine(
             override fun onError(error: Int) {
                 if (!active) return
                 active = false
+                if ((error == 12 || error == 13) &&
+                    allowOnlineFallback &&
+                    SpeechRecognizer.isRecognitionAvailable(context)
+                ) {
+                    startInternal(
+                        languageTag = languageTag,
+                        preferOffline = false,
+                        silenceTimeoutMs = silenceTimeoutMs,
+                        allowOnlineFallback = false,
+                        callbacks = callbacks
+                    )
+                    return
+                }
                 // If we already captured partial speech and hit speech-timeout/no-match, emit partial!
                 if (lastPartial.isNotBlank() &&
                     (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)
@@ -96,6 +125,7 @@ class AndroidSpeechEngine(
                     SpeechRecognizer.ERROR_NO_MATCH -> "沒有偵測到清晰語音"
                     SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "等待說話逾時"
                     SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "語音辨識服務忙碌中"
+                    12, 13 -> "系統語音不支援此離線語系，請連網或檢查系統語音包"
                     else -> "語音辨識錯誤 ($error)"
                 }
                 callbacks.onError(error, msg)

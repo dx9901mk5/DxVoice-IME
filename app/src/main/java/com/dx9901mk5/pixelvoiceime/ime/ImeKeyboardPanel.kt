@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -309,23 +310,26 @@ fun ImeKeyboardPanel(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Bottom controls: Return to previous IME | Primary Mic Orb | Backspace & Enter
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                // Bottom controls: Return to previous IME (Left) | Large Centered Primary Mic Orb | Backspace (Right)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp)
                 ) {
-                    // Return to previous IME button
+                    // Return to previous IME button (left)
                     FilledTonalButton(
                         onClick = onSwitchToPreviousIme,
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .widthIn(max = 112.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Keyboard,
                             contentDescription = "切回原輸入法",
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text(
                             text = previousImeLabel.ifBlank { "切回鍵盤" },
                             style = MaterialTheme.typography.labelMedium,
@@ -334,7 +338,7 @@ fun ImeKeyboardPanel(
                         )
                     }
 
-                    // Primary Mic / Stop button
+                    // Large Centered Primary Mic / Stop button
                     val isListening = state is VoiceSessionState.Listening
                     val orbColor = if (isListening) {
                         MaterialTheme.colorScheme.error
@@ -343,25 +347,29 @@ fun ImeKeyboardPanel(
                     }
                     Surface(
                         modifier = Modifier
-                            .size(64.dp)
+                            .align(Alignment.Center)
+                            .size(84.dp)
                             .clip(CircleShape)
                             .clickable(onClick = onMicPrimaryAction),
                         color = orbColor,
                         shape = CircleShape,
-                        shadowElevation = 4.dp
+                        shadowElevation = 6.dp
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = if (isListening) Icons.Rounded.Stop else Icons.Rounded.Mic,
                                 contentDescription = if (isListening) "完成收音" else "開始語音輸入",
                                 tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(30.dp)
+                                modifier = Modifier.size(40.dp)
                             )
                         }
                     }
 
-                    // Quick Backspace + Enter
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // Quick Backspace + Enter (right)
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
                         FilledTonalIconButton(onClick = onBackspace) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.Backspace,
