@@ -29,6 +29,7 @@ object VoiceLanguageCatalog {
     const val PACK_ZIPFORMER_EN = "zipformer-en"
     const val PACK_WHISPER_MULTI = "whisper-tiny-multilingual"
     const val PACK_WHISPER_BASE_MULTI = "whisper-base-multilingual"
+    const val PACK_PUNCTUATION_ZH_EN = "punct-ct-transformer-zh-en"
 
     val modelPacks: Map<String, OfflineModelPack> = linkedMapOf(
         PACK_SENSEVOICE_CJK to OfflineModelPack(
@@ -37,6 +38,13 @@ object VoiceLanguageCatalog {
             description = "高精度裝置端量化模型，共用權重涵蓋繁中、簡中、粵語、英文、日文、韓文",
             approxSizeMb = 160,
             downloadUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17.tar.bz2"
+        ),
+        PACK_PUNCTUATION_ZH_EN to OfflineModelPack(
+            packId = PACK_PUNCTUATION_ZH_EN,
+            title = "CT-Transformer 本地標點符號模型 (中/英)",
+            description = "純離線自動補齊逗號、句號、問號，延遲僅數十毫秒",
+            approxSizeMb = 62,
+            downloadUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/punctuation-models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12-int8.tar.bz2"
         ),
         PACK_ZIPFORMER_EN to OfflineModelPack(
             packId = PACK_ZIPFORMER_EN,

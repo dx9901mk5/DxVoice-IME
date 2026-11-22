@@ -72,6 +72,45 @@ class OfflineModelManager(
 
     fun getPackDirectory(packId: String): File = File(modelsRoot, packId)
 
+    fun isPunctuationReady(): Boolean =
+        _packStates.value[VoiceLanguageCatalog.PACK_PUNCTUATION_ZH_EN] is PackDownloadState.Installed
+
+    fun findSenseVoiceFiles(packId: String): Pair<File, File>? {
+        val dir = getPackDirectory(packId)
+        if (!File(dir, ".ready").exists()) return null
+        val files = dir.walkTopDown().filter { it.isFile }.toList()
+        val model = files.firstOrNull { it.name.equals("model.int8.onnx", ignoreCase = true) }
+            ?: files.firstOrNull { it.name.endsWith(".onnx", ignoreCase = true) }
+            ?: return null
+        val tokens = files.firstOrNull { it.name.equals("tokens.txt", ignoreCase = true) }
+            ?: return null
+        return model to tokens
+    }
+
+    fun findWhisperFiles(packId: String): Triple<File, File, File>? {
+        val dir = getPackDirectory(packId)
+        if (!File(dir, ".ready").exists()) return null
+        val files = dir.walkTopDown().filter { it.isFile }.toList()
+        val encoder = files.firstOrNull {
+            it.name.contains("encoder", ignoreCase = true) && it.name.endsWith(".onnx", ignoreCase = true)
+        } ?: return null
+        val decoder = files.firstOrNull {
+            it.name.contains("decoder", ignoreCase = true) && it.name.endsWith(".onnx", ignoreCase = true)
+        } ?: return null
+        val tokens = files.firstOrNull {
+            it.name.contains("tokens", ignoreCase = true) && it.name.endsWith(".txt", ignoreCase = true)
+        } ?: return null
+        return Triple(encoder, decoder, tokens)
+    }
+
+    fun findPunctuationModelFile(): File? {
+        val dir = getPackDirectory(VoiceLanguageCatalog.PACK_PUNCTUATION_ZH_EN)
+        if (!File(dir, ".ready").exists()) return null
+        val files = dir.walkTopDown().filter { it.isFile }.toList()
+        return files.firstOrNull { it.name.equals("model.int8.onnx", ignoreCase = true) }
+            ?: files.firstOrNull { it.name.endsWith(".onnx", ignoreCase = true) }
+    }
+
     fun enableLanguage(bcp47: String) {
         val next = _enabledLanguages.value + bcp47
         saveEnabledLanguages(next)
@@ -87,10 +126,18 @@ class OfflineModelManager(
         val item = VoiceLanguageCatalog.findByTag(bcp47)
         enableLanguage(item.bcp47)
         val currentState = _packStates.value[item.packId]
-        if (currentState is PackDownloadState.Installed) {
-            return Result.success(Unit)
+        val mainResult = if (currentState is PackDownloadState.Installed) {
+            Result.success(Unit)
+        } else {
+            downloadPack(item.packId)
         }
-        return downloadPack(item.packId)
+        if (mainResult.isSuccess &&
+            item.packId == VoiceLanguageCatalog.PACK_SENSEVOICE_CJK &&
+            !isPunctuationReady()
+        ) {
+            downloadPack(VoiceLanguageCatalog.PACK_PUNCTUATION_ZH_EN)
+        }
+        return mainResult
     }
 
     suspend fun downloadPack(packId: String): Result<Unit> = withContext(Dispatchers.IO) {

@@ -20,6 +20,8 @@ import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
 import com.dx9901mk5.pixelvoiceime.ai.GeminiResult
+import com.dx9901mk5.pixelvoiceime.ai.LocalTextPolisher
+import com.dx9901mk5.pixelvoiceime.ai.LocalTranslator
 import com.dx9901mk5.pixelvoiceime.ai.WavEncoder
 import com.dx9901mk5.pixelvoiceime.asr.AndroidSpeechEngine
 import com.dx9901mk5.pixelvoiceime.asr.LocalAudioCaptureEngine
@@ -56,6 +58,7 @@ class PixelVoiceImeService : InputMethodService() {
     private var activePolishJob: Job? = null
     private var autoReturnJob: Job? = null
     private var usingAudioCaptureEngine: Boolean = false
+    private var usingLocalSherpa: Boolean = false
     private var lastCommittedLength: Int = 0
     private var lastRawTranscript: String = ""
 
@@ -89,8 +92,10 @@ class PixelVoiceImeService : InputMethodService() {
                     activeLanguage = activeLang,
                     isOfflinePackReady = offlineReady,
                     isGeminiReady = hasApiKey && config.geminiPolishEnabled,
+                    targetTranslationCode = config.targetTranslationLang,
                     previousImeLabel = config.previousImeLabel.ifBlank { "切回鍵盤" },
                     onCycleLanguage = ::cycleActiveLanguage,
+                    onCycleTranslation = ::cycleTargetTranslation,
                     onOpenSettings = ::openSettingsActivity,
                     onMicPrimaryAction = ::handleMicButtonClick,
                     onSwitchToPreviousIme = ::returnToPreviousInputMethod,
@@ -117,6 +122,13 @@ class PixelVoiceImeService : InputMethodService() {
         if (!hasRecordAudioPermission()) {
             sessionState.value = VoiceSessionState.PermissionRequired
             return
+        }
+
+        val activeLangTag = app.prefs.config.value.activeLanguageTag
+        if (app.localSherpaAsrEngine.isReadyForLanguage(activeLangTag)) {
+            serviceScope.launch {
+                app.localSherpaAsrEngine.preload(activeLangTag)
+            }
         }
 
         if (app.prefs.config.value.autoListenOnStart) {
@@ -175,27 +187,31 @@ class PixelVoiceImeService : InputMethodService() {
         val config = app.prefs.config.value
         val activeLang = VoiceLanguageCatalog.findByTag(config.activeLanguageTag)
         val offlineReady = app.modelManager.isLanguageOfflineReady(activeLang.bcp47)
+        val sherpaReady = app.localSherpaAsrEngine.isReadyForLanguage(activeLang.bcp47)
         val hasApiKey = app.apiKeyStore.hasApiKey.value
 
-        val shouldUseAudioCapture = config.geminiPolishEnabled &&
+        val useGeminiAudioMode = config.geminiPolishEnabled &&
             hasApiKey &&
-            (config.polishMode == PolishMode.AUDIO_MULTIMODAL || !speechEngine.isAvailable())
+            (config.polishMode == PolishMode.AUDIO_MULTIMODAL || (!sherpaReady && !speechEngine.isAvailable()))
+        val useSherpaLocalMode = !useGeminiAudioMode && sherpaReady
+        val shouldUseAudioCapture = useGeminiAudioMode || useSherpaLocalMode
 
         if (!shouldUseAudioCapture && !speechEngine.isAvailable()) {
             sessionState.value = VoiceSessionState.Error(
-                "此裝置未偵測到系統/本機語音辨識服務，請開啟系統語音服務或改用 Gemini 音訊 API 模式"
+                "此裝置未偵測到系統語音服務，請至「離線語系」下載 SenseVoice 本地包或改用 Gemini 音訊 API"
             )
             return
         }
 
         usingAudioCaptureEngine = shouldUseAudioCapture
+        usingLocalSherpa = useSherpaLocalMode
 
         if (shouldUseAudioCapture) {
             sessionState.value = VoiceSessionState.Listening(
                 partialText = "",
                 amplitude = 0.1f,
                 speechDetected = false,
-                engineLabel = "Audio + Gemini"
+                engineLabel = if (useSherpaLocalMode) "本地極速 (Sherpa)" else "Audio + Gemini"
             )
             audioCaptureEngine.start(
                 scope = serviceScope,
@@ -213,7 +229,11 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onCaptured(pcmBytes: ByteArray) {
-                        processCapturedAudio(pcmBytes)
+                        if (usingLocalSherpa) {
+                            processCapturedAudioWithSherpa(pcmBytes)
+                        } else {
+                            processCapturedAudio(pcmBytes)
+                        }
                     }
 
                     override fun onNoSpeechTimeout() {
@@ -301,23 +321,35 @@ class PixelVoiceImeService : InputMethodService() {
                     autoPunctuation = config.autoPunctuation,
                     removeFillers = config.removeFillerWords
                 )
-                val finalText = when (result) {
+                val polished = when (result) {
                     is GeminiResult.Success -> result.data.ifBlank { cleanRaw }
                     is GeminiResult.Error -> {
-                        if (config.autoPunctuation) {
-                            app.geminiPolisher.localFallbackPunctuate(cleanRaw, config.activeLanguageTag)
-                        } else cleanRaw
+                        LocalTextPolisher.polish(
+                            rawText = cleanRaw,
+                            languageTag = config.activeLanguageTag,
+                            autoPunctuation = config.autoPunctuation,
+                            removeFillers = config.removeFillerWords,
+                            punctuationModel = app.localSherpaAsrEngine.getPunctuationModel(),
+                            polisherHelper = app.geminiPolisher
+                        )
                     }
                 }
+                val finalText = applyTranslationIfNeeded(polished, config.activeLanguageTag, config.targetTranslationLang, hasApiKey)
                 commitAndMaybeReturn(
                     rawText = cleanRaw,
                     finalText = finalText,
                     wasAiPolished = result is GeminiResult.Success
                 )
             } else {
-                val finalText = if (config.autoPunctuation) {
-                    app.geminiPolisher.localFallbackPunctuate(cleanRaw, config.activeLanguageTag)
-                } else cleanRaw
+                val polished = LocalTextPolisher.polish(
+                    rawText = cleanRaw,
+                    languageTag = config.activeLanguageTag,
+                    autoPunctuation = config.autoPunctuation,
+                    removeFillers = config.removeFillerWords,
+                    punctuationModel = app.localSherpaAsrEngine.getPunctuationModel(),
+                    polisherHelper = app.geminiPolisher
+                )
+                val finalText = applyTranslationIfNeeded(polished, config.activeLanguageTag, config.targetTranslationLang, hasApiKey)
                 commitAndMaybeReturn(
                     rawText = cleanRaw,
                     finalText = finalText,
@@ -325,6 +357,113 @@ class PixelVoiceImeService : InputMethodService() {
                 )
             }
         }
+    }
+
+    private fun processCapturedAudioWithSherpa(pcmBytes: ByteArray) {
+        val config = app.prefs.config.value
+        val hasApiKey = app.apiKeyStore.hasApiKey.value
+
+        activePolishJob = serviceScope.launch {
+            sessionState.value = VoiceSessionState.Polishing(
+                rawText = "",
+                statusText = "本地極速辨識與標點中…"
+            )
+
+            val asrResult = app.localSherpaAsrEngine.transcribePcm16(pcmBytes, config.activeLanguageTag)
+            if (asrResult.isFailure) {
+                sessionState.value = VoiceSessionState.Error(
+                    asrResult.exceptionOrNull()?.localizedMessage ?: "本地辨識失敗"
+                )
+                return@launch
+            }
+
+            val rawText = asrResult.getOrNull()?.trim().orEmpty()
+            if (rawText.isBlank()) {
+                sessionState.value = VoiceSessionState.Idle
+                return@launch
+            }
+
+            var wasAiPolished = false
+            var polished = if (config.geminiPolishEnabled && hasApiKey) {
+                sessionState.value = VoiceSessionState.Polishing(
+                    rawText = rawText,
+                    statusText = "Gemini 修正語意與標點中…"
+                )
+                val beforeCursor = if (config.includeSurroundingContext) {
+                    currentInputConnection?.getTextBeforeCursor(80, 0)?.toString().orEmpty()
+                } else ""
+                val afterCursor = if (config.includeSurroundingContext) {
+                    currentInputConnection?.getTextAfterCursor(40, 0)?.toString().orEmpty()
+                } else ""
+                when (
+                    val res = app.geminiPolisher.polishTranscript(
+                        rawText = rawText,
+                        languageTag = config.activeLanguageTag,
+                        beforeCursor = beforeCursor,
+                        afterCursor = afterCursor,
+                        autoPunctuation = config.autoPunctuation,
+                        removeFillers = config.removeFillerWords
+                    )
+                ) {
+                    is GeminiResult.Success -> {
+                        wasAiPolished = true
+                        res.data.ifBlank { rawText }
+                    }
+                    is GeminiResult.Error -> null
+                }
+            } else null
+
+            if (polished == null) {
+                polished = LocalTextPolisher.polish(
+                    rawText = rawText,
+                    languageTag = config.activeLanguageTag,
+                    autoPunctuation = config.autoPunctuation,
+                    removeFillers = config.removeFillerWords,
+                    punctuationModel = app.localSherpaAsrEngine.getPunctuationModel(),
+                    polisherHelper = app.geminiPolisher
+                )
+            }
+
+            val finalText = applyTranslationIfNeeded(
+                text = polished,
+                sourceTag = config.activeLanguageTag,
+                targetCode = config.targetTranslationLang,
+                hasApiKey = hasApiKey
+            )
+
+            commitAndMaybeReturn(
+                rawText = rawText,
+                finalText = finalText,
+                wasAiPolished = wasAiPolished
+            )
+        }
+    }
+
+    private suspend fun applyTranslationIfNeeded(
+        text: String,
+        sourceTag: String,
+        targetCode: String,
+        hasApiKey: Boolean
+    ): String {
+        if (targetCode.isBlank() || text.isBlank()) return text
+        sessionState.value = VoiceSessionState.Polishing(
+            rawText = text,
+            statusText = "正在翻譯為 ${LocalTranslator.findTarget(targetCode).fullName}…"
+        )
+        val localRes = LocalTranslator.translateOnDevice(text, sourceTag, targetCode)
+        if (localRes.isSuccess) {
+            return localRes.getOrNull()?.ifBlank { text } ?: text
+        }
+        if (hasApiKey) {
+            val geminiRes = app.geminiPolisher.translateText(
+                text = text,
+                targetLanguageName = LocalTranslator.findTarget(targetCode).fullName
+            )
+            if (geminiRes is GeminiResult.Success) {
+                return geminiRes.data.ifBlank { text }
+            }
+        }
+        return text
     }
 
     private fun processCapturedAudio(pcmBytes: ByteArray) {
@@ -354,12 +493,18 @@ class PixelVoiceImeService : InputMethodService() {
                 )
             ) {
                 is GeminiResult.Success -> {
-                    val finalText = result.data.trim()
-                    if (finalText.isBlank()) {
+                    val polished = result.data.trim()
+                    if (polished.isBlank()) {
                         sessionState.value = VoiceSessionState.Idle
                     } else {
+                        val finalText = applyTranslationIfNeeded(
+                            text = polished,
+                            sourceTag = config.activeLanguageTag,
+                            targetCode = config.targetTranslationLang,
+                            hasApiKey = true
+                        )
                         commitAndMaybeReturn(
-                            rawText = finalText,
+                            rawText = polished,
                             finalText = finalText,
                             wasAiPolished = true
                         )
@@ -464,6 +609,14 @@ class PixelVoiceImeService : InputMethodService() {
             }
         } catch (_: Exception) {
         }
+    }
+
+    private fun cycleTargetTranslation() {
+        val options = LocalTranslator.targets
+        val current = app.prefs.config.value.targetTranslationLang
+        val idx = options.indexOfFirst { it.code == current }.let { if (it < 0) 0 else it }
+        val next = options[(idx + 1) % options.size]
+        app.prefs.update { it.copy(targetTranslationLang = next.code) }
     }
 
     private fun cycleActiveLanguage() {

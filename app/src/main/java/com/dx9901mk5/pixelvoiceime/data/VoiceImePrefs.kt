@@ -23,6 +23,7 @@ data class VoiceImeConfig(
     val removeFillerWords: Boolean = true,
     val includeSurroundingContext: Boolean = true,
     val activeLanguageTag: String = "zh-TW",
+    val targetTranslationLang: String = "",
     val githubRepoUrl: String = DEFAULT_GITHUB_REPO,
     val autoUpdateEnabled: Boolean = true,
     val previousImeId: String = "",
@@ -59,6 +60,7 @@ class VoiceImePrefs(context: Context) {
             removeFillerWords = prefs.getBoolean(KEY_REMOVE_FILLERS, true),
             includeSurroundingContext = prefs.getBoolean(KEY_INCLUDE_CONTEXT, true),
             activeLanguageTag = prefs.getString(KEY_ACTIVE_LANG, "zh-TW") ?: "zh-TW",
+            targetTranslationLang = prefs.getString(KEY_TARGET_TRANSLATION, "") ?: "",
             githubRepoUrl = prefs.getString(KEY_GITHUB_REPO, VoiceImeConfig.DEFAULT_GITHUB_REPO)
                 ?.ifBlank { VoiceImeConfig.DEFAULT_GITHUB_REPO }
                 ?: VoiceImeConfig.DEFAULT_GITHUB_REPO,
@@ -82,6 +84,7 @@ class VoiceImePrefs(context: Context) {
             .putBoolean(KEY_REMOVE_FILLERS, updated.removeFillerWords)
             .putBoolean(KEY_INCLUDE_CONTEXT, updated.includeSurroundingContext)
             .putString(KEY_ACTIVE_LANG, updated.activeLanguageTag)
+            .putString(KEY_TARGET_TRANSLATION, updated.targetTranslationLang)
             .putString(KEY_GITHUB_REPO, updated.githubRepoUrl)
             .putBoolean(KEY_AUTO_UPDATE, updated.autoUpdateEnabled)
             .putString(KEY_PREV_IME_ID, updated.previousImeId)
@@ -108,6 +111,7 @@ class VoiceImePrefs(context: Context) {
         private const val KEY_REMOVE_FILLERS = "remove_fillers"
         private const val KEY_INCLUDE_CONTEXT = "include_context"
         private const val KEY_ACTIVE_LANG = "active_language_tag"
+        private const val KEY_TARGET_TRANSLATION = "target_translation_lang"
         private const val KEY_GITHUB_REPO = "github_repo_url"
         private const val KEY_AUTO_UPDATE = "auto_update_enabled"
         private const val KEY_PREV_IME_ID = "previous_ime_id"

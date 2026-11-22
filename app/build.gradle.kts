@@ -12,8 +12,8 @@ android {
         applicationId = "com.dx9901mk5.pixelvoiceime"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11
-        versionName = "0.1.11"
+        versionCode = 12
+        versionName = "0.2.0"
     }
 
     signingConfigs {
@@ -74,5 +74,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.commons.compress)
+    implementation(files("libs/sherpa-onnx-2.0.2.aar"))
+    implementation("com.google.mlkit:translate:17.0.3")
     debugImplementation(libs.androidx.ui.tooling)
 }

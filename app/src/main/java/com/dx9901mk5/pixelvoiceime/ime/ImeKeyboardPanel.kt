@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.dx9901mk5.pixelvoiceime.ai.LocalTranslator
 import com.dx9901mk5.pixelvoiceime.asr.VoiceSessionState
 import com.dx9901mk5.pixelvoiceime.models.VoiceLanguageItem
 import com.dx9901mk5.pixelvoiceime.ui.theme.PixelVoiceTheme
@@ -57,8 +58,10 @@ fun ImeKeyboardPanel(
     activeLanguage: VoiceLanguageItem,
     isOfflinePackReady: Boolean,
     isGeminiReady: Boolean,
+    targetTranslationCode: String,
     previousImeLabel: String,
     onCycleLanguage: () -> Unit,
+    onCycleTranslation: () -> Unit,
     onOpenSettings: () -> Unit,
     onMicPrimaryAction: () -> Unit,
     onSwitchToPreviousIme: () -> Unit,
@@ -121,7 +124,35 @@ fun ImeKeyboardPanel(
                         }
                     }
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val transOption = LocalTranslator.findTarget(targetTranslationCode)
+                        val transActive = targetTranslationCode.isNotBlank()
+                        Surface(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .clickable(onClick = onCycleTranslation),
+                            color = if (transActive) {
+                                MaterialTheme.colorScheme.secondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Text(
+                                text = "譯:${transOption.shortLabel}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (transActive) {
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+
                         if (isGeminiReady) {
                             Surface(
                                 color = MaterialTheme.colorScheme.primaryContainer,

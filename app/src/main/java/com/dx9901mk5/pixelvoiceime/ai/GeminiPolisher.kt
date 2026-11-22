@@ -133,6 +133,22 @@ class GeminiPolisher(
         }
     }
 
+    suspend fun translateText(
+        text: String,
+        targetLanguageName: String
+    ): GeminiResult<String> {
+        val clean = text.trim()
+        if (clean.isBlank()) return GeminiResult.Success("")
+        val prompt = buildString {
+            appendLine("請將以下文字精準、自然地翻譯為「$targetLanguageName」。")
+            appendLine("- 保留原意與適當標點符號。")
+            appendLine("- 嚴格規則：只輸出翻譯後的最終文字本身，不要加任何解釋、引號或前綴。")
+            appendLine()
+            append(clean)
+        }
+        return generateText(prompt = prompt, maxOutputTokens = 512)
+    }
+
     /**
      * Ensures CJK pauses/clauses use commas (，) and only the final ending uses a period (。).
      */
