@@ -131,6 +131,11 @@ class PixelVoiceImeService : InputMethodService() {
                 app.localSherpaAsrEngine.preload(activeLangTag)
             }
         }
+        if (app.prefs.config.value.localLlmEnabled && app.localLlmPolisher.isModelDownloaded()) {
+            serviceScope.launch {
+                app.localLlmPolisher.preloadIfReady()
+            }
+        }
 
         if (app.prefs.config.value.autoListenOnStart) {
             startListeningSession()
@@ -337,6 +342,7 @@ class PixelVoiceImeService : InputMethodService() {
                             languageTag = config.activeLanguageTag,
                             autoPunctuation = config.autoPunctuation,
                             removeFillers = config.removeFillerWords,
+                            applyTaiwanTypoFix = config.localTaiwanTypoFixEnabled,
                             punctuationModel = app.localSherpaAsrEngine.getPunctuationModel(),
                             polisherHelper = app.geminiPolisher
                         )
@@ -349,11 +355,26 @@ class PixelVoiceImeService : InputMethodService() {
                     wasAiPolished = result is GeminiResult.Success
                 )
             } else {
-                val polished = LocalTextPolisher.polish(
+                val localLlmOut = if (config.localLlmEnabled && app.localLlmPolisher.isModelDownloaded()) {
+                    sessionState.value = VoiceSessionState.Polishing(
+                        rawText = cleanRaw,
+                        statusText = "本地 Gemma 3 1B 台灣口語修潤中…"
+                    )
+                    app.localLlmPolisher.polish(
+                        rawText = cleanRaw,
+                        languageTag = config.activeLanguageTag,
+                        autoPunctuation = config.autoPunctuation,
+                        removeFillers = config.removeFillerWords,
+                        polisherHelper = app.geminiPolisher
+                    ).getOrNull()
+                } else null
+
+                val polished = localLlmOut ?: LocalTextPolisher.polish(
                     rawText = cleanRaw,
                     languageTag = config.activeLanguageTag,
                     autoPunctuation = config.autoPunctuation,
                     removeFillers = config.removeFillerWords,
+                    applyTaiwanTypoFix = config.localTaiwanTypoFixEnabled,
                     punctuationModel = app.localSherpaAsrEngine.getPunctuationModel(),
                     polisherHelper = app.geminiPolisher
                 )
@@ -361,7 +382,7 @@ class PixelVoiceImeService : InputMethodService() {
                 commitAndMaybeReturn(
                     rawText = cleanRaw,
                     finalText = finalText,
-                    wasAiPolished = false
+                    wasAiPolished = localLlmOut != null
                 )
             }
         }
@@ -432,6 +453,7 @@ class PixelVoiceImeService : InputMethodService() {
                         languageTag = config.activeLanguageTag,
                         autoPunctuation = config.autoPunctuation,
                         removeFillers = config.removeFillerWords,
+                        applyTaiwanTypoFix = config.localTaiwanTypoFixEnabled,
                         punctuationModel = app.localSherpaAsrEngine.getPunctuationModel(),
                         polisherHelper = app.geminiPolisher
                     )
@@ -509,12 +531,31 @@ class PixelVoiceImeService : InputMethodService() {
                 }
             } else null
 
+            if (polished == null && config.localLlmEnabled && app.localLlmPolisher.isModelDownloaded()) {
+                sessionState.value = VoiceSessionState.Polishing(
+                    rawText = rawText,
+                    statusText = "本地 Gemma 3 1B 台灣口語修潤中…"
+                )
+                val llmRes = app.localLlmPolisher.polish(
+                    rawText = rawText,
+                    languageTag = config.activeLanguageTag,
+                    autoPunctuation = config.autoPunctuation,
+                    removeFillers = config.removeFillerWords,
+                    polisherHelper = app.geminiPolisher
+                )
+                if (llmRes.isSuccess) {
+                    wasAiPolished = true
+                    polished = llmRes.getOrNull()
+                }
+            }
+
             if (polished == null) {
                 polished = LocalTextPolisher.polish(
                     rawText = rawText,
                     languageTag = config.activeLanguageTag,
                     autoPunctuation = config.autoPunctuation,
                     removeFillers = config.removeFillerWords,
+                    applyTaiwanTypoFix = config.localTaiwanTypoFixEnabled,
                     punctuationModel = app.localSherpaAsrEngine.getPunctuationModel(),
                     polisherHelper = app.geminiPolisher
                 )

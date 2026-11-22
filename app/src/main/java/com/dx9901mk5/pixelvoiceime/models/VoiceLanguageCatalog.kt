@@ -30,6 +30,7 @@ object VoiceLanguageCatalog {
     const val PACK_WHISPER_MULTI = "whisper-tiny-multilingual"
     const val PACK_WHISPER_BASE_MULTI = "whisper-base-multilingual"
     const val PACK_PUNCTUATION_ZH_EN = "punct-ct-transformer-zh-en"
+    const val PACK_LOCAL_LLM_GEMMA3_1B = "gemma3-1b-it-int4"
 
     val modelPacks: Map<String, OfflineModelPack> = linkedMapOf(
         PACK_SENSEVOICE_CJK to OfflineModelPack(
@@ -45,6 +46,14 @@ object VoiceLanguageCatalog {
             description = "純離線自動補齊逗號、句號、問號，延遲僅數十毫秒",
             approxSizeMb = 62,
             downloadUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/punctuation-models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12-int8.tar.bz2"
+        ),
+        PACK_LOCAL_LLM_GEMMA3_1B to OfflineModelPack(
+            packId = PACK_LOCAL_LLM_GEMMA3_1B,
+            title = "Gemma 3 1B INT4 本地修潤模型 (僅限旗艦機)",
+            description = "MediaPipe 裝置端 LLM，可選開啟本地台灣口語修潤（建議 Snapdragon 8 Gen 3 / 8 Elite、Dimensity 9300+、Tensor G4+、12GB+ RAM）",
+            approxSizeMb = 555,
+            downloadUrl = "https://huggingface.co/obaf/gemma3-1b-it-int4/resolve/main/gemma3-1b-it-int4.task",
+            isArchiveTarBz2 = false
         ),
         PACK_ZIPFORMER_EN to OfflineModelPack(
             packId = PACK_ZIPFORMER_EN,

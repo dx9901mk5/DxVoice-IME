@@ -13,6 +13,52 @@ object LocalTextPolisher {
     private val fillerRegex = Regex("""^(嗯+|啊+|呃+|那個+|就是說+)[，,\s]*""")
     private val midFillerRegex = Regex("""[，,\s]+(嗯+|呃+|那個+)[，,\s]+""")
 
+    /**
+     * Taiwanese Mandarin / Zhuyin common homophone & typo reference table (教育部與台灣常見錯別字範本).
+     */
+    private val taiwanTypoReplacements = listOf(
+        "因該" to "應該",
+        "以經" to "已經",
+        "必竟" to "畢竟",
+        "既使" to "即使",
+        "即然" to "既然",
+        "在見" to "再見",
+        "再家" to "在家",
+        "覺的" to "覺得",
+        "後補" to "候補",
+        "消夜" to "宵夜",
+        "尋人啟示" to "尋人啟事",
+        "按耐不住" to "按捺不住",
+        "走頭無路" to "走投無路",
+        "按步就班" to "按部就班",
+        "既往不究" to "既往不咎",
+        "破斧沉舟" to "破釜沉舟",
+        "名列前矛" to "名列前茅",
+        "公佈" to "公布",
+        "佈達" to "布達",
+        "部份" to "部分",
+        "身份" to "身分",
+        "規畫" to "規劃",
+        "搜集" to "蒐集",
+        "搜證" to "蒐證",
+        "粉多" to "很多",
+        "醬子" to "這樣子",
+        "不盡理想" to "不盡理想",
+        "一昧" to "一味",
+        "莫名奇妙" to "莫名其妙",
+        "迫不及待" to "迫不及待",
+        "迫不急待" to "迫不及待",
+        "不可思意" to "不可思議",
+        "再接再勵" to "再接再厲",
+        "反應熱烈" to "反應熱烈",
+        "反映問題" to "反映問題",
+        "無微不至" to "無微不至",
+        "無微不致" to "無微不至",
+        "濫竽充數" to "濫竽充數",
+        "美輪美煥" to "美輪美奐",
+        "川流不習" to "川流不息"
+    )
+
     private val termReplacements = listOf(
         "软件" to "軟體",
         "硬件" to "硬體",
@@ -169,6 +215,7 @@ object LocalTextPolisher {
         languageTag: String,
         autoPunctuation: Boolean,
         removeFillers: Boolean,
+        applyTaiwanTypoFix: Boolean = true,
         punctuationModel: OfflinePunctuation?,
         polisherHelper: GeminiPolisher
     ): String {
@@ -183,7 +230,7 @@ object LocalTextPolisher {
             languageTag.startsWith("zh-HK", ignoreCase = true) ||
             languageTag.startsWith("yue", ignoreCase = true)
         ) {
-            text = toTraditionalTaiwan(text)
+            text = toTraditionalTaiwan(text, applyTaiwanTypoFix)
         }
 
         if (autoPunctuation) {
@@ -205,7 +252,7 @@ object LocalTextPolisher {
         return text.trim()
     }
 
-    fun toTraditionalTaiwan(input: String): String {
+    fun toTraditionalTaiwan(input: String, applyTaiwanTypoFix: Boolean = true): String {
         var result = input
         for ((src, dst) in termReplacements) {
             if (result.contains(src)) {
@@ -216,6 +263,14 @@ object LocalTextPolisher {
         for (ch in result) {
             sb.append(charMap[ch] ?: ch)
         }
-        return sb.toString()
+        var out = sb.toString()
+        if (applyTaiwanTypoFix) {
+            for ((wrong, right) in taiwanTypoReplacements) {
+                if (out.contains(wrong)) {
+                    out = out.replace(wrong, right)
+                }
+            }
+        }
+        return out
     }
 }

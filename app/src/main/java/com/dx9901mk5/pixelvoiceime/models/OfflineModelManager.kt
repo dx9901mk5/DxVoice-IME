@@ -111,6 +111,17 @@ class OfflineModelManager(
             ?: files.firstOrNull { it.name.endsWith(".onnx", ignoreCase = true) }
     }
 
+    fun isLocalLlmReady(): Boolean =
+        _packStates.value[VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B] is PackDownloadState.Installed
+
+    fun findLocalLlmModelFile(): File? {
+        val dir = getPackDirectory(VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B)
+        if (!File(dir, ".ready").exists()) return null
+        val files = dir.walkTopDown().filter { it.isFile }.toList()
+        return files.firstOrNull { it.name.endsWith(".task", ignoreCase = true) }
+            ?: files.firstOrNull { it.name.equals("model.bin", ignoreCase = true) }
+    }
+
     fun enableLanguage(bcp47: String) {
         val next = _enabledLanguages.value + bcp47
         saveEnabledLanguages(next)
@@ -200,7 +211,12 @@ class OfflineModelManager(
                 updatePackState(packId, PackDownloadState.Downloading(0.90f, "解壓縮離線語音模型中…"))
                 extractTarBz2(tempArchive, targetDir)
             } else {
-                tempArchive.copyTo(File(targetDir, "model.bin"), overwrite = true)
+                val targetName = if (pack.downloadUrl.endsWith(".task", ignoreCase = true)) {
+                    "model.task"
+                } else {
+                    "model.bin"
+                }
+                tempArchive.copyTo(File(targetDir, targetName), overwrite = true)
             }
 
             File(targetDir, ".ready").writeText("ok:${System.currentTimeMillis()}")

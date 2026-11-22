@@ -23,6 +23,8 @@ data class VoiceImeConfig(
     val autoPunctuation: Boolean = true,
     val removeFillerWords: Boolean = true,
     val includeSurroundingContext: Boolean = true,
+    val localTaiwanTypoFixEnabled: Boolean = true,
+    val localLlmEnabled: Boolean = false,
     val activeLanguageTag: String = "zh-TW",
     val targetTranslationLang: String = "",
     val customAsrEndpoint: String = "https://api.groq.com/openai/v1",
@@ -67,6 +69,8 @@ class VoiceImePrefs(context: Context) {
             autoPunctuation = prefs.getBoolean(KEY_AUTO_PUNCTUATION, true),
             removeFillerWords = prefs.getBoolean(KEY_REMOVE_FILLERS, true),
             includeSurroundingContext = prefs.getBoolean(KEY_INCLUDE_CONTEXT, true),
+            localTaiwanTypoFixEnabled = prefs.getBoolean(KEY_LOCAL_TYPO_FIX, true),
+            localLlmEnabled = prefs.getBoolean(KEY_LOCAL_LLM_ENABLED, false),
             activeLanguageTag = prefs.getString(KEY_ACTIVE_LANG, "zh-TW") ?: "zh-TW",
             targetTranslationLang = prefs.getString(KEY_TARGET_TRANSLATION, "") ?: "",
             customAsrEndpoint = prefs.getString(KEY_CUSTOM_ASR_ENDPOINT, "https://api.groq.com/openai/v1")
@@ -102,6 +106,8 @@ class VoiceImePrefs(context: Context) {
             .putBoolean(KEY_AUTO_PUNCTUATION, updated.autoPunctuation)
             .putBoolean(KEY_REMOVE_FILLERS, updated.removeFillerWords)
             .putBoolean(KEY_INCLUDE_CONTEXT, updated.includeSurroundingContext)
+            .putBoolean(KEY_LOCAL_TYPO_FIX, updated.localTaiwanTypoFixEnabled)
+            .putBoolean(KEY_LOCAL_LLM_ENABLED, updated.localLlmEnabled)
             .putString(KEY_ACTIVE_LANG, updated.activeLanguageTag)
             .putString(KEY_TARGET_TRANSLATION, updated.targetTranslationLang)
             .putString(KEY_CUSTOM_ASR_ENDPOINT, updated.customAsrEndpoint)
@@ -136,6 +142,8 @@ class VoiceImePrefs(context: Context) {
         private const val KEY_AUTO_PUNCTUATION = "auto_punctuation"
         private const val KEY_REMOVE_FILLERS = "remove_fillers"
         private const val KEY_INCLUDE_CONTEXT = "include_context"
+        private const val KEY_LOCAL_TYPO_FIX = "local_taiwan_typo_fix"
+        private const val KEY_LOCAL_LLM_ENABLED = "local_llm_enabled"
         private const val KEY_ACTIVE_LANG = "active_language_tag"
         private const val KEY_TARGET_TRANSLATION = "target_translation_lang"
         private const val KEY_CUSTOM_ASR_ENDPOINT = "custom_asr_endpoint"

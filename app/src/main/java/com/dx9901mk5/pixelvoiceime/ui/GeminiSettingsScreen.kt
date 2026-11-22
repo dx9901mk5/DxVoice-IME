@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -32,15 +33,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
 import com.dx9901mk5.pixelvoiceime.ai.GeminiPolisher
 import com.dx9901mk5.pixelvoiceime.ai.GeminiResult
 import com.dx9901mk5.pixelvoiceime.data.ApiKeyStore
 import com.dx9901mk5.pixelvoiceime.data.PolishMode
 import com.dx9901mk5.pixelvoiceime.data.VoiceImePrefs
+import com.dx9901mk5.pixelvoiceime.models.PackDownloadState
+import com.dx9901mk5.pixelvoiceime.models.VoiceLanguageCatalog
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -55,6 +60,9 @@ fun GeminiSettingsScreen(
     val selectedModel by apiKeyStore.selectedModel.collectAsState()
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
+    val app = LocalContext.current.applicationContext as PixelVoiceApp
+    val packStates by app.modelManager.packStates.collectAsState()
+    val localLlmState = packStates[VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B] ?: PackDownloadState.NotInstalled
 
     var keyInput by remember { mutableStateOf(apiKeyStore.getApiKey()) }
     var customModel by remember(selectedModel) { mutableStateOf(selectedModel) }
@@ -382,6 +390,100 @@ fun GeminiSettingsScreen(
                     checked = config.includeSurroundingContext,
                     onCheckedChange = { v -> prefs.update { it.copy(includeSurroundingContext = v) } }
                 )
+            }
+        }
+
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "本地端台灣口語修潤（可選）",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                SettingSwitchRow(
+                    title = "台灣口語／同音錯字本地校正表",
+                    subtitle = "參照教育部與台灣常見錯別字範本（如：因該→應該、以經→已經），0.01 秒內離線完成",
+                    checked = config.localTaiwanTypoFixEnabled,
+                    onCheckedChange = { v -> prefs.update { it.copy(localTaiwanTypoFixEnabled = v) } }
+                )
+                SettingSwitchRow(
+                    title = "旗艦機本地小模型修潤 (Gemma 3 1B INT4)",
+                    subtitle = "無須網路即可用本地 LLM 潤飾語氣與修正錯字（須先下載 555 MB 模型，關閉時改走極速規則與詞庫）",
+                    checked = config.localLlmEnabled,
+                    onCheckedChange = { v -> prefs.update { it.copy(localLlmEnabled = v) } }
+                )
+                Text(
+                    text = "⚠️ 硬體建議：僅適合旗艦機使用（約需 555 MB 空間與 1.5GB+ 額外 RAM）。推薦處理器：Snapdragon 8 Gen 3 / 8 Elite、MediaTek Dimensity 9300 / 9400+、Google Tensor G4+（建議 12GB RAM 以上）；一般手機建議維持關閉以維持最快反應速度。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                when (val s = localLlmState) {
+                    is PackDownloadState.NotInstalled -> {
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B)
+                                }
+                            }
+                        ) {
+                            Text("下載 Gemma 3 1B INT4 本地模型 (約 555 MB)")
+                        }
+                    }
+                    is PackDownloadState.Downloading -> {
+                        LinearProgressIndicator(
+                            progress = { s.progress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = s.statusLabel,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    is PackDownloadState.Installed -> {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "本地模型已就緒 (${s.sizeBytes / (1024 * 1024)} MB)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedButton(
+                                onClick = {
+                                    scope.launch {
+                                        app.localLlmPolisher.release()
+                                        app.modelManager.deletePack(VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B)
+                                    }
+                                }
+                            ) {
+                                Text("移除模型")
+                            }
+                        }
+                    }
+                    is PackDownloadState.Error -> {
+                        Text(
+                            text = "下載失敗：${s.message}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B)
+                                }
+                            }
+                        ) {
+                            Text("重試下載 Gemma 3 1B")
+                        }
+                    }
+                }
             }
         }
 
