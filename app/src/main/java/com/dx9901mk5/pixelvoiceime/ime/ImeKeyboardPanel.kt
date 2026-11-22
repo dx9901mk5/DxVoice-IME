@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dx9901mk5.pixelvoiceime.ai.LocalTranslator
 import com.dx9901mk5.pixelvoiceime.asr.VoiceSessionState
+import com.dx9901mk5.pixelvoiceime.data.AppThemeMode
 import com.dx9901mk5.pixelvoiceime.models.VoiceLanguageItem
 import com.dx9901mk5.pixelvoiceime.ui.theme.PixelVoiceTheme
 
@@ -59,6 +60,7 @@ fun ImeKeyboardPanel(
     isOfflinePackReady: Boolean,
     isGeminiReady: Boolean,
     targetTranslationCode: String,
+    themeMode: AppThemeMode = AppThemeMode.DYNAMIC_PIXEL,
     previousImeLabel: String,
     onCycleLanguage: () -> Unit,
     onCycleTranslation: () -> Unit,
@@ -70,18 +72,23 @@ fun ImeKeyboardPanel(
     onEnter: () -> Unit,
     onOpenPermissionSetup: () -> Unit
 ) {
-    PixelVoiceTheme {
+    PixelVoiceTheme(themeMode = themeMode) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 3.dp
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 680.dp)
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                 // Top utility bar: Language pill + AI indicator + Settings gear
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -415,6 +422,7 @@ fun ImeKeyboardPanel(
                         }
                     }
                 }
+            }
             }
         }
     }

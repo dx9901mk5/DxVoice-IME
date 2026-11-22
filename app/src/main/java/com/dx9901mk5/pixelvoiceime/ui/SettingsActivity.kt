@@ -10,13 +10,17 @@ import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.KeyboardVoice
 import androidx.compose.material.icons.rounded.Language
@@ -39,11 +44,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -62,88 +70,164 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
+import com.dx9901mk5.pixelvoiceime.ime.FloatingMicService
 import com.dx9901mk5.pixelvoiceime.ui.theme.PixelVoiceTheme
 
 class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val app = application as PixelVoiceApp
 
+        if (app.prefs.config.value.floatingBallEnabled && Settings.canDrawOverlays(this)) {
+            FloatingMicService.start(this)
+        }
+
         setContent {
-            PixelVoiceTheme {
+            val config by app.prefs.config.collectAsState()
+            PixelVoiceTheme(themeMode = config.appThemeMode) {
                 PixelVoiceSettingsApp(app = app)
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+private data class SettingsNavItem(
+    val index: Int,
+    val label: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var companionTab by remember { mutableIntStateOf(3) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("PixelVoice IME", fontWeight = FontWeight.Bold)
-                        Text(
-                            text = "Gemini 智慧修潤與自動標點語音輸入法",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+    val navItems = remember {
+        listOf(
+            SettingsNavItem(0, "啟用行為", Icons.Rounded.KeyboardVoice),
+            SettingsNavItem(1, "離線語系", Icons.Rounded.Language),
+            SettingsNavItem(2, "AI 與端點", Icons.Rounded.AutoAwesome),
+            SettingsNavItem(3, "外觀備份", Icons.Rounded.Backup),
+            SettingsNavItem(4, "檢查更新", Icons.Rounded.SystemUpdate)
+        )
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val isTwoPane = maxWidth >= 680.dp
+        val useRail = maxWidth >= 540.dp
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text("PixelVoice IME", fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "本地極速 / Gemini / 自架端點語音輸入法",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                )
+            },
+            bottomBar = {
+                if (!useRail) {
+                    NavigationBar {
+                        navItems.forEach { item ->
+                            NavigationBarItem(
+                                selected = selectedTab == item.index,
+                                onClick = { selectedTab = item.index },
+                                icon = { Icon(item.icon, contentDescription = null) },
+                                label = { Text(item.label) }
+                            )
+                        }
                     }
                 }
-            )
-        },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Rounded.KeyboardVoice, contentDescription = null) },
-                    label = { Text("啟用與行為") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Rounded.Language, contentDescription = null) },
-                    label = { Text("離線語系") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Rounded.AutoAwesome, contentDescription = null) },
-                    label = { Text("Gemini AI") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    icon = { Icon(Icons.Rounded.SystemUpdate, contentDescription = null) },
-                    label = { Text("GitHub 更新") }
-                )
             }
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            when (selectedTab) {
-                0 -> SetupAndBehaviorTab(app = app)
-                1 -> OfflineLanguagesScreen(modelManager = app.modelManager, prefs = app.prefs)
-                2 -> GeminiSettingsScreen(
-                    apiKeyStore = app.apiKeyStore,
-                    polisher = app.geminiPolisher,
-                    prefs = app.prefs
-                )
+        ) { innerPadding ->
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                if (useRail) {
+                    NavigationRail {
+                        navItems.forEach { item ->
+                            NavigationRailItem(
+                                selected = selectedTab == item.index,
+                                onClick = {
+                                    selectedTab = item.index
+                                    if (companionTab == item.index) {
+                                        companionTab = (item.index + 1) % navItems.size
+                                    }
+                                },
+                                icon = { Icon(item.icon, contentDescription = null) },
+                                label = { Text(item.label) }
+                            )
+                        }
+                    }
+                }
 
-                3 -> UpdateSettingsScreen(prefs = app.prefs, updater = app.updater)
+                if (isTwoPane) {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) {
+                            RenderSettingsTab(tabIndex = selectedTab, app = app)
+                        }
+                        VerticalDivider()
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) {
+                            FlowRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                navItems.filter { it.index != selectedTab }.forEach { item ->
+                                    FilterChip(
+                                        selected = companionTab == item.index,
+                                        onClick = { companionTab = item.index },
+                                        label = { Text(item.label) }
+                                    )
+                                }
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                RenderSettingsTab(tabIndex = companionTab, app = app)
+                            }
+                        }
+                    }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        RenderSettingsTab(tabIndex = selectedTab, app = app)
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun RenderSettingsTab(tabIndex: Int, app: PixelVoiceApp) {
+    when (tabIndex) {
+        0 -> SetupAndBehaviorTab(app = app)
+        1 -> OfflineLanguagesScreen(modelManager = app.modelManager, prefs = app.prefs)
+        2 -> GeminiSettingsScreen(
+            apiKeyStore = app.apiKeyStore,
+            polisher = app.geminiPolisher,
+            prefs = app.prefs
+        )
+        3 -> BackupAndAppearanceScreen(app = app)
+        4 -> UpdateSettingsScreen(prefs = app.prefs, updater = app.updater)
     }
 }
 

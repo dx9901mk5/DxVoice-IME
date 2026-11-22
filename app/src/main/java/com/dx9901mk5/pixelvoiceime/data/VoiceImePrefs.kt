@@ -2,6 +2,7 @@ package com.dx9901mk5.pixelvoiceime.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,6 +11,11 @@ enum class PolishMode {
     FAST_TEXT,
     AUDIO_MULTIMODAL,
     OPENAI_COMPATIBLE
+}
+
+enum class AppThemeMode {
+    DYNAMIC_PIXEL,
+    ORANGE_CHARCOAL
 }
 
 data class VoiceImeConfig(
@@ -37,7 +43,16 @@ data class VoiceImeConfig(
     val githubRepoUrl: String = DEFAULT_GITHUB_REPO,
     val autoUpdateEnabled: Boolean = true,
     val previousImeId: String = "",
-    val previousImeLabel: String = ""
+    val previousImeLabel: String = "",
+    val appThemeMode: AppThemeMode = AppThemeMode.DYNAMIC_PIXEL,
+    val floatingBallEnabled: Boolean = false,
+    val floatingBallAlpha: Float = 0.85f,
+    val floatingBallOuterX: Int = 40,
+    val floatingBallOuterY: Int = 420,
+    val floatingBallInnerX: Int = 60,
+    val floatingBallInnerY: Int = 520,
+    val backupDeviceName: String = Build.MODEL ?: "PixelVoice",
+    val backupTreeUri: String = ""
 ) {
     companion object {
         const val DEFAULT_GITHUB_REPO = "https://github.com/dx9901mk5/PixelVoice-IME"
@@ -56,6 +71,9 @@ class VoiceImePrefs(context: Context) {
         val modeName = prefs.getString(KEY_POLISH_MODE, PolishMode.FAST_TEXT.name)
         val polishMode = runCatching { PolishMode.valueOf(modeName ?: "") }
             .getOrDefault(PolishMode.FAST_TEXT)
+        val themeName = prefs.getString(KEY_THEME_MODE, AppThemeMode.DYNAMIC_PIXEL.name)
+        val themeMode = runCatching { AppThemeMode.valueOf(themeName ?: "") }
+            .getOrDefault(AppThemeMode.DYNAMIC_PIXEL)
         val rawSilence = prefs.getLong(KEY_SILENCE_TIMEOUT, 3000L)
         val silenceTimeoutMs = if (rawSilence < 2500L) 3000L else rawSilence
         return VoiceImeConfig(
@@ -89,7 +107,17 @@ class VoiceImePrefs(context: Context) {
                 ?: VoiceImeConfig.DEFAULT_GITHUB_REPO,
             autoUpdateEnabled = prefs.getBoolean(KEY_AUTO_UPDATE, true),
             previousImeId = prefs.getString(KEY_PREV_IME_ID, "") ?: "",
-            previousImeLabel = prefs.getString(KEY_PREV_IME_LABEL, "") ?: ""
+            previousImeLabel = prefs.getString(KEY_PREV_IME_LABEL, "") ?: "",
+            appThemeMode = themeMode,
+            floatingBallEnabled = prefs.getBoolean(KEY_FLOATING_BALL_ENABLED, false),
+            floatingBallAlpha = prefs.getFloat(KEY_FLOATING_BALL_ALPHA, 0.85f).coerceIn(0.25f, 1.0f),
+            floatingBallOuterX = prefs.getInt(KEY_FLOATING_OUTER_X, 40),
+            floatingBallOuterY = prefs.getInt(KEY_FLOATING_OUTER_Y, 420),
+            floatingBallInnerX = prefs.getInt(KEY_FLOATING_INNER_X, 60),
+            floatingBallInnerY = prefs.getInt(KEY_FLOATING_INNER_Y, 520),
+            backupDeviceName = prefs.getString(KEY_BACKUP_DEVICE_NAME, Build.MODEL ?: "PixelVoice")
+                ?.ifBlank { Build.MODEL ?: "PixelVoice" } ?: "PixelVoice",
+            backupTreeUri = prefs.getString(KEY_BACKUP_TREE_URI, "") ?: ""
         )
     }
 
@@ -121,6 +149,15 @@ class VoiceImePrefs(context: Context) {
             .putBoolean(KEY_AUTO_UPDATE, updated.autoUpdateEnabled)
             .putString(KEY_PREV_IME_ID, updated.previousImeId)
             .putString(KEY_PREV_IME_LABEL, updated.previousImeLabel)
+            .putString(KEY_THEME_MODE, updated.appThemeMode.name)
+            .putBoolean(KEY_FLOATING_BALL_ENABLED, updated.floatingBallEnabled)
+            .putFloat(KEY_FLOATING_BALL_ALPHA, updated.floatingBallAlpha)
+            .putInt(KEY_FLOATING_OUTER_X, updated.floatingBallOuterX)
+            .putInt(KEY_FLOATING_OUTER_Y, updated.floatingBallOuterY)
+            .putInt(KEY_FLOATING_INNER_X, updated.floatingBallInnerX)
+            .putInt(KEY_FLOATING_INNER_Y, updated.floatingBallInnerY)
+            .putString(KEY_BACKUP_DEVICE_NAME, updated.backupDeviceName)
+            .putString(KEY_BACKUP_TREE_URI, updated.backupTreeUri)
             .apply()
         _config.value = updated
     }
@@ -157,5 +194,14 @@ class VoiceImePrefs(context: Context) {
         private const val KEY_AUTO_UPDATE = "auto_update_enabled"
         private const val KEY_PREV_IME_ID = "previous_ime_id"
         private const val KEY_PREV_IME_LABEL = "previous_ime_label"
+        private const val KEY_THEME_MODE = "app_theme_mode"
+        private const val KEY_FLOATING_BALL_ENABLED = "floating_ball_enabled"
+        private const val KEY_FLOATING_BALL_ALPHA = "floating_ball_alpha"
+        private const val KEY_FLOATING_OUTER_X = "floating_ball_outer_x"
+        private const val KEY_FLOATING_OUTER_Y = "floating_ball_outer_y"
+        private const val KEY_FLOATING_INNER_X = "floating_ball_inner_x"
+        private const val KEY_FLOATING_INNER_Y = "floating_ball_inner_y"
+        private const val KEY_BACKUP_DEVICE_NAME = "backup_device_name"
+        private const val KEY_BACKUP_TREE_URI = "backup_tree_uri"
     }
 }

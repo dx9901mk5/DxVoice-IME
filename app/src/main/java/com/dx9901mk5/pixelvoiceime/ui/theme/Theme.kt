@@ -10,6 +10,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.dx9901mk5.pixelvoiceime.data.AppThemeMode
 
 private val PixelLightColors = lightColorScheme(
     primary = Color(0xFF0B57D0),
@@ -35,13 +36,33 @@ private val PixelDarkColors = darkColorScheme(
     background = Color(0xFF131314)
 )
 
+private val OrangeCharcoalColors = darkColorScheme(
+    primary = Color(0xFFFF7A00),
+    onPrimary = Color(0xFF1A0B00),
+    primaryContainer = Color(0xFF4D2600),
+    onPrimaryContainer = Color(0xFFFFD8B8),
+    secondary = Color(0xFFFFA94D),
+    onSecondary = Color(0xFF1F1200),
+    secondaryContainer = Color(0xFF382412),
+    onSecondaryContainer = Color(0xFFFFE5C9),
+    surface = Color(0xFF18191D),
+    onSurface = Color(0xFFF3F4F6),
+    surfaceVariant = Color(0xFF26282E),
+    onSurfaceVariant = Color(0xFFB8BCC6),
+    background = Color(0xFF111215),
+    onBackground = Color(0xFFF3F4F6),
+    outline = Color(0xFF545863)
+)
+
 @Composable
 fun PixelVoiceTheme(
+    themeMode: AppThemeMode = AppThemeMode.DYNAMIC_PIXEL,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val colorScheme = when {
+        themeMode == AppThemeMode.ORANGE_CHARCOAL -> OrangeCharcoalColors
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }

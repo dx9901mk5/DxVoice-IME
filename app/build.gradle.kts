@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "com.dx9901mk5.pixelvoiceime"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.dx9901mk5.pixelvoiceime"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 14
-        versionName = "0.2.2"
+        targetSdk = 36
+        versionCode = 15
+        versionName = "0.3.0"
         ndk {
             abiFilters += "arm64-v8a"
         }
@@ -77,6 +77,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.commons.compress)
+    implementation("androidx.documentfile:documentfile:1.0.1")
+    implementation("androidx.window:window:1.3.0")
     implementation(files("libs/sherpa-onnx-2.0.2.aar"))
     implementation("com.google.mlkit:translate:17.0.3")
     implementation("com.google.mediapipe:tasks-genai:0.10.14")

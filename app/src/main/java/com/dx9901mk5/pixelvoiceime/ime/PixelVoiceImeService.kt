@@ -1,7 +1,10 @@
 package com.dx9901mk5.pixelvoiceime.ime
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.inputmethodservice.InputMethodService
 import android.os.Build
@@ -63,11 +66,36 @@ class PixelVoiceImeService : InputMethodService() {
     private var lastCommittedLength: Int = 0
     private var lastRawTranscript: String = ""
 
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Intent.ACTION_SCREEN_OFF) {
+                stopAllListening()
+                cancelPendingJobs()
+                if (app.prefs.config.value.autoReturnToPreviousIme) {
+                    val delayMs = app.prefs.config.value.autoReturnDelayMs.coerceAtLeast(300L)
+                    autoReturnJob = serviceScope.launch {
+                        delay(delayMs)
+                        returnToPreviousInputMethod()
+                    }
+                } else {
+                    sessionState.value = VoiceSessionState.Idle
+                }
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         app = application as PixelVoiceApp
         speechEngine = AndroidSpeechEngine(this)
         imeLifecycleOwner.onCreate()
+        val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenOffReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(screenOffReceiver, filter)
+        }
     }
 
     override fun onCreateInputView(): View {
@@ -94,6 +122,7 @@ class PixelVoiceImeService : InputMethodService() {
                     isOfflinePackReady = offlineReady,
                     isGeminiReady = hasApiKey && config.geminiPolishEnabled,
                     targetTranslationCode = config.targetTranslationLang,
+                    themeMode = config.appThemeMode,
                     previousImeLabel = config.previousImeLabel.ifBlank { "切回鍵盤" },
                     onCycleLanguage = ::cycleActiveLanguage,
                     onCycleTranslation = ::cycleTargetTranslation,
@@ -112,6 +141,7 @@ class PixelVoiceImeService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         imeLifecycleOwner.onStart()
+        FloatingMicService.notifyImeVisibility(this, true)
         cancelPendingJobs()
         detectAndRememberOtherIme()
 
@@ -149,10 +179,12 @@ class PixelVoiceImeService : InputMethodService() {
         stopAllListening()
         cancelPendingJobs()
         currentInputConnection?.finishComposingText()
+        FloatingMicService.notifyImeVisibility(this, false)
         imeLifecycleOwner.onStop()
     }
 
     override fun onDestroy() {
+        runCatching { unregisterReceiver(screenOffReceiver) }
         stopAllListening()
         cancelPendingJobs()
         serviceScope.cancel()
@@ -250,7 +282,7 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onNoSpeechTimeout() {
-                        sessionState.value = VoiceSessionState.Idle
+                        handleNoSpeechAutoReturn("未偵測到語音")
                     }
 
                     override fun onError(message: String) {
@@ -296,10 +328,31 @@ class PixelVoiceImeService : InputMethodService() {
 
                     override fun onError(code: Int, message: String) {
                         currentInputConnection?.finishComposingText()
-                        sessionState.value = VoiceSessionState.Error(message)
+                        if (code == android.speech.SpeechRecognizer.ERROR_SPEECH_TIMEOUT ||
+                            code == android.speech.SpeechRecognizer.ERROR_NO_MATCH
+                        ) {
+                            handleNoSpeechAutoReturn(message)
+                        } else {
+                            sessionState.value = VoiceSessionState.Error(message)
+                        }
                     }
                 }
             )
+        }
+    }
+
+    private fun handleNoSpeechAutoReturn(reason: String) {
+        val config = app.prefs.config.value
+        if (config.autoReturnToPreviousIme) {
+            val waitMs = config.autoReturnDelayMs.coerceAtLeast(600L)
+            sessionState.value = VoiceSessionState.Error("$reason，即將自動切回原輸入法…")
+            cancelAutoReturn()
+            autoReturnJob = serviceScope.launch {
+                delay(waitMs)
+                returnToPreviousInputMethod()
+            }
+        } else {
+            sessionState.value = VoiceSessionState.Idle
         }
     }
 
