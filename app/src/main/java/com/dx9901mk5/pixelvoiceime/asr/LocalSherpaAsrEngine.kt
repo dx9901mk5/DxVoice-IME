@@ -23,7 +23,9 @@ import kotlin.math.sqrt
 class LocalSherpaAsrEngine(
     private val modelManager: OfflineModelManager
 ) {
-    private val loadMutex = Mutex()
+    private val recognizerMutex = Mutex()
+    private val punctMutex = Mutex()
+    private val tagRegex = Regex("""<\|[^|]+\|>""")
     private var loadedPackId: String? = null
     private var loadedLanguageHint: String? = null
     private var recognizer: OfflineRecognizer? = null
@@ -65,7 +67,9 @@ class LocalSherpaAsrEngine(
             try {
                 stream.acceptWaveform(samples, 16000)
                 rec.decode(stream)
-                val text = rec.getResult(stream).text.trim()
+                val text = rec.getResult(stream).text
+                    .replace(tagRegex, "")
+                    .trim()
                 if (text.isNotBlank()) {
                     decodedParts.add(text)
                 }
@@ -90,14 +94,14 @@ class LocalSherpaAsrEngine(
         ensurePunctuation()
     }
 
-    private suspend fun ensureRecognizer(bcp47: String): OfflineRecognizer? = loadMutex.withLock {
+    private suspend fun ensureRecognizer(bcp47: String): OfflineRecognizer? = recognizerMutex.withLock {
         val item = VoiceLanguageCatalog.findByTag(bcp47)
         val langHint = mapLanguageHint(bcp47)
         if (recognizer != null && loadedPackId == item.packId && loadedLanguageHint == langHint) {
             return recognizer
         }
 
-        recognizer?.release()
+        runCatching { recognizer?.release() }
         recognizer = null
         loadedPackId = null
         loadedLanguageHint = null
@@ -138,19 +142,23 @@ class LocalSherpaAsrEngine(
             modelConfig = modelConfig,
             decodingMethod = "greedy_search"
         )
-        val created = OfflineRecognizer(assetManager = null, config = config)
-        recognizer = created
-        loadedPackId = item.packId
-        loadedLanguageHint = langHint
-        return created
+        return try {
+            val created = OfflineRecognizer(assetManager = null, config = config)
+            recognizer = created
+            loadedPackId = item.packId
+            loadedLanguageHint = langHint
+            created
+        } catch (_: Throwable) {
+            null
+        }
     }
 
-    private suspend fun ensurePunctuation(): OfflinePunctuation? = loadMutex.withLock {
+    private suspend fun ensurePunctuation(): OfflinePunctuation? = punctMutex.withLock {
         val file = modelManager.findPunctuationModelFile() ?: return null
         if (punctuation != null && loadedPunctPath == file.absolutePath) {
             return punctuation
         }
-        punctuation?.release()
+        runCatching { punctuation?.release() }
         punctuation = null
         loadedPunctPath = null
 
@@ -162,10 +170,14 @@ class LocalSherpaAsrEngine(
                 provider = "cpu"
             )
         )
-        val created = OfflinePunctuation(assetManager = null, config = config)
-        punctuation = created
-        loadedPunctPath = file.absolutePath
-        return created
+        return try {
+            val created = OfflinePunctuation(assetManager = null, config = config)
+            punctuation = created
+            loadedPunctPath = file.absolutePath
+            created
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     fun release() {
@@ -182,7 +194,7 @@ class LocalSherpaAsrEngine(
         val lower = bcp47.lowercase()
         return when {
             lower.startsWith("yue") -> "yue"
-            lower.startsWith("zh") -> "zh"
+            lower.startsWith("zh") -> "auto"
             lower.startsWith("en") -> "en"
             lower.startsWith("ja") -> "ja"
             lower.startsWith("ko") -> "ko"
@@ -192,26 +204,39 @@ class LocalSherpaAsrEngine(
 
     /**
      * Splits 16kHz 16-bit mono PCM bytes into speech segments whenever internal silence >= 450ms,
-     * so pauses naturally become comma boundaries and each segment decodes in ~70-150ms.
+     * using an adaptive noise floor computed from the recording itself.
      */
     private fun splitPcmBySilence(pcmBytes: ByteArray): List<ByteArray> {
         val frameBytes = 1600 // 50ms at 16kHz 16-bit mono
         val minSilenceFrames = 9 // 9 * 50ms = 450ms
-        val speechThresholdRms = 420f
+
+        val frameRmsList = ArrayList<Float>(pcmBytes.size / frameBytes + 1)
+        var pos = 0
+        while (pos + frameBytes <= pcmBytes.size) {
+            frameRmsList.add(frameRms(pcmBytes, pos, frameBytes))
+            pos += frameBytes
+        }
+        if (frameRmsList.isEmpty()) {
+            return if (pcmBytes.size > 3200) listOf(pcmBytes) else emptyList()
+        }
+
+        val sortedRms = frameRmsList.sorted()
+        val noiseFloor = sortedRms[(sortedRms.size * 0.2f).toInt().coerceIn(0, sortedRms.lastIndex)]
+        val speechThresholdRms = (noiseFloor * 2.2f).coerceIn(260f, 2200f)
 
         val segments = mutableListOf<ByteArray>()
         var segStart = -1
         var lastVoiceEnd = -1
         var silentFrames = 0
 
-        var pos = 0
-        while (pos + frameBytes <= pcmBytes.size) {
-            val rms = frameRms(pcmBytes, pos, frameBytes)
+        for (idx in frameRmsList.indices) {
+            val framePos = idx * frameBytes
+            val rms = frameRmsList[idx]
             if (rms >= speechThresholdRms) {
                 if (segStart < 0) {
-                    segStart = (pos - frameBytes * 2).coerceAtLeast(0)
+                    segStart = (framePos - frameBytes * 2).coerceAtLeast(0)
                 }
-                lastVoiceEnd = (pos + frameBytes * 2).coerceAtMost(pcmBytes.size)
+                lastVoiceEnd = (framePos + frameBytes * 2).coerceAtMost(pcmBytes.size)
                 silentFrames = 0
             } else if (segStart >= 0) {
                 silentFrames++
@@ -224,7 +249,6 @@ class LocalSherpaAsrEngine(
                     silentFrames = 0
                 }
             }
-            pos += frameBytes
         }
 
         if (segStart >= 0 && lastVoiceEnd > segStart + 3200) {

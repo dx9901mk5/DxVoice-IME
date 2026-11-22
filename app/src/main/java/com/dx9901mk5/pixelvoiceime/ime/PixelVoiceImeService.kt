@@ -299,7 +299,7 @@ class PixelVoiceImeService : InputMethodService() {
             )
             speechEngine.start(
                 languageTag = activeLang.bcp47,
-                preferOffline = offlineReady,
+                preferOffline = false,
                 silenceTimeoutMs = config.silenceTimeoutMs,
                 callbacks = object : AndroidSpeechEngine.Callbacks {
                     override fun onReady() = Unit

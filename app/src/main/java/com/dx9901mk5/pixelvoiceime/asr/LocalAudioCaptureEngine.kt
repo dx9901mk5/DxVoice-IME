@@ -79,6 +79,8 @@ class LocalAudioCaptureEngine {
             val startTime = System.currentTimeMillis()
             var speechStarted = false
             var lastSpeechTime = startTime
+            var noiseFloorRms = 180f
+            var calibratedFrames = 0
 
             try {
                 recorder.startRecording()
@@ -88,10 +90,23 @@ class LocalAudioCaptureEngine {
 
                     pcmOut.write(frameBuffer, 0, read)
                     val rms = computeRms(frameBuffer, read)
-                    val normalized = (rms / 6500f).coerceIn(0.05f, 1f)
                     val now = System.currentTimeMillis()
 
-                    if (rms >= SPEECH_RMS_THRESHOLD) {
+                    if (calibratedFrames < 6) {
+                        noiseFloorRms = if (calibratedFrames == 0) {
+                            rms
+                        } else {
+                            noiseFloorRms * 0.6f + rms * 0.4f
+                        }
+                        calibratedFrames++
+                    } else if (!speechStarted || rms < noiseFloorRms * 1.6f) {
+                        noiseFloorRms = (noiseFloorRms * 0.92f + rms * 0.08f).coerceIn(80f, 1600f)
+                    }
+
+                    val dynamicThreshold = (noiseFloorRms * 2.3f).coerceIn(280f, 2400f)
+                    val normalized = (rms / (dynamicThreshold * 2.5f)).coerceIn(0.05f, 1f)
+
+                    if (calibratedFrames >= 3 && rms >= dynamicThreshold) {
                         speechStarted = true
                         lastSpeechTime = now
                     }
