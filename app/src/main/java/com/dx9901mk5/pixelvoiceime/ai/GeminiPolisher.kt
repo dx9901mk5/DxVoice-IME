@@ -52,7 +52,7 @@ class GeminiPolisher(
             appendLine("- 目標語系：$languageTag（若為 zh-TW 請保持繁體中文台灣用語；若為中英夾雜請保留正確英文拼寫與大小寫）。")
             appendLine("- 修正同音異字、漏字、誤判專有名詞與語病，但不可改變原意、不可憑空捏造內容。")
             if (autoPunctuation) {
-                appendLine("- 自動補齊自然且正確的標點符號（中文使用全形標點：句子與句子之間或語氣停頓處使用逗號「，」，僅在整段話最後結尾使用句號「。」（或依語氣使用「？」「！」）；英文使用半形標點）。")
+                appendLine("- 自動補齊自然且正確的標點符號（中文嚴格規則：整段文字中「只能」在最後結尾使用一個句號「。」（或依語氣用「？」「！」）；話語停頓、子句與句子之間一律使用全形逗號「，」，絕對不可以在中間出現句號「。」或分號「；」。英文使用半形標點）。")
             } else {
                 appendLine("- 盡量維持原斷句，不要強行加入多餘標點。")
             }
@@ -71,7 +71,12 @@ class GeminiPolisher(
             append(cleanInput)
         }
 
-        return generateText(prompt = prompt, maxOutputTokens = 512)
+        val result = generateText(prompt = prompt, maxOutputTokens = 512)
+        return if (autoPunctuation && result is GeminiResult.Success) {
+            GeminiResult.Success(normalizeClausePunctuation(result.data, languageTag))
+        } else {
+            result
+        }
     }
 
     suspend fun transcribeAndPolishAudio(
@@ -86,7 +91,7 @@ class GeminiPolisher(
             appendLine("你是高精度語音輸入法引擎。請直接聆聽這段音訊，精準轉錄並修潤為最終要輸入的文字。")
             appendLine("- 主要語系：$languageTag（若為 zh-TW 務必輸出繁體中文台灣用語）。")
             if (autoPunctuation) {
-                appendLine("- 自動加入自然正確的標點符號（中文句子與句子之間或語氣停頓處使用全形逗號「，」，僅在整段話最後結尾使用句號「。」（或依語氣使用「？」「！」）；英文使用半形標點）。")
+                appendLine("- 自動加入自然正確的標點符號（中文嚴格規則：整段文字中「只能」在最後結尾使用一個句號「。」（或依語氣用「？」「！」）；話語停頓、子句與句子之間一律使用全形逗號「，」，絕對不可以在中間出現句號「。」或分號「；」。英文使用半形標點）。")
             }
             if (removeFillers) {
                 appendLine("- 去除無意義口語贅詞（嗯、啊、呃、那個等）。")
@@ -120,7 +125,36 @@ class GeminiPolisher(
                     .put("temperature", 0.1)
             )
         }
-        return executeGenerateContent(payload, keyStore.selectedModel.value)
+        val result = executeGenerateContent(payload, keyStore.selectedModel.value)
+        return if (autoPunctuation && result is GeminiResult.Success) {
+            GeminiResult.Success(normalizeClausePunctuation(result.data, languageTag))
+        } else {
+            result
+        }
+    }
+
+    /**
+     * Ensures CJK pauses/clauses use commas (，) and only the final ending uses a period (。).
+     */
+    fun normalizeClausePunctuation(text: String, languageTag: String): String {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return ""
+        val isCjk = languageTag.startsWith("zh", ignoreCase = true) ||
+            languageTag.startsWith("ja", ignoreCase = true) ||
+            languageTag.startsWith("yue", ignoreCase = true)
+        if (!isCjk) return trimmed
+
+        val lastIdx = trimmed.lastIndex
+        val sb = StringBuilder(trimmed.length)
+        for (i in trimmed.indices) {
+            val ch = trimmed[i]
+            if (i < lastIdx && (ch == '。' || ch == '；')) {
+                sb.append('，')
+            } else {
+                sb.append(ch)
+            }
+        }
+        return sb.toString()
     }
 
     /**
@@ -133,24 +167,31 @@ class GeminiPolisher(
             languageTag.startsWith("ja", ignoreCase = true) ||
             languageTag.startsWith("yue", ignoreCase = true)
 
-        val lastChar = trimmed.last()
+        val withClauseCommas = if (isCjk) {
+            val spaceBetweenCjk = Regex("""(?<=[\p{IsHan}\p{IsHiragana}\p{IsKatakana}])\s+(?=[\p{IsHan}\p{IsHiragana}\p{IsKatakana}])""")
+            normalizeClausePunctuation(trimmed.replace(spaceBetweenCjk, "，"), languageTag)
+        } else {
+            trimmed
+        }
+
+        val lastChar = withClauseCommas.last()
         val alreadyPunctuated = lastChar in setOf('。', '？', '！', '，', '.', '?', '!', ',', '；', ';')
-        if (alreadyPunctuated) return trimmed
+        if (alreadyPunctuated) return withClauseCommas
 
         return if (isCjk) {
-            val isQuestion = trimmed.endsWith("嗎") || trimmed.endsWith("呢") ||
-                trimmed.endsWith("嗎") || trimmed.contains("什麼") ||
-                trimmed.contains("怎麼") || trimmed.contains("為什麼") ||
-                trimmed.contains("哪裡") || trimmed.contains("是不是")
-            trimmed + if (isQuestion) "？" else "。"
+            val isQuestion = withClauseCommas.endsWith("嗎") || withClauseCommas.endsWith("呢") ||
+                withClauseCommas.contains("什麼") ||
+                withClauseCommas.contains("怎麼") || withClauseCommas.contains("為什麼") ||
+                withClauseCommas.contains("哪裡") || withClauseCommas.contains("是不是")
+            withClauseCommas + if (isQuestion) "？" else "。"
         } else {
-            val lower = trimmed.lowercase()
+            val lower = withClauseCommas.lowercase()
             val isQuestion = lower.startsWith("what ") || lower.startsWith("how ") ||
                 lower.startsWith("why ") || lower.startsWith("where ") ||
                 lower.startsWith("when ") || lower.startsWith("who ") ||
                 lower.startsWith("can ") || lower.startsWith("do ") ||
                 lower.startsWith("is ") || lower.startsWith("are ")
-            val capitalized = trimmed.replaceFirstChar { it.uppercase() }
+            val capitalized = withClauseCommas.replaceFirstChar { it.uppercase() }
             capitalized + if (isQuestion) "?" else "."
         }
     }

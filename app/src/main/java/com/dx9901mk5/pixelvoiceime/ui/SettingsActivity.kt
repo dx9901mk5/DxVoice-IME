@@ -273,14 +273,24 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         0L to "立刻 (0秒)",
                         450L to "極快 (0.45秒)",
                         1000L to "預覽 (1秒)",
-                        1800L to "寬裕 (1.8秒)"
+                        1800L to "寬裕 (1.8秒)",
+                        2500L to "寬裕 (2.5秒)"
                     ).forEach { (delayMs, label) ->
                         FilterChip(
-                            selected = config.autoReturnDelayMs == delayMs,
-                            onClick = { app.prefs.update { it.copy(autoReturnDelayMs = delayMs) } },
+                            selected = config.autoReturnToPreviousIme && config.autoReturnDelayMs == delayMs,
+                            onClick = {
+                                app.prefs.update {
+                                    it.copy(autoReturnToPreviousIme = true, autoReturnDelayMs = delayMs)
+                                }
+                            },
                             label = { Text(label) }
                         )
                     }
+                    FilterChip(
+                        selected = !config.autoReturnToPreviousIme,
+                        onClick = { app.prefs.update { it.copy(autoReturnToPreviousIme = false) } },
+                        label = { Text("手動點擊切回") }
+                    )
                 }
 
                 Text(
