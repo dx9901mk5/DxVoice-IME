@@ -2,6 +2,7 @@ package com.dx9901mk5.pixelvoiceime.asr
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -26,7 +27,11 @@ class AndroidSpeechEngine(
     private var lastPartial: String = ""
     private var active: Boolean = false
 
-    fun isAvailable(): Boolean = SpeechRecognizer.isRecognitionAvailable(context)
+    fun isAvailable(): Boolean {
+        if (SpeechRecognizer.isRecognitionAvailable(context)) return true
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
+    }
 
     fun start(
         languageTag: String,
@@ -43,7 +48,15 @@ class AndroidSpeechEngine(
         lastPartial = ""
         active = true
 
-        val sr = SpeechRecognizer.createSpeechRecognizer(context)
+        val useOnDevice = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            SpeechRecognizer.isOnDeviceRecognitionAvailable(context) &&
+            (preferOffline || !SpeechRecognizer.isRecognitionAvailable(context))
+
+        val sr = if (useOnDevice && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+        } else {
+            SpeechRecognizer.createSpeechRecognizer(context)
+        }
         recognizer = sr
         sr.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {

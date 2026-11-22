@@ -31,7 +31,7 @@ class GeminiPolisher(
     suspend fun testConnection(): GeminiResult<String> {
         return generateText(
             prompt = "Reply with only: PixelVoice IME OK",
-            maxOutputTokens = 64
+            maxOutputTokens = 512
         )
     }
 

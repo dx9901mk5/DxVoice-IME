@@ -97,8 +97,11 @@ fun GeminiSettingsScreen(
                         Text("儲存金鑰")
                     }
                     OutlinedButton(
-                        enabled = !testing && hasApiKey,
+                        enabled = !testing && (keyInput.isNotBlank() || hasApiKey),
                         onClick = {
+                            if (keyInput.isNotBlank()) {
+                                apiKeyStore.saveApiKey(keyInput)
+                            }
                             testing = true
                             testStatus = "測試連線中…"
                             scope.launch {
