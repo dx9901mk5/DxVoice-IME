@@ -50,9 +50,9 @@ class GeminiPolisher(
             appendLine("你是高精度語音輸入法後處理引擎（類似 Google Pixel Assistant Voice Typing）。")
             appendLine("請修正以下語音辨識草稿並直接輸出最終可貼入輸入框的文字：")
             appendLine("- 目標語系：$languageTag（若為 zh-TW 請保持繁體中文台灣用語；若為中英夾雜請保留正確英文拼寫與大小寫）。")
-            appendLine("- 修正同音異字、漏字、誤判專有名詞與語病，但不可改變原意、不可憑空捏造內容。不在句子中間加入逗號或分號。")
+            appendLine("- 修正同音異字、漏字、誤判專有名詞與語病，但不可改變原意、不可憑空捏造內容。")
             if (autoPunctuation) {
-                appendLine("- 自動補齊自然且正確的標點符號（中文使用全形標點：，、。？！；英文使用半形標點）。")
+                appendLine("- 自動補齊自然且正確的標點符號（中文使用全形標點：句子與句子之間或語氣停頓處使用逗號「，」，僅在整段話最後結尾使用句號「。」（或依語氣使用「？」「！」）；英文使用半形標點）。")
             } else {
                 appendLine("- 盡量維持原斷句，不要強行加入多餘標點。")
             }
@@ -86,7 +86,7 @@ class GeminiPolisher(
             appendLine("你是高精度語音輸入法引擎。請直接聆聽這段音訊，精準轉錄並修潤為最終要輸入的文字。")
             appendLine("- 主要語系：$languageTag（若為 zh-TW 務必輸出繁體中文台灣用語）。")
             if (autoPunctuation) {
-                appendLine("- 自動加入自然正確的標點符號。")
+                appendLine("- 自動加入自然正確的標點符號（中文句子與句子之間或語氣停頓處使用全形逗號「，」，僅在整段話最後結尾使用句號「。」（或依語氣使用「？」「！」）；英文使用半形標點）。")
             }
             if (removeFillers) {
                 appendLine("- 去除無意義口語贅詞（嗯、啊、呃、那個等）。")

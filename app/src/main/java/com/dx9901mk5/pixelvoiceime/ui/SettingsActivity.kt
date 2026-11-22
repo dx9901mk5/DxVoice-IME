@@ -292,7 +292,10 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                     listOf(
                         1000L to "快速 (1.0秒)",
                         1500L to "標準 (1.5秒)",
-                        2200L to "長句 (2.2秒)"
+                        2200L to "長句 (2.2秒)",
+                        2500L to "長句 (2.5秒)",
+                        2700L to "長句 (2.7秒)",
+                        3000L to "長句 (3秒)"
                     ).forEach { (ms, label) ->
                         FilterChip(
                             selected = config.silenceTimeoutMs == ms,

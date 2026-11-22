@@ -63,6 +63,29 @@ fun UpdateSettingsScreen(
 
     val canInstall = updater.canInstallPackages(context)
 
+    fun startDownloadAndInstall(apkUrl: String, versionLabel: String? = null) {
+        downloading = true
+        downloadProgress = 0f
+        statusMessage = if (versionLabel != null) {
+            "發現新版本 $versionLabel，正在自動下載 APK…"
+        } else {
+            "正在下載新版 APK…"
+        }
+        scope.launch {
+            val result = updater.downloadAndInstall(
+                context = context,
+                downloadUrl = apkUrl,
+                onProgress = { p -> downloadProgress = p }
+            )
+            statusMessage = if (result.isSuccess) {
+                "下載完成，已啟動系統安裝程式"
+            } else {
+                "下載或安裝失敗：${result.exceptionOrNull()?.localizedMessage}"
+            }
+            downloading = false
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -179,18 +202,22 @@ fun UpdateSettingsScreen(
                                 when (val res = updater.checkLatestRelease(config.githubRepoUrl)) {
                                     is UpdateCheckResult.Success -> {
                                         releaseInfo = res.info
-                                        statusMessage = if (res.info.hasUpdate) {
-                                            "發現新版本 ${res.info.tagName}！"
+                                        checking = false
+                                        val apkUrl = res.info.apkDownloadUrl
+                                        if (res.info.hasUpdate && !apkUrl.isNullOrBlank()) {
+                                            startDownloadAndInstall(apkUrl, res.info.tagName)
+                                        } else if (res.info.hasUpdate) {
+                                            statusMessage = "發現新版本 ${res.info.tagName}，但找不到可下載的 APK 附件"
                                         } else {
-                                            "目前已是最新版本（遠端：${res.info.tagName}）"
+                                            statusMessage = "目前已是最新版本（遠端：${res.info.tagName}）"
                                         }
                                     }
 
                                     is UpdateCheckResult.Error -> {
                                         statusMessage = "檢查失敗：${res.message}"
+                                        checking = false
                                     }
                                 }
-                                checking = false
                             }
                         }
                     ) {
@@ -201,24 +228,7 @@ fun UpdateSettingsScreen(
                     if (apkUrl != null) {
                         Button(
                             enabled = !downloading,
-                            onClick = {
-                                downloading = true
-                                downloadProgress = 0f
-                                statusMessage = "正在下載新版 APK…"
-                                scope.launch {
-                                    val result = updater.downloadAndInstall(
-                                        context = context,
-                                        downloadUrl = apkUrl,
-                                        onProgress = { p -> downloadProgress = p }
-                                    )
-                                    statusMessage = if (result.isSuccess) {
-                                        "下載完成，已啟動系統安裝程式"
-                                    } else {
-                                        "下載或安裝失敗：${result.exceptionOrNull()?.localizedMessage}"
-                                    }
-                                    downloading = false
-                                }
-                            }
+                            onClick = { startDownloadAndInstall(apkUrl) }
                         ) {
                             Text(if (downloading) "下載中…" else "下載並自動安裝")
                         }

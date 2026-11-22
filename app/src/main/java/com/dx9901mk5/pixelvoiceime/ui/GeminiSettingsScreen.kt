@@ -32,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -53,6 +54,7 @@ fun GeminiSettingsScreen(
     val hasApiKey by apiKeyStore.hasApiKey.collectAsState()
     val selectedModel by apiKeyStore.selectedModel.collectAsState()
     val scope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
 
     var keyInput by remember { mutableStateOf(apiKeyStore.getApiKey()) }
     var customModel by remember(selectedModel) { mutableStateOf(selectedModel) }
@@ -117,6 +119,24 @@ fun GeminiSettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "如何免費取得 Gemini API Key？",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "1. 點擊下方按鈕前往 Google AI Studio 並登入 Google 帳號。\n" +
+                        "2. 點擊「Create API key」建立新的 API 金鑰（可選用預設專案或新建專案）。\n" +
+                        "3. 複製「AIza...」開頭的金鑰，貼回上方欄位後點擊「儲存金鑰」與「測試連線」。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedButton(
+                    onClick = { uriHandler.openUri("https://aistudio.google.com/apikey") }
+                ) {
+                    Text("前往 Google AI Studio 申請 API Key ↗")
                 }
             }
         }
