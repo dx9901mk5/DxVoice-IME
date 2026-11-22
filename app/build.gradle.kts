@@ -16,8 +16,18 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file(rootProject.extra["MYAPP_RELEASE_STORE_FILE"] as String)
+            storePassword = rootProject.extra["MYAPP_RELEASE_STORE_PASSWORD"] as String
+            keyAlias = rootProject.extra["MYAPP_RELEASE_KEY_ALIAS"] as String
+            keyPassword = rootProject.extra["MYAPP_RELEASE_KEY_PASSWORD"] as String
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
