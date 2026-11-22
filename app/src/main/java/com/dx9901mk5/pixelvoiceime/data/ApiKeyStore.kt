@@ -23,7 +23,7 @@ class ApiKeyStore(context: Context) {
 
     private fun loadModel(): String {
         val saved = prefs.getString(KEY_MODEL, DEFAULT_MODEL)?.trim().orEmpty()
-        if (saved.isBlank() || saved == "gemini-4-hydrogen") {
+        if (saved.isBlank() || saved == "gemini-4-hydrogen" || saved == "gemini-2.5-flash") {
             prefs.edit().putString(KEY_MODEL, DEFAULT_MODEL).apply()
             return DEFAULT_MODEL
         }
@@ -71,13 +71,13 @@ class ApiKeyStore(context: Context) {
         private const val PREFS_NAME_FALLBACK = "pixelvoice_prefs_fallback"
         private const val KEY_API_KEY = "gemini_api_key"
         private const val KEY_MODEL = "gemini_model"
-        const val DEFAULT_MODEL = "gemini-2.5-flash"
+        const val DEFAULT_MODEL = "gemini-3.8-flash"
         val PRESET_MODELS = listOf(
-            "gemini-2.5-flash",
-            "gemini-2.5-flash-lite",
             "gemini-3.8-flash",
             "gemini-3.5-flash-lite",
-            "gemini-2.5-pro"
+            "gemini-3.6-flash",
+            "gemini-4-argon",
+            "gemini-2.5-flash"
         )
     }
 }
