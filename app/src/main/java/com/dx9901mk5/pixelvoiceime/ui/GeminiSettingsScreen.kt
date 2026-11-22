@@ -217,19 +217,134 @@ fun GeminiSettingsScreen(
                         },
                         label = { Text("純走 Gemini 音訊 API") }
                     )
+                    FilterChip(
+                        selected = config.geminiPolishEnabled && config.polishMode == PolishMode.OPENAI_COMPATIBLE,
+                        onClick = {
+                            prefs.update {
+                                it.copy(geminiPolishEnabled = true, polishMode = PolishMode.OPENAI_COMPATIBLE)
+                            }
+                        },
+                        label = { Text("自架 / OpenAI 端點") }
+                    )
                 }
                 Text(
                     text = when {
                         !config.geminiPolishEnabled ->
-                            "完全使用裝置內建/系統語音辨識，不呼叫 Gemini API，僅於本機補上結尾標點。"
+                            "完全使用裝置本地語音辨識（有下載離線包時即走 Sherpa-ONNX 極速本地引擎），不呼叫 API。"
                         config.polishMode == PolishMode.FAST_TEXT ->
-                            "先以本機/系統語音即時轉寫草稿，說完立即送 Gemini API 修正錯字與標點，延遲最低。"
+                            "先以本地/系統語音極速轉寫，說完再送 Gemini API 修潤標點，延遲最低。"
+                        config.polishMode == PolishMode.AUDIO_MULTIMODAL ->
+                            "直接錄製 16kHz WAV 音訊送交 Gemini API 聆聽轉錄與標點。"
                         else ->
-                            "直接錄製 16kHz WAV 音訊送交 Gemini API 聆聽轉錄與標點，完全不依賴系統語音服務。"
+                            "連線至自架 Mac / 區網 Whisper 伺服器，或 Groq / OpenAI / DeepSeek 相容端點（支援 HTTP 區網）。"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                if (config.geminiPolishEnabled && config.polishMode == PolishMode.OPENAI_COMPATIBLE) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "自架 / OpenAI 相容端點設定（voice-keyboard 上游規範）",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                prefs.update {
+                                    it.copy(
+                                        customAsrEndpoint = "http://192.168.1.100:8000/v1",
+                                        customAsrModel = "whisper-1",
+                                        customAsrApiKey = ""
+                                    )
+                                }
+                            }
+                        ) { Text("套用 Mac 區網範例") }
+                        OutlinedButton(
+                            onClick = {
+                                prefs.update {
+                                    it.copy(
+                                        customAsrEndpoint = "https://api.groq.com/openai/v1",
+                                        customAsrModel = "whisper-large-v3-turbo"
+                                    )
+                                }
+                            }
+                        ) { Text("套用 Groq") }
+                        OutlinedButton(
+                            onClick = {
+                                prefs.update {
+                                    it.copy(
+                                        customAsrEndpoint = "https://api.openai.com/v1",
+                                        customAsrModel = "whisper-1"
+                                    )
+                                }
+                            }
+                        ) { Text("套用 OpenAI") }
+                    }
+                    OutlinedTextField(
+                        value = config.customAsrEndpoint,
+                        onValueChange = { v -> prefs.update { it.copy(customAsrEndpoint = v) } },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text("ASR 端點 URL（自動補 /audio/transcriptions）") },
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    OutlinedTextField(
+                        value = config.customAsrModel,
+                        onValueChange = { v -> prefs.update { it.copy(customAsrModel = v) } },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text("ASR 模型名稱（如 whisper-1 / whisper-large-v3-turbo）") },
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    OutlinedTextField(
+                        value = config.customAsrApiKey,
+                        onValueChange = { v -> prefs.update { it.copy(customAsrApiKey = v) } },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        label = { Text("ASR API Key（自架 Mac 端可留空）") },
+                        shape = RoundedCornerShape(14.dp)
+                    )
+
+                    SettingSwitchRow(
+                        title = "額外接自訂 LLM 修潤（如 DeepSeek / Mac Ollama）",
+                        subtitle = "關閉時將使用本地標點與台灣繁體詞庫直接輸出",
+                        checked = config.customLlmEnabled,
+                        onCheckedChange = { v -> prefs.update { it.copy(customLlmEnabled = v) } }
+                    )
+                    if (config.customLlmEnabled) {
+                        OutlinedTextField(
+                            value = config.customLlmEndpoint,
+                            onValueChange = { v -> prefs.update { it.copy(customLlmEndpoint = v) } },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("LLM 端點 URL（自動補 /chat/completions）") },
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        OutlinedTextField(
+                            value = config.customLlmModel,
+                            onValueChange = { v -> prefs.update { it.copy(customLlmModel = v) } },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("LLM 模型（如 deepseek-chat / gpt-4o-mini）") },
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        OutlinedTextField(
+                            value = config.customLlmApiKey,
+                            onValueChange = { v -> prefs.update { it.copy(customLlmApiKey = v) } },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            label = { Text("LLM API Key（自架 Ollama 可留空）") },
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                    }
+                }
             }
         }
 

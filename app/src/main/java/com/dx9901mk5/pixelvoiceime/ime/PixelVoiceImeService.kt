@@ -59,6 +59,7 @@ class PixelVoiceImeService : InputMethodService() {
     private var autoReturnJob: Job? = null
     private var usingAudioCaptureEngine: Boolean = false
     private var usingLocalSherpa: Boolean = false
+    private var usingCustomOpenAi: Boolean = false
     private var lastCommittedLength: Int = 0
     private var lastRawTranscript: String = ""
 
@@ -190,28 +191,35 @@ class PixelVoiceImeService : InputMethodService() {
         val sherpaReady = app.localSherpaAsrEngine.isReadyForLanguage(activeLang.bcp47)
         val hasApiKey = app.apiKeyStore.hasApiKey.value
 
+        val useCustomOpenAiMode = config.geminiPolishEnabled && config.polishMode == PolishMode.OPENAI_COMPATIBLE
         val useGeminiAudioMode = config.geminiPolishEnabled &&
             hasApiKey &&
             (config.polishMode == PolishMode.AUDIO_MULTIMODAL || (!sherpaReady && !speechEngine.isAvailable()))
-        val useSherpaLocalMode = !useGeminiAudioMode && sherpaReady
-        val shouldUseAudioCapture = useGeminiAudioMode || useSherpaLocalMode
+        val useSherpaLocalMode = !useCustomOpenAiMode && !useGeminiAudioMode && sherpaReady
+        val shouldUseAudioCapture = useCustomOpenAiMode || useGeminiAudioMode || useSherpaLocalMode
 
         if (!shouldUseAudioCapture && !speechEngine.isAvailable()) {
             sessionState.value = VoiceSessionState.Error(
-                "此裝置未偵測到系統語音服務，請至「離線語系」下載 SenseVoice 本地包或改用 Gemini 音訊 API"
+                "此裝置未偵測到系統語音服務，請至「離線語系」下載 SenseVoice 本地包或改用雲端/自架端點"
             )
             return
         }
 
         usingAudioCaptureEngine = shouldUseAudioCapture
         usingLocalSherpa = useSherpaLocalMode
+        usingCustomOpenAi = useCustomOpenAiMode
 
         if (shouldUseAudioCapture) {
+            val engineLabel = when {
+                useCustomOpenAiMode -> "自架 / OpenAI 端點"
+                useSherpaLocalMode -> "本地極速 (Sherpa)"
+                else -> "Audio + Gemini"
+            }
             sessionState.value = VoiceSessionState.Listening(
                 partialText = "",
                 amplitude = 0.1f,
                 speechDetected = false,
-                engineLabel = if (useSherpaLocalMode) "本地極速 (Sherpa)" else "Audio + Gemini"
+                engineLabel = engineLabel
             )
             audioCaptureEngine.start(
                 scope = serviceScope,
@@ -229,10 +237,10 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onCaptured(pcmBytes: ByteArray) {
-                        if (usingLocalSherpa) {
-                            processCapturedAudioWithSherpa(pcmBytes)
-                        } else {
-                            processCapturedAudio(pcmBytes)
+                        when {
+                            usingCustomOpenAi -> processCapturedAudioWithCustomEndpoint(pcmBytes)
+                            usingLocalSherpa -> processCapturedAudioWithSherpa(pcmBytes)
+                            else -> processCapturedAudio(pcmBytes)
                         }
                     }
 
@@ -355,6 +363,94 @@ class PixelVoiceImeService : InputMethodService() {
                     finalText = finalText,
                     wasAiPolished = false
                 )
+            }
+        }
+    }
+
+    private fun processCapturedAudioWithCustomEndpoint(pcmBytes: ByteArray) {
+        val config = app.prefs.config.value
+        val hasGeminiKey = app.apiKeyStore.hasApiKey.value
+
+        activePolishJob = serviceScope.launch {
+            sessionState.value = VoiceSessionState.Polishing(
+                rawText = "",
+                statusText = "正在送交自架 / OpenAI 語音端點辨識…"
+            )
+            val wav = WavEncoder.pcm16ToWav(pcmBytes)
+            when (
+                val asrRes = app.openAiClient.transcribeAudio(
+                    wavBytes = wav,
+                    endpoint = config.customAsrEndpoint,
+                    model = config.customAsrModel,
+                    apiKey = config.customAsrApiKey,
+                    languageTag = config.activeLanguageTag
+                )
+            ) {
+                is GeminiResult.Success -> {
+                    val rawText = asrRes.data.trim()
+                    if (rawText.isBlank()) {
+                        sessionState.value = VoiceSessionState.Idle
+                        return@launch
+                    }
+
+                    val targetName = if (config.targetTranslationLang.isNotBlank()) {
+                        LocalTranslator.findTarget(config.targetTranslationLang).fullName
+                    } else ""
+
+                    if (config.customLlmEnabled && config.customLlmEndpoint.isNotBlank()) {
+                        sessionState.value = VoiceSessionState.Polishing(
+                            rawText = rawText,
+                            statusText = "正在透過自訂 LLM 端點修潤…"
+                        )
+                        val llmRes = app.openAiClient.polishOrTranslateText(
+                            text = rawText,
+                            endpoint = config.customLlmEndpoint,
+                            model = config.customLlmModel,
+                            apiKey = config.customLlmApiKey,
+                            languageTag = config.activeLanguageTag,
+                            autoPunctuation = config.autoPunctuation,
+                            removeFillers = config.removeFillerWords,
+                            targetTranslationName = targetName
+                        )
+                        if (llmRes is GeminiResult.Success) {
+                            val normalized = if (config.targetTranslationLang.isBlank()) {
+                                app.geminiPolisher.normalizeClausePunctuation(llmRes.data, config.activeLanguageTag)
+                            } else {
+                                llmRes.data
+                            }
+                            commitAndMaybeReturn(
+                                rawText = rawText,
+                                finalText = normalized.ifBlank { rawText },
+                                wasAiPolished = true
+                            )
+                            return@launch
+                        }
+                    }
+
+                    val localPolished = LocalTextPolisher.polish(
+                        rawText = rawText,
+                        languageTag = config.activeLanguageTag,
+                        autoPunctuation = config.autoPunctuation,
+                        removeFillers = config.removeFillerWords,
+                        punctuationModel = app.localSherpaAsrEngine.getPunctuationModel(),
+                        polisherHelper = app.geminiPolisher
+                    )
+                    val finalText = applyTranslationIfNeeded(
+                        text = localPolished,
+                        sourceTag = config.activeLanguageTag,
+                        targetCode = config.targetTranslationLang,
+                        hasApiKey = hasGeminiKey
+                    )
+                    commitAndMaybeReturn(
+                        rawText = rawText,
+                        finalText = finalText,
+                        wasAiPolished = false
+                    )
+                }
+
+                is GeminiResult.Error -> {
+                    sessionState.value = VoiceSessionState.Error("端點辨識失敗：${asrRes.message}")
+                }
             }
         }
     }

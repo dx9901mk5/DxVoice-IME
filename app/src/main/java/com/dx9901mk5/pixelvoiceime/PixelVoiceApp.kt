@@ -2,6 +2,7 @@ package com.dx9901mk5.pixelvoiceime
 
 import android.app.Application
 import com.dx9901mk5.pixelvoiceime.ai.GeminiPolisher
+import com.dx9901mk5.pixelvoiceime.ai.OpenAiCompatibleClient
 import com.dx9901mk5.pixelvoiceime.asr.LocalSherpaAsrEngine
 import com.dx9901mk5.pixelvoiceime.data.ApiKeyStore
 import com.dx9901mk5.pixelvoiceime.data.VoiceImePrefs
@@ -21,6 +22,8 @@ class PixelVoiceApp : Application() {
         private set
     lateinit var geminiPolisher: GeminiPolisher
         private set
+    lateinit var openAiClient: OpenAiCompatibleClient
+        private set
     lateinit var updater: GitHubUpdater
         private set
 
@@ -31,6 +34,7 @@ class PixelVoiceApp : Application() {
         modelManager = OfflineModelManager(this)
         localSherpaAsrEngine = LocalSherpaAsrEngine(modelManager)
         geminiPolisher = GeminiPolisher(apiKeyStore)
+        openAiClient = OpenAiCompatibleClient()
         updater = GitHubUpdater()
 
         if (prefs.config.value.autoUpdateEnabled) {

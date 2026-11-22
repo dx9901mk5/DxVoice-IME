@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 enum class PolishMode {
     FAST_TEXT,
-    AUDIO_MULTIMODAL
+    AUDIO_MULTIMODAL,
+    OPENAI_COMPATIBLE
 }
 
 data class VoiceImeConfig(
@@ -24,6 +25,13 @@ data class VoiceImeConfig(
     val includeSurroundingContext: Boolean = true,
     val activeLanguageTag: String = "zh-TW",
     val targetTranslationLang: String = "",
+    val customAsrEndpoint: String = "https://api.groq.com/openai/v1",
+    val customAsrModel: String = "whisper-large-v3-turbo",
+    val customAsrApiKey: String = "",
+    val customLlmEnabled: Boolean = false,
+    val customLlmEndpoint: String = "https://api.deepseek.com/v1",
+    val customLlmModel: String = "deepseek-chat",
+    val customLlmApiKey: String = "",
     val githubRepoUrl: String = DEFAULT_GITHUB_REPO,
     val autoUpdateEnabled: Boolean = true,
     val previousImeId: String = "",
@@ -61,6 +69,17 @@ class VoiceImePrefs(context: Context) {
             includeSurroundingContext = prefs.getBoolean(KEY_INCLUDE_CONTEXT, true),
             activeLanguageTag = prefs.getString(KEY_ACTIVE_LANG, "zh-TW") ?: "zh-TW",
             targetTranslationLang = prefs.getString(KEY_TARGET_TRANSLATION, "") ?: "",
+            customAsrEndpoint = prefs.getString(KEY_CUSTOM_ASR_ENDPOINT, "https://api.groq.com/openai/v1")
+                ?.ifBlank { "https://api.groq.com/openai/v1" } ?: "https://api.groq.com/openai/v1",
+            customAsrModel = prefs.getString(KEY_CUSTOM_ASR_MODEL, "whisper-large-v3-turbo")
+                ?.ifBlank { "whisper-large-v3-turbo" } ?: "whisper-large-v3-turbo",
+            customAsrApiKey = prefs.getString(KEY_CUSTOM_ASR_KEY, "") ?: "",
+            customLlmEnabled = prefs.getBoolean(KEY_CUSTOM_LLM_ENABLED, false),
+            customLlmEndpoint = prefs.getString(KEY_CUSTOM_LLM_ENDPOINT, "https://api.deepseek.com/v1")
+                ?.ifBlank { "https://api.deepseek.com/v1" } ?: "https://api.deepseek.com/v1",
+            customLlmModel = prefs.getString(KEY_CUSTOM_LLM_MODEL, "deepseek-chat")
+                ?.ifBlank { "deepseek-chat" } ?: "deepseek-chat",
+            customLlmApiKey = prefs.getString(KEY_CUSTOM_LLM_KEY, "") ?: "",
             githubRepoUrl = prefs.getString(KEY_GITHUB_REPO, VoiceImeConfig.DEFAULT_GITHUB_REPO)
                 ?.ifBlank { VoiceImeConfig.DEFAULT_GITHUB_REPO }
                 ?: VoiceImeConfig.DEFAULT_GITHUB_REPO,
@@ -85,6 +104,13 @@ class VoiceImePrefs(context: Context) {
             .putBoolean(KEY_INCLUDE_CONTEXT, updated.includeSurroundingContext)
             .putString(KEY_ACTIVE_LANG, updated.activeLanguageTag)
             .putString(KEY_TARGET_TRANSLATION, updated.targetTranslationLang)
+            .putString(KEY_CUSTOM_ASR_ENDPOINT, updated.customAsrEndpoint)
+            .putString(KEY_CUSTOM_ASR_MODEL, updated.customAsrModel)
+            .putString(KEY_CUSTOM_ASR_KEY, updated.customAsrApiKey)
+            .putBoolean(KEY_CUSTOM_LLM_ENABLED, updated.customLlmEnabled)
+            .putString(KEY_CUSTOM_LLM_ENDPOINT, updated.customLlmEndpoint)
+            .putString(KEY_CUSTOM_LLM_MODEL, updated.customLlmModel)
+            .putString(KEY_CUSTOM_LLM_KEY, updated.customLlmApiKey)
             .putString(KEY_GITHUB_REPO, updated.githubRepoUrl)
             .putBoolean(KEY_AUTO_UPDATE, updated.autoUpdateEnabled)
             .putString(KEY_PREV_IME_ID, updated.previousImeId)
@@ -112,6 +138,13 @@ class VoiceImePrefs(context: Context) {
         private const val KEY_INCLUDE_CONTEXT = "include_context"
         private const val KEY_ACTIVE_LANG = "active_language_tag"
         private const val KEY_TARGET_TRANSLATION = "target_translation_lang"
+        private const val KEY_CUSTOM_ASR_ENDPOINT = "custom_asr_endpoint"
+        private const val KEY_CUSTOM_ASR_MODEL = "custom_asr_model"
+        private const val KEY_CUSTOM_ASR_KEY = "custom_asr_key"
+        private const val KEY_CUSTOM_LLM_ENABLED = "custom_llm_enabled"
+        private const val KEY_CUSTOM_LLM_ENDPOINT = "custom_llm_endpoint"
+        private const val KEY_CUSTOM_LLM_MODEL = "custom_llm_model"
+        private const val KEY_CUSTOM_LLM_KEY = "custom_llm_key"
         private const val KEY_GITHUB_REPO = "github_repo_url"
         private const val KEY_AUTO_UPDATE = "auto_update_enabled"
         private const val KEY_PREV_IME_ID = "previous_ime_id"
