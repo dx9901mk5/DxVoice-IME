@@ -182,13 +182,16 @@ class AndroidSpeechEngine(
                 if (accumulatedSegments.isNotEmpty() &&
                     (error == SpeechRecognizer.ERROR_NO_MATCH ||
                         error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT ||
-                        error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY)
+                        error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY ||
+                        error == SpeechRecognizer.ERROR_CLIENT ||
+                        error == 10 ||
+                        error == 11)
                 ) {
                     if (manualFinishRequested || finishRunnable == null) {
                         flushAccumulated(callbacks)
                     } else {
                         destroyRecognizer()
-                        val retryDelay = if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) 150L else 50L
+                        val retryDelay = if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY || error == 11) 200L else 80L
                         mainHandler.postDelayed({
                             if (sessionActive && !manualFinishRequested && finishRunnable != null) {
                                 startInternal(
@@ -204,6 +207,10 @@ class AndroidSpeechEngine(
                     }
                     return
                 }
+                if (accumulatedSegments.isNotEmpty()) {
+                    flushAccumulated(callbacks)
+                    return
+                }
                 sessionActive = false
                 cancelFinishTimer()
                 val msg = when (error) {
@@ -214,6 +221,7 @@ class AndroidSpeechEngine(
                     SpeechRecognizer.ERROR_NO_MATCH -> "沒有偵測到清晰語音"
                     SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "等待說話逾時"
                     SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "語音辨識服務忙碌中"
+                    11 -> "系統語音服務連線中斷"
                     12, 13 -> "系統語音不支援此離線語系，請連網或檢查系統語音包"
                     else -> "語音辨識錯誤 ($error)"
                 }
@@ -250,8 +258,8 @@ class AndroidSpeechEngine(
                 finishRunnable = timer
                 mainHandler.postDelayed(timer, silenceTimeoutMs)
 
-                mainHandler.post {
-                    if (sessionActive) {
+                mainHandler.postDelayed({
+                    if (sessionActive && !manualFinishRequested && finishRunnable != null) {
                         startInternal(
                             languageTag = languageTag,
                             preferOffline = preferOffline,
@@ -261,7 +269,7 @@ class AndroidSpeechEngine(
                             callbacks = callbacks
                         )
                     }
-                }
+                }, 120L)
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
