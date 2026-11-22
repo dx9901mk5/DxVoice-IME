@@ -29,7 +29,12 @@ class AndroidSpeechEngine(
     private var lastPartial: String = ""
     private var lastPartialChangeAtMs: Long = 0L
     private val pauseBreakLengths = mutableListOf<Int>()
+    private val accumulatedSegments = mutableListOf<String>()
     private var active: Boolean = false
+    private var sessionActive: Boolean = false
+    private var manualFinishRequested: Boolean = false
+    private var currentCallbacks: Callbacks? = null
+    private var finishRunnable: Runnable? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     fun isAvailable(): Boolean {
@@ -44,6 +49,11 @@ class AndroidSpeechEngine(
         silenceTimeoutMs: Long,
         callbacks: Callbacks
     ) {
+        stop()
+        accumulatedSegments.clear()
+        manualFinishRequested = false
+        sessionActive = true
+        currentCallbacks = callbacks
         startInternal(
             languageTag = languageTag,
             preferOffline = preferOffline,
@@ -54,6 +64,36 @@ class AndroidSpeechEngine(
         )
     }
 
+    private fun cancelFinishTimer() {
+        finishRunnable?.let { mainHandler.removeCallbacks(it) }
+        finishRunnable = null
+    }
+
+    private fun destroyRecognizer() {
+        try {
+            recognizer?.cancel()
+            recognizer?.destroy()
+        } catch (_: Exception) {
+        }
+        recognizer = null
+    }
+
+    private fun flushAccumulated(callbacks: Callbacks) {
+        cancelFinishTimer()
+        sessionActive = false
+        active = false
+        destroyRecognizer()
+        val joined = accumulatedSegments.joinToString("，").trim()
+        accumulatedSegments.clear()
+        lastPartial = ""
+        pauseBreakLengths.clear()
+        if (joined.isNotBlank()) {
+            callbacks.onFinal(joined)
+        } else {
+            callbacks.onError(SpeechRecognizer.ERROR_NO_MATCH, "沒有辨識到文字")
+        }
+    }
+
     private fun startInternal(
         languageTag: String,
         preferOffline: Boolean,
@@ -62,8 +102,10 @@ class AndroidSpeechEngine(
         allowOnlineFallback: Boolean,
         callbacks: Callbacks
     ) {
-        stop()
+        if (!sessionActive) return
+        destroyRecognizer()
         if (!isAvailable()) {
+            sessionActive = false
             callbacks.onError(SpeechRecognizer.ERROR_CLIENT, "此裝置未安裝系統語音辨識服務")
             return
         }
@@ -103,7 +145,7 @@ class AndroidSpeechEngine(
             override fun onEndOfSpeech() = Unit
 
             override fun onError(error: Int) {
-                if (!active) return
+                if (!active || !sessionActive) return
                 active = false
                 if (allowOnlineFallback &&
                     (error == 12 || error == 13 ||
@@ -111,7 +153,7 @@ class AndroidSpeechEngine(
                         error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) &&
                     SpeechRecognizer.isRecognitionAvailable(context)
                 ) {
-                    stop()
+                    destroyRecognizer()
                     mainHandler.post {
                         startInternal(
                             languageTag = languageTag,
@@ -124,15 +166,28 @@ class AndroidSpeechEngine(
                     }
                     return
                 }
-                // If we already captured partial speech and hit speech-timeout/no-match, emit partial!
+                // If we already captured partial speech and hit speech-timeout/no-match, rescue it!
                 if (lastPartial.isNotBlank() &&
                     (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)
                 ) {
-                    val rescued = lastPartial
+                    accumulatedSegments.add(applyPauseCommas(lastPartial))
                     lastPartial = ""
-                    callbacks.onFinal(rescued)
+                    pauseBreakLengths.clear()
+                    flushAccumulated(callbacks)
                     return
                 }
+                if (accumulatedSegments.isNotEmpty() &&
+                    (error == SpeechRecognizer.ERROR_NO_MATCH ||
+                        error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT ||
+                        error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY)
+                ) {
+                    if (manualFinishRequested || finishRunnable == null) {
+                        flushAccumulated(callbacks)
+                    }
+                    return
+                }
+                sessionActive = false
+                cancelFinishTimer()
                 val msg = when (error) {
                     SpeechRecognizer.ERROR_AUDIO -> "麥克風收音異常"
                     SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "尚未授予麥克風權限"
@@ -148,7 +203,7 @@ class AndroidSpeechEngine(
             }
 
             override fun onResults(results: Bundle?) {
-                if (!active) return
+                if (!active || !sessionActive) return
                 active = false
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val best = matches?.firstOrNull()?.trim().orEmpty().ifBlank { lastPartial }
@@ -156,17 +211,47 @@ class AndroidSpeechEngine(
                 lastPartial = ""
                 pauseBreakLengths.clear()
                 if (withPauses.isNotBlank()) {
-                    callbacks.onFinal(withPauses)
-                } else {
-                    callbacks.onError(SpeechRecognizer.ERROR_NO_MATCH, "沒有辨識到文字")
+                    accumulatedSegments.add(withPauses)
+                }
+
+                if (manualFinishRequested || silenceTimeoutMs < 1500L) {
+                    flushAccumulated(callbacks)
+                    return
+                }
+
+                if (accumulatedSegments.isNotEmpty()) {
+                    callbacks.onPartial(accumulatedSegments.joinToString("，") + "，")
+                }
+
+                cancelFinishTimer()
+                val timer = Runnable {
+                    if (sessionActive) {
+                        flushAccumulated(callbacks)
+                    }
+                }
+                finishRunnable = timer
+                mainHandler.postDelayed(timer, silenceTimeoutMs)
+
+                mainHandler.post {
+                    if (sessionActive) {
+                        startInternal(
+                            languageTag = languageTag,
+                            preferOffline = preferOffline,
+                            silenceTimeoutMs = silenceTimeoutMs,
+                            forceStandardRecognizer = forceStandardRecognizer,
+                            allowOnlineFallback = allowOnlineFallback,
+                            callbacks = callbacks
+                        )
+                    }
                 }
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
-                if (!active) return
+                if (!active || !sessionActive) return
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val text = matches?.firstOrNull()?.trim().orEmpty()
                 if (text.isNotBlank()) {
+                    cancelFinishTimer()
                     val now = System.currentTimeMillis()
                     if (lastPartial.isNotBlank() &&
                         text.length > lastPartial.length &&
@@ -183,7 +268,12 @@ class AndroidSpeechEngine(
                         lastPartialChangeAtMs = now
                     }
                     lastPartial = text
-                    callbacks.onPartial(text)
+                    val prefix = if (accumulatedSegments.isEmpty()) {
+                        ""
+                    } else {
+                        accumulatedSegments.joinToString("，") + "，"
+                    }
+                    callbacks.onPartial(prefix + text)
                 }
             }
 
@@ -235,21 +325,27 @@ class AndroidSpeechEngine(
     }
 
     fun finishListening() {
-        if (!active) return
-        try {
-            recognizer?.stopListening()
-        } catch (_: Exception) {
+        if (!sessionActive) return
+        manualFinishRequested = true
+        if (active) {
+            try {
+                recognizer?.stopListening()
+            } catch (_: Exception) {
+                currentCallbacks?.let { flushAccumulated(it) }
+            }
+        } else {
+            currentCallbacks?.let { flushAccumulated(it) }
         }
     }
 
     fun stop() {
+        sessionActive = false
         active = false
+        manualFinishRequested = false
+        cancelFinishTimer()
         mainHandler.removeCallbacksAndMessages(null)
-        try {
-            recognizer?.cancel()
-            recognizer?.destroy()
-        } catch (_: Exception) {
-        }
-        recognizer = null
+        accumulatedSegments.clear()
+        currentCallbacks = null
+        destroyRecognizer()
     }
 }
