@@ -294,19 +294,16 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 }
 
                 Text(
-                    text = "說話停頓自動結束時間 (VAD 靜音門檻)",
+                    text = "說話停頓自動結束時間 (2秒內停頓續講，停滿此秒數才結束收話)",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
-                        1000L to "快速 (1.0秒)",
-                        1500L to "標準 (1.5秒)",
-                        2200L to "長句 (2.2秒)",
-                        2500L to "長句 (2.5秒)",
-                        2700L to "長句 (2.7秒)",
-                        3000L to "長句 (3秒)",
-                        4000L to "超長 (4秒)"
+                        2500L to "2.5秒",
+                        2700L to "2.7秒",
+                        3000L to "3.0秒 (預設)",
+                        4000L to "4.0秒"
                     ).forEach { (ms, label) ->
                         FilterChip(
                             selected = config.silenceTimeoutMs == ms,

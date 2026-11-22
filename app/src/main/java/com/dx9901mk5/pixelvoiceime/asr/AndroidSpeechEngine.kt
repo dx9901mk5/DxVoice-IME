@@ -131,7 +131,10 @@ class AndroidSpeechEngine(
                 if (active) callbacks.onReady()
             }
 
-            override fun onBeginningOfSpeech() = Unit
+            override fun onBeginningOfSpeech() {
+                if (!active || !sessionActive) return
+                cancelFinishTimer()
+            }
 
             override fun onRmsChanged(rmsdB: Float) {
                 if (!active) return
@@ -183,6 +186,21 @@ class AndroidSpeechEngine(
                 ) {
                     if (manualFinishRequested || finishRunnable == null) {
                         flushAccumulated(callbacks)
+                    } else {
+                        destroyRecognizer()
+                        val retryDelay = if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) 150L else 50L
+                        mainHandler.postDelayed({
+                            if (sessionActive && !manualFinishRequested && finishRunnable != null) {
+                                startInternal(
+                                    languageTag = languageTag,
+                                    preferOffline = preferOffline,
+                                    silenceTimeoutMs = silenceTimeoutMs,
+                                    forceStandardRecognizer = forceStandardRecognizer,
+                                    allowOnlineFallback = allowOnlineFallback,
+                                    callbacks = callbacks
+                                )
+                            }
+                        }, retryDelay)
                     }
                     return
                 }
@@ -214,7 +232,7 @@ class AndroidSpeechEngine(
                     accumulatedSegments.add(withPauses)
                 }
 
-                if (manualFinishRequested || silenceTimeoutMs < 1500L) {
+                if (manualFinishRequested || silenceTimeoutMs < 2000L) {
                     flushAccumulated(callbacks)
                     return
                 }

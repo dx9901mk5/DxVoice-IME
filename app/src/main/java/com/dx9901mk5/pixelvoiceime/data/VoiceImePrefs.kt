@@ -15,7 +15,7 @@ data class VoiceImeConfig(
     val autoListenOnStart: Boolean = true,
     val autoReturnToPreviousIme: Boolean = true,
     val autoReturnDelayMs: Long = 450L,
-    val silenceTimeoutMs: Long = 2500L,
+    val silenceTimeoutMs: Long = 3000L,
     val noSpeechTimeoutMs: Long = 6000L,
     val geminiPolishEnabled: Boolean = true,
     val polishMode: PolishMode = PolishMode.FAST_TEXT,
@@ -45,11 +45,13 @@ class VoiceImePrefs(context: Context) {
         val modeName = prefs.getString(KEY_POLISH_MODE, PolishMode.FAST_TEXT.name)
         val polishMode = runCatching { PolishMode.valueOf(modeName ?: "") }
             .getOrDefault(PolishMode.FAST_TEXT)
+        val rawSilence = prefs.getLong(KEY_SILENCE_TIMEOUT, 3000L)
+        val silenceTimeoutMs = if (rawSilence < 2500L) 3000L else rawSilence
         return VoiceImeConfig(
             autoListenOnStart = prefs.getBoolean(KEY_AUTO_LISTEN, true),
             autoReturnToPreviousIme = prefs.getBoolean(KEY_AUTO_RETURN, true),
             autoReturnDelayMs = prefs.getLong(KEY_AUTO_RETURN_DELAY, 450L),
-            silenceTimeoutMs = prefs.getLong(KEY_SILENCE_TIMEOUT, 2500L),
+            silenceTimeoutMs = silenceTimeoutMs,
             noSpeechTimeoutMs = prefs.getLong(KEY_NO_SPEECH_TIMEOUT, 6000L),
             geminiPolishEnabled = prefs.getBoolean(KEY_GEMINI_POLISH, true),
             polishMode = polishMode,
