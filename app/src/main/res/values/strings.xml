@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PixelVoice IME</string>
+    <string name="ime_name">PixelVoice 語音輸入法</string>
+    <string name="subtype_voice_zh_tw">語音輸入 (繁體中文 / AI 自動修潤)</string>
+    <string name="subtype_voice_en_us">Voice Typing (English / AI Polish)</string>
+</resources>
