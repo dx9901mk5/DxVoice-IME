@@ -25,7 +25,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -40,16 +39,12 @@ import androidx.compose.ui.unit.dp
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
 import com.dx9901mk5.pixelvoiceime.data.AppThemeMode
 import com.dx9901mk5.pixelvoiceime.data.BackupManager
-import com.dx9901mk5.pixelvoiceime.ime.FloatingMicService
-import com.dx9901mk5.pixelvoiceime.ime.PixelVoiceAccessibilityService
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
     val context = LocalContext.current
     val config by app.prefs.config.collectAsState()
-    var canOverlay by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var backupStatus by remember { mutableStateOf<String?>(null) }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -131,114 +126,6 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                         onClick = { app.prefs.update { it.copy(appThemeMode = AppThemeMode.ORANGE_CHARCOAL) } },
                         label = { Text("橘色灰黑底 (Orange Charcoal)") }
                     )
-                }
-            }
-        }
-
-        // Floating Ball Card
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = "懸浮球快速切換捷徑",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "使用其他輸入法時顯示可拖曳懸浮麥克風球，點擊立即呼叫切換輸入法；摺疊機將自動分開記憶外螢幕與內螢幕位置。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                canOverlay = Settings.canDrawOverlays(context)
-                if (!canOverlay) {
-                    OutlinedButton(
-                        onClick = {
-                            val intent = Intent(
-                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                Uri.parse("package:${context.packageName}")
-                            )
-                            context.startActivity(intent)
-                        }
-                    ) {
-                        Text("授權「顯示於其他應用程式上層」權限")
-                    }
-                }
-
-                val accessibilityActive = PixelVoiceAccessibilityService.isRunning()
-                Text(
-                    text = if (accessibilityActive) {
-                        "跟隨鍵盤顯示＋一鍵直切：已啟用 ✓（僅在鍵盤出現時顯示，點擊直接切換收音）"
-                    } else {
-                        "提示：啟用「PixelVoice 無障礙輔助」後，懸浮球會在鍵盤出現才顯示、鍵盤關閉就消失，且點擊直接切到本輸入法開始收音（免跳系統選單）。"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (accessibilityActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (!accessibilityActive) {
-                    OutlinedButton(
-                        onClick = {
-                            context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                        }
-                    ) {
-                        Text("前往開啟「PixelVoice 語音輸入法」無障礙輔助")
-                    }
-                }
-
-                SettingSwitchRow(
-                    title = "啟用懸浮語音捷徑球",
-                    subtitle = if (canOverlay) "切換到其他鍵盤時自動顯示，可自由拖曳記憶位置" else "請先授予上層顯示權限",
-                    checked = config.floatingBallEnabled,
-                    onCheckedChange = { enabled ->
-                        if (enabled && !Settings.canDrawOverlays(context)) {
-                            val intent = Intent(
-                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                Uri.parse("package:${context.packageName}")
-                            )
-                            context.startActivity(intent)
-                        } else {
-                            app.prefs.update { it.copy(floatingBallEnabled = enabled) }
-                            if (enabled) {
-                                FloatingMicService.start(context)
-                            } else {
-                                FloatingMicService.stop(context)
-                            }
-                        }
-                    }
-                )
-
-                Text(
-                    text = "懸浮球透明度：${(config.floatingBallAlpha * 100).roundToInt()}%",
-                    style = MaterialTheme.typography.labelLarge
-                )
-                Slider(
-                    value = config.floatingBallAlpha,
-                    onValueChange = { alpha ->
-                        app.prefs.update { it.copy(floatingBallAlpha = alpha.coerceIn(0.25f, 1.0f)) }
-                    },
-                    valueRange = 0.25f..1.0f
-                )
-
-                Text(
-                    text = "記憶座標｜外螢幕/手機：(${config.floatingBallOuterX}, ${config.floatingBallOuterY}) ｜ 摺疊內螢幕/平板：(${config.floatingBallInnerX}, ${config.floatingBallInnerY})",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                OutlinedButton(
-                    onClick = {
-                        app.prefs.update {
-                            it.copy(
-                                floatingBallOuterX = 40,
-                                floatingBallOuterY = 420,
-                                floatingBallInnerX = 60,
-                                floatingBallInnerY = 520
-                            )
-                        }
-                    }
-                ) {
-                    Text("重設內/外螢幕懸浮球位置")
                 }
             }
         }

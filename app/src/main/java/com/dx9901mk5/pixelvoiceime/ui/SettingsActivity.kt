@@ -1,8 +1,10 @@
 package com.dx9901mk5.pixelvoiceime.ui
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -49,6 +51,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
@@ -71,7 +74,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
 import com.dx9901mk5.pixelvoiceime.ime.FloatingMicService
+import com.dx9901mk5.pixelvoiceime.ime.PixelVoiceAccessibilityService
 import com.dx9901mk5.pixelvoiceime.ui.theme.PixelVoiceTheme
+import kotlin.math.roundToInt
 
 class SettingsActivity : ComponentActivity() {
 
@@ -240,6 +245,8 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
 
     var hasMicPermission by remember { mutableStateOf(checkMicPermission(context)) }
     var isImeEnabled by remember { mutableStateOf(checkImeEnabled(context)) }
+    var canOverlay by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+    var accessibilityActive by remember { mutableStateOf(PixelVoiceAccessibilityService.isRunning()) }
     var sandboxText by remember { mutableStateOf("") }
 
     val micPermissionLauncher = rememberLauncherForActivityResult(
@@ -257,6 +264,8 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
             if (event == Lifecycle.Event.ON_RESUME) {
                 hasMicPermission = checkMicPermission(context)
                 isImeEnabled = checkImeEnabled(context)
+                canOverlay = Settings.canDrawOverlays(context)
+                accessibilityActive = PixelVoiceAccessibilityService.isRunning()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -395,6 +404,123 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                             label = { Text(label) }
                         )
                     }
+                }
+            }
+        }
+
+        // Floating Ball Shortcut Card
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "懸浮語音捷徑球（跟隨其他輸入法）",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "使用其他輸入法時顯示可拖曳懸浮麥克風球，點擊直接切換至本輸入法開始收音；摺疊機將自動分開記憶外螢幕與內螢幕位置。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (!canOverlay) {
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:${context.packageName}")
+                            )
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Text("授權「顯示於其他應用程式上層」權限")
+                    }
+                }
+
+                Text(
+                    text = if (accessibilityActive) {
+                        "跟隨鍵盤顯示＋一鍵直切：已啟用 ✓（僅在鍵盤出現時顯示，點擊直接切換收音）"
+                    } else {
+                        "提示：啟用「PixelVoice 無障礙輔助」後，懸浮球會在鍵盤出現才顯示、鍵盤關閉就消失，且點擊直接切到本輸入法開始收音（免跳系統選單）。"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (accessibilityActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (!accessibilityActive) {
+                    OutlinedButton(
+                        onClick = {
+                            val serviceComponent = ComponentName(
+                                context,
+                                PixelVoiceAccessibilityService::class.java
+                            ).flattenToString()
+                            val args = Bundle().apply {
+                                putString(":settings:fragment_args_key", serviceComponent)
+                            }
+                            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                                putExtra(":settings:fragment_args_key", serviceComponent)
+                                putExtra(":settings:show_fragment_args", args)
+                            }
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Text("前往開啟「PixelVoice 語音輸入法」無障礙輔助")
+                    }
+                }
+
+                SettingSwitchRow(
+                    title = "啟用懸浮語音捷徑球",
+                    subtitle = if (canOverlay) "切換到其他鍵盤時自動顯示，可自由拖曳記憶位置" else "請先授予上層顯示權限",
+                    checked = config.floatingBallEnabled,
+                    onCheckedChange = { enabled ->
+                        if (enabled && !Settings.canDrawOverlays(context)) {
+                            val intent = Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:${context.packageName}")
+                            )
+                            context.startActivity(intent)
+                        } else {
+                            app.prefs.update { it.copy(floatingBallEnabled = enabled) }
+                            if (enabled) {
+                                FloatingMicService.start(context)
+                            } else {
+                                FloatingMicService.stop(context)
+                            }
+                        }
+                    }
+                )
+
+                Text(
+                    text = "懸浮球透明度：${(config.floatingBallAlpha * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Slider(
+                    value = config.floatingBallAlpha,
+                    onValueChange = { alpha ->
+                        app.prefs.update { it.copy(floatingBallAlpha = alpha.coerceIn(0.25f, 1.0f)) }
+                    },
+                    valueRange = 0.25f..1.0f
+                )
+
+                Text(
+                    text = "記憶座標｜外螢幕/手機：(${config.floatingBallOuterX}, ${config.floatingBallOuterY}) ｜ 摺疊內螢幕/平板：(${config.floatingBallInnerX}, ${config.floatingBallInnerY})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedButton(
+                    onClick = {
+                        app.prefs.update {
+                            it.copy(
+                                floatingBallOuterX = 40,
+                                floatingBallOuterY = 420,
+                                floatingBallInnerX = 60,
+                                floatingBallInnerY = 520
+                            )
+                        }
+                    }
+                ) {
+                    Text("重設內/外螢幕懸浮球位置")
                 }
             }
         }
