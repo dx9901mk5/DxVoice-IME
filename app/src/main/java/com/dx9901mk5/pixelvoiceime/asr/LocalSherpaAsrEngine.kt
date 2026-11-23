@@ -67,10 +67,16 @@ class LocalSherpaAsrEngine(
             try {
                 stream.acceptWaveform(samples, 16000)
                 rec.decode(stream)
-                val text = rec.getResult(stream).text
+                val rawText = rec.getResult(stream).text
+                if (rawText.contains("<|nospeech|>", ignoreCase = true) ||
+                    rawText.contains("<|BGM|>", ignoreCase = true)
+                ) {
+                    continue
+                }
+                val text = rawText
                     .replace(tagRegex, "")
                     .trim(' ', '\t', '\n', '\r', '，', '。', '？', '！', '、', ',', '.', '?', '!')
-                if (text.isNotBlank()) {
+                if (text.isNotBlank() && text.any { it.isLetterOrDigit() }) {
                     decodedParts.add(text)
                 }
             } finally {
@@ -209,6 +215,7 @@ class LocalSherpaAsrEngine(
     private fun splitPcmBySilence(pcmBytes: ByteArray): List<ByteArray> {
         val frameBytes = 1600 // 50ms at 16kHz 16-bit mono
         val minSilenceFrames = 9 // 9 * 50ms = 450ms
+        val minSpeechFramesPerSegment = 4 // 4 * 50ms = 200ms
 
         val frameRmsList = ArrayList<Float>(pcmBytes.size / frameBytes + 1)
         var pos = 0
@@ -217,7 +224,7 @@ class LocalSherpaAsrEngine(
             pos += frameBytes
         }
         if (frameRmsList.isEmpty()) {
-            return if (pcmBytes.size > 3200) listOf(pcmBytes) else emptyList()
+            return emptyList()
         }
 
         val sortedRms = frameRmsList.sorted()
@@ -228,6 +235,7 @@ class LocalSherpaAsrEngine(
         var segStart = -1
         var lastVoiceEnd = -1
         var silentFrames = 0
+        var activeSpeechFramesInSeg = 0
 
         for (idx in frameRmsList.indices) {
             val framePos = idx * frameBytes
@@ -235,27 +243,27 @@ class LocalSherpaAsrEngine(
             if (rms >= speechThresholdRms) {
                 if (segStart < 0) {
                     segStart = (framePos - frameBytes * 2).coerceAtLeast(0)
+                    activeSpeechFramesInSeg = 0
                 }
+                activeSpeechFramesInSeg++
                 lastVoiceEnd = (framePos + frameBytes * 2).coerceAtMost(pcmBytes.size)
                 silentFrames = 0
             } else if (segStart >= 0) {
                 silentFrames++
                 if (silentFrames >= minSilenceFrames) {
-                    if (lastVoiceEnd > segStart + 3200) {
+                    if (activeSpeechFramesInSeg >= minSpeechFramesPerSegment && lastVoiceEnd > segStart + 3200) {
                         segments.add(pcmBytes.copyOfRange(segStart, lastVoiceEnd))
                     }
                     segStart = -1
                     lastVoiceEnd = -1
                     silentFrames = 0
+                    activeSpeechFramesInSeg = 0
                 }
             }
         }
 
-        if (segStart >= 0 && lastVoiceEnd > segStart + 3200) {
+        if (segStart >= 0 && activeSpeechFramesInSeg >= minSpeechFramesPerSegment && lastVoiceEnd > segStart + 3200) {
             segments.add(pcmBytes.copyOfRange(segStart, lastVoiceEnd))
-        }
-        if (segments.isEmpty() && pcmBytes.size > 3200) {
-            segments.add(pcmBytes)
         }
         return segments
     }

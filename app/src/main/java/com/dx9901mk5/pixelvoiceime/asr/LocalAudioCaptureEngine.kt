@@ -78,6 +78,7 @@ class LocalAudioCaptureEngine {
             val frameBuffer = ByteArray(1600) // ~50ms at 16kHz 16-bit mono
             val startTime = System.currentTimeMillis()
             var speechStarted = false
+            var consecutiveSpeechFrames = 0
             var lastSpeechTime = startTime
             var noiseFloorRms = 180f
             var calibratedFrames = 0
@@ -107,8 +108,13 @@ class LocalAudioCaptureEngine {
                     val normalized = (rms / (dynamicThreshold * 2.5f)).coerceIn(0.05f, 1f)
 
                     if (calibratedFrames >= 3 && rms >= dynamicThreshold) {
-                        speechStarted = true
-                        lastSpeechTime = now
+                        consecutiveSpeechFrames++
+                        if (speechStarted || consecutiveSpeechFrames >= 3) {
+                            speechStarted = true
+                            lastSpeechTime = now
+                        }
+                    } else if (!speechStarted) {
+                        consecutiveSpeechFrames = 0
                     }
 
                     withContext(Dispatchers.Main) {
