@@ -155,15 +155,19 @@ class PixelVoiceImeService : InputMethodService() {
             return
         }
 
-        val activeLangTag = app.prefs.config.value.activeLanguageTag
-        if (app.localSherpaAsrEngine.isReadyForLanguage(activeLangTag)) {
-            serviceScope.launch {
-                app.localSherpaAsrEngine.preload(activeLangTag)
+        val cfg = app.prefs.config.value
+        val activeLangTag = cfg.activeLanguageTag
+        val needLocalLlm = cfg.localLlmEnabled &&
+            !(cfg.geminiPolishEnabled && app.apiKeyStore.hasApiKey.value) &&
+            app.localLlmPolisher.isModelDownloaded() &&
+            !app.localLlmPolisher.isBlockedByCrashGuard()
+
+        serviceScope.launch {
+            if (app.localSherpaAsrEngine.isReadyForLanguage(activeLangTag)) {
+                runCatching { app.localSherpaAsrEngine.preload(activeLangTag) }
             }
-        }
-        if (app.prefs.config.value.localLlmEnabled && app.localLlmPolisher.isModelDownloaded()) {
-            serviceScope.launch {
-                app.localLlmPolisher.preloadIfReady()
+            if (needLocalLlm) {
+                runCatching { app.localLlmPolisher.preloadIfReady() }
             }
         }
 

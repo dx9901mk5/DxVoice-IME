@@ -12,8 +12,8 @@ android {
         applicationId = "com.dx9901mk5.pixelvoiceime"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20
-        versionName = "0.3.5"
+        versionCode = 21
+        versionName = "0.3.6"
         ndk {
             abiFilters += "arm64-v8a"
         }
@@ -81,6 +81,6 @@ dependencies {
     implementation("androidx.window:window:1.3.0")
     implementation(files("libs/sherpa-onnx-2.0.2.aar"))
     implementation("com.google.mlkit:translate:17.0.3")
-    implementation("com.google.mediapipe:tasks-genai:0.10.14")
+    implementation("com.google.mediapipe:tasks-genai:0.10.35")
     debugImplementation(libs.androidx.ui.tooling)
 }

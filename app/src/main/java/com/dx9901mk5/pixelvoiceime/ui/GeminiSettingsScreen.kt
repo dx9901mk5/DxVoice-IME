@@ -413,7 +413,14 @@ fun GeminiSettingsScreen(
                     title = "旗艦機本地小模型修潤 (Gemma 3 1B INT4)",
                     subtitle = "無須網路即可用本地 LLM 潤飾語氣與修正錯字（須先下載 555 MB 模型，關閉時改走極速規則與詞庫）",
                     checked = config.localLlmEnabled,
-                    onCheckedChange = { v -> prefs.update { it.copy(localLlmEnabled = v) } }
+                    onCheckedChange = { v ->
+                        prefs.update { it.copy(localLlmEnabled = v) }
+                        if (v) {
+                            app.localLlmPolisher.clearCrashGuard()
+                        } else {
+                            app.localLlmPolisher.release()
+                        }
+                    }
                 )
                 Text(
                     text = "⚠️ 硬體建議：僅適合旗艦機使用（約需 555 MB 空間與 1.5GB+ 額外 RAM）。推薦處理器：Snapdragon 8 Gen 3 / 8 Elite、MediaTek Dimensity 9300 / 9400+、Google Tensor G4+（建議 12GB RAM 以上）；一般手機建議維持關閉以維持最快反應速度。",
