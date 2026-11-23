@@ -229,13 +229,15 @@ class LocalSherpaAsrEngine(
 
         val sortedRms = frameRmsList.sorted()
         val noiseFloor = sortedRms[(sortedRms.size * 0.2f).toInt().coerceIn(0, sortedRms.lastIndex)]
-        val speechThresholdRms = (noiseFloor * 2.2f).coerceIn(260f, 2200f)
+        val speechThresholdRms = (noiseFloor * 2.8f).coerceIn(650f, 3000f)
+        val minSegmentPeakRms = maxOf(900f, speechThresholdRms * 1.25f)
 
         val segments = mutableListOf<ByteArray>()
         var segStart = -1
         var lastVoiceEnd = -1
         var silentFrames = 0
         var activeSpeechFramesInSeg = 0
+        var maxSegRms = 0f
 
         for (idx in frameRmsList.indices) {
             val framePos = idx * frameBytes
@@ -244,25 +246,35 @@ class LocalSherpaAsrEngine(
                 if (segStart < 0) {
                     segStart = (framePos - frameBytes * 2).coerceAtLeast(0)
                     activeSpeechFramesInSeg = 0
+                    maxSegRms = 0f
                 }
                 activeSpeechFramesInSeg++
+                if (rms > maxSegRms) maxSegRms = rms
                 lastVoiceEnd = (framePos + frameBytes * 2).coerceAtMost(pcmBytes.size)
                 silentFrames = 0
             } else if (segStart >= 0) {
                 silentFrames++
                 if (silentFrames >= minSilenceFrames) {
-                    if (activeSpeechFramesInSeg >= minSpeechFramesPerSegment && lastVoiceEnd > segStart + 3200) {
+                    if (activeSpeechFramesInSeg >= minSpeechFramesPerSegment &&
+                        maxSegRms >= minSegmentPeakRms &&
+                        lastVoiceEnd > segStart + 3200
+                    ) {
                         segments.add(pcmBytes.copyOfRange(segStart, lastVoiceEnd))
                     }
                     segStart = -1
                     lastVoiceEnd = -1
                     silentFrames = 0
                     activeSpeechFramesInSeg = 0
+                    maxSegRms = 0f
                 }
             }
         }
 
-        if (segStart >= 0 && activeSpeechFramesInSeg >= minSpeechFramesPerSegment && lastVoiceEnd > segStart + 3200) {
+        if (segStart >= 0 &&
+            activeSpeechFramesInSeg >= minSpeechFramesPerSegment &&
+            maxSegRms >= minSegmentPeakRms &&
+            lastVoiceEnd > segStart + 3200
+        ) {
             segments.add(pcmBytes.copyOfRange(segStart, lastVoiceEnd))
         }
         return segments

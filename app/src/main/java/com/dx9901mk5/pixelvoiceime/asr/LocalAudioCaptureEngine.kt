@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.NoiseSuppressor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -83,6 +84,16 @@ class LocalAudioCaptureEngine {
             var noiseFloorRms = 180f
             var calibratedFrames = 0
 
+            var noiseSuppressor: NoiseSuppressor? = null
+            try {
+                if (NoiseSuppressor.isAvailable()) {
+                    noiseSuppressor = NoiseSuppressor.create(recorder.audioSessionId)?.apply {
+                        enabled = true
+                    }
+                }
+            } catch (_: Exception) {
+            }
+
             try {
                 recorder.startRecording()
                 while (isActive) {
@@ -104,7 +115,7 @@ class LocalAudioCaptureEngine {
                         noiseFloorRms = (noiseFloorRms * 0.92f + rms * 0.08f).coerceIn(80f, 1600f)
                     }
 
-                    val dynamicThreshold = (noiseFloorRms * 2.3f).coerceIn(280f, 2400f)
+                    val dynamicThreshold = (noiseFloorRms * 3.0f).coerceIn(680f, 3200f)
                     val normalized = (rms / (dynamicThreshold * 2.5f)).coerceIn(0.05f, 1f)
 
                     if (calibratedFrames >= 3 && rms >= dynamicThreshold) {
@@ -147,6 +158,10 @@ class LocalAudioCaptureEngine {
                 }
                 return@launch
             } finally {
+                try {
+                    noiseSuppressor?.release()
+                } catch (_: Exception) {
+                }
                 try {
                     recorder.stop()
                 } catch (_: Exception) {
