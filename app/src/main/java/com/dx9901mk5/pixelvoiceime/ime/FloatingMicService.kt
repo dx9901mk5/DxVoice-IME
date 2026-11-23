@@ -352,7 +352,7 @@ class FloatingMicService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "PixelVoice 懸浮球捷徑",
+                "DxVoice-IME 懸浮球捷徑",
                 NotificationManager.IMPORTANCE_MIN
             )
             nm.createNotificationChannel(channel)
@@ -370,7 +370,7 @@ class FloatingMicService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("PixelVoice 懸浮語音捷徑運作中")
+            .setContentTitle("DxVoice-IME 懸浮語音捷徑運作中")
             .setContentText("使用其他鍵盤時點擊懸浮球即可直接啟動語音輸入法")
             .setContentIntent(pendingIntent)
             .setOngoing(true)

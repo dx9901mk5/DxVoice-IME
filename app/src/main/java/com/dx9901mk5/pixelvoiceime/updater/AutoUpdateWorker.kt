@@ -52,7 +52,7 @@ class AutoUpdateWorker(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "PixelVoice 自動更新",
+                "DxVoice-IME 自動更新",
                 NotificationManager.IMPORTANCE_HIGH
             )
             nm.createNotificationChannel(channel)
@@ -68,7 +68,7 @@ class AutoUpdateWorker(
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("PixelVoice IME $versionTag 已下載完成")
+            .setContentTitle("DxVoice-IME $versionTag 已下載完成")
             .setContentText("點擊立即啟動系統安裝程式更新")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

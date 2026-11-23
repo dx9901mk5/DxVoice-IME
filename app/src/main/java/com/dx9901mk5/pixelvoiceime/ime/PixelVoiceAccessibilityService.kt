@@ -168,7 +168,7 @@ class PixelVoiceAccessibilityService : AccessibilityService() {
     }
 
     private fun findImeItemNode(root: AccessibilityNodeInfo, imeLabel: String): AccessibilityNodeInfo? {
-        val byKeyword = runCatching { root.findAccessibilityNodeInfosByText("PixelVoice") }
+        val byKeyword = runCatching { root.findAccessibilityNodeInfosByText("DxVoice") }
             .getOrNull()
             .orEmpty()
         if (byKeyword.isNotEmpty()) {
@@ -187,8 +187,8 @@ class PixelVoiceAccessibilityService : AccessibilityService() {
         if (node == null || depth > 12) return null
         val text = node.text?.toString().orEmpty()
         val desc = node.contentDescription?.toString().orEmpty()
-        if (text.contains("PixelVoice", ignoreCase = true) ||
-            desc.contains("PixelVoice", ignoreCase = true)
+        if (text.contains("DxVoice", ignoreCase = true) ||
+            desc.contains("DxVoice", ignoreCase = true)
         ) {
             return node
         }

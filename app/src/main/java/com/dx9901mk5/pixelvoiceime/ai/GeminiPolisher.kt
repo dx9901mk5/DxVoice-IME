@@ -30,7 +30,7 @@ class GeminiPolisher(
 ) {
     suspend fun testConnection(): GeminiResult<String> {
         return generateText(
-            prompt = "Reply with only: PixelVoice IME OK",
+            prompt = "Reply with only: DxVoice-IME OK",
             maxOutputTokens = 512
         )
     }

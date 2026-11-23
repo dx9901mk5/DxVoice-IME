@@ -51,11 +51,20 @@ data class VoiceImeConfig(
     val floatingBallOuterY: Int = 420,
     val floatingBallInnerX: Int = 60,
     val floatingBallInnerY: Int = 520,
-    val backupDeviceName: String = Build.MODEL ?: "PixelVoice",
+    val backupDeviceName: String = Build.MODEL ?: "DxVoice-IME",
     val backupTreeUri: String = ""
 ) {
     companion object {
-        const val DEFAULT_GITHUB_REPO = "https://github.com/dx9901mk5/PixelVoice-IME"
+        const val DEFAULT_GITHUB_REPO = "https://github.com/dx9901mk5/DxVoice-IME"
+        private const val LEGACY_GITHUB_REPO = "https://github.com/dx9901mk5/PixelVoice-IME"
+        fun normalizeRepoUrl(raw: String?): String {
+            val trimmed = raw?.trim().orEmpty()
+            return if (trimmed.isBlank() || trimmed.equals(LEGACY_GITHUB_REPO, ignoreCase = true)) {
+                DEFAULT_GITHUB_REPO
+            } else {
+                trimmed
+            }
+        }
     }
 }
 
@@ -113,9 +122,7 @@ class VoiceImePrefs(context: Context) {
             customLlmModel = prefs.getString(KEY_CUSTOM_LLM_MODEL, "deepseek-chat")
                 ?.ifBlank { "deepseek-chat" } ?: "deepseek-chat",
             customLlmApiKey = prefs.getString(KEY_CUSTOM_LLM_KEY, "") ?: "",
-            githubRepoUrl = prefs.getString(KEY_GITHUB_REPO, VoiceImeConfig.DEFAULT_GITHUB_REPO)
-                ?.ifBlank { VoiceImeConfig.DEFAULT_GITHUB_REPO }
-                ?: VoiceImeConfig.DEFAULT_GITHUB_REPO,
+            githubRepoUrl = VoiceImeConfig.normalizeRepoUrl(prefs.getString(KEY_GITHUB_REPO, VoiceImeConfig.DEFAULT_GITHUB_REPO)),
             autoUpdateEnabled = prefs.getBoolean(KEY_AUTO_UPDATE, true),
             previousImeId = prefs.getString(KEY_PREV_IME_ID, "") ?: "",
             previousImeLabel = prefs.getString(KEY_PREV_IME_LABEL, "") ?: "",
@@ -126,8 +133,8 @@ class VoiceImePrefs(context: Context) {
             floatingBallOuterY = prefs.getInt(KEY_FLOATING_OUTER_Y, 420),
             floatingBallInnerX = prefs.getInt(KEY_FLOATING_INNER_X, 60),
             floatingBallInnerY = prefs.getInt(KEY_FLOATING_INNER_Y, 520),
-            backupDeviceName = prefs.getString(KEY_BACKUP_DEVICE_NAME, Build.MODEL ?: "PixelVoice")
-                ?.ifBlank { Build.MODEL ?: "PixelVoice" } ?: "PixelVoice",
+            backupDeviceName = prefs.getString(KEY_BACKUP_DEVICE_NAME, Build.MODEL ?: "DxVoice-IME")
+                ?.ifBlank { Build.MODEL ?: "DxVoice-IME" } ?: "DxVoice-IME",
             backupTreeUri = prefs.getString(KEY_BACKUP_TREE_URI, "") ?: ""
         )
     }

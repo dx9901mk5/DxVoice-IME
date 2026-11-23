@@ -163,7 +163,7 @@ class OfflineModelManager(
         try {
             val request = Request.Builder()
                 .url(pack.downloadUrl)
-                .addHeader("User-Agent", "PixelVoice-IME")
+                .addHeader("User-Agent", "DxVoice-IME")
                 .build()
 
             httpClient.newCall(request).execute().use { response ->

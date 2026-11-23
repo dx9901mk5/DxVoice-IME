@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PixelVoice-IME"
+rootProject.name = "DxVoice-IME"
 include(":app")

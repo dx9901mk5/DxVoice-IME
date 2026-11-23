@@ -21,7 +21,7 @@ object BackupManager {
         val cleanName = deviceName.trim()
             .replace(Regex("""[\\/:*?"<>|\s]+"""), "_")
             .trim('_')
-            .ifBlank { "PixelVoice" }
+            .ifBlank { "DxVoice-IME" }
         val dateStr = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
         return "${cleanName}_${dateStr}.json"
     }

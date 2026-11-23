@@ -129,7 +129,7 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                 TopAppBar(
                     title = {
                         Column {
-                            Text("PixelVoice IME", fontWeight = FontWeight.Bold)
+                            Text("DxVoice-IME", fontWeight = FontWeight.Bold)
                             Text(
                                 text = "本地極速 / Gemini / 自架端點語音輸入法",
                                 style = MaterialTheme.typography.labelSmall,
@@ -320,7 +320,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         if (isImeEnabled) {
                             Icon(Icons.Rounded.CheckCircle, contentDescription = null)
                         }
-                        Text(if (isImeEnabled) " 已啟用輸入法" else "1. 啟用 PixelVoice 輸入法")
+                        Text(if (isImeEnabled) " 已啟用輸入法" else "1. 啟用 DxVoice-IME")
                     }
                     OutlinedButton(
                         onClick = {
@@ -365,7 +365,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 )
                 SettingSwitchRow(
                     title = "切換輸入法時自主啟動收音",
-                    subtitle = "一旦切到 PixelVoice IME 立即開始語音接收與判定（密碼框自動略過）",
+                    subtitle = "一旦切到 DxVoice-IME 立即開始語音接收與判定（密碼框自動略過）",
                     checked = config.autoListenOnStart,
                     onCheckedChange = { v -> app.prefs.update { it.copy(autoListenOnStart = v) } }
                 )
@@ -466,7 +466,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         accessibilityEnabledInSettings ->
                             "注意：系統已勾選無障礙，但服務尚未連線（常見於剛更新安裝或省電限制）。請點擊下方按鈕進入無障礙將開關「關閉再重開一次」，即可恢復點擊直接啟動本輸入法。"
                         else ->
-                            "重要：啟用「PixelVoice 語音輸入法」無障礙輔助後，懸浮球會在鍵盤出現才顯示，且點擊懸浮球會直接啟動本輸入法開始收音（不再跳出系統輸入法選單）。"
+                            "重要：啟用「DxVoice-IME」無障礙輔助後，懸浮球會在鍵盤出現才顯示，且點擊懸浮球會直接啟動本輸入法開始收音（不再跳出系統輸入法選單）。"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (accessibilityActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
@@ -477,9 +477,9 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                     ) {
                         Text(
                             if (accessibilityEnabledInSettings) {
-                                "前往無障礙重新開關「PixelVoice 語音輸入法」"
+                                "前往無障礙重新開關「DxVoice-IME」"
                             } else {
-                                "開啟「PixelVoice 語音輸入法」無障礙（點擊直接切換必備）"
+                                "開啟「DxVoice-IME」無障礙（點擊直接切換必備）"
                             }
                         )
                     }
@@ -556,7 +556,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "點擊下方輸入框並切換成「PixelVoice 語音輸入法」，即可立即體驗自動收音 → Gemini 修正標點 → 自動貼回並切回原輸入法！",
+                    text = "點擊下方輸入框並切換成「DxVoice-IME」，即可立即體驗自動收音 → AI 修正標點 → 自動貼回並切回原輸入法！",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -63,7 +63,7 @@ class GitHubUpdater(
         val request = Request.Builder()
             .url(apiUrl)
             .addHeader("Accept", "application/vnd.github+json")
-            .addHeader("User-Agent", "PixelVoice-IME/${BuildConfig.VERSION_NAME}")
+            .addHeader("User-Agent", "DxVoice-IME/${BuildConfig.VERSION_NAME}")
             .build()
 
         try {
@@ -133,11 +133,11 @@ class GitHubUpdater(
     ): Result<File> = withContext(Dispatchers.IO) {
         try {
             val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
-            val apkFile = File(updatesDir, "PixelVoice-IME-update.apk")
+            val apkFile = File(updatesDir, "DxVoice-IME-update.apk")
 
             val request = Request.Builder()
                 .url(downloadUrl)
-                .addHeader("User-Agent", "PixelVoice-IME/${BuildConfig.VERSION_NAME}")
+                .addHeader("User-Agent", "DxVoice-IME/${BuildConfig.VERSION_NAME}")
                 .build()
 
             httpClient.newCall(request).execute().use { response ->
