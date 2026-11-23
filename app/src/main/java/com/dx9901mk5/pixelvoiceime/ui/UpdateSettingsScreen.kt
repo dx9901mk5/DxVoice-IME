@@ -224,8 +224,9 @@ fun UpdateSettingsScreen(
                         Text(if (checking) "檢查中…" else "立即檢查更新")
                     }
 
-                    val apkUrl = releaseInfo?.apkDownloadUrl
-                    if (apkUrl != null) {
+                    val info = releaseInfo
+                    val apkUrl = info?.apkDownloadUrl
+                    if (info?.hasUpdate == true && apkUrl != null) {
                         Button(
                             enabled = !downloading,
                             onClick = { startDownloadAndInstall(apkUrl) }

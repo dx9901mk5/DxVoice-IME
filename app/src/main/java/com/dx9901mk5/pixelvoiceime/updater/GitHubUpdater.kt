@@ -120,6 +120,17 @@ class GitHubUpdater(
     ): Result<Unit> {
         val downloadResult = downloadApkOnly(context, downloadUrl, onProgress)
         return downloadResult.mapCatching { apkFile ->
+            val pkgInfo = context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, 0)
+            val remoteCode = if (pkgInfo != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) pkgInfo.longVersionCode
+                else @Suppress("DEPRECATION") pkgInfo.versionCode.toLong()
+            } else {
+                Long.MAX_VALUE
+            }
+            if (remoteCode <= BuildConfig.VERSION_CODE.toLong()) {
+                apkFile.delete()
+                throw IllegalStateException("遠端 APK 版本 (${pkgInfo?.versionName ?: "?"}) 與目前版本相同或較舊，已略過安裝")
+            }
             withContext(Dispatchers.Main) {
                 launchApkInstaller(context, apkFile)
             }
@@ -133,7 +144,10 @@ class GitHubUpdater(
     ): Result<File> = withContext(Dispatchers.IO) {
         try {
             val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
+            val tempFile = File(updatesDir, "DxVoice-IME-update.apk.tmp")
             val apkFile = File(updatesDir, "DxVoice-IME-update.apk")
+            if (tempFile.exists()) tempFile.delete()
+            if (apkFile.exists()) apkFile.delete()
 
             val request = Request.Builder()
                 .url(downloadUrl)
@@ -149,7 +163,7 @@ class GitHubUpdater(
                 val totalBytes = body.contentLength()
 
                 body.byteStream().use { input ->
-                    FileOutputStream(apkFile).use { output ->
+                    FileOutputStream(tempFile).use { output ->
                         val buf = ByteArray(16 * 1024)
                         var downloaded = 0L
                         while (true) {
@@ -163,6 +177,10 @@ class GitHubUpdater(
                         }
                     }
                 }
+            }
+            if (!tempFile.renameTo(apkFile)) {
+                tempFile.copyTo(apkFile, overwrite = true)
+                tempFile.delete()
             }
             Result.success(apkFile)
         } catch (e: Exception) {
@@ -197,7 +215,8 @@ class GitHubUpdater(
     internal fun isNewerVersion(remoteTag: String, currentVersion: String): Boolean {
         val remoteParts = parseSemver(remoteTag)
         val currentParts = parseSemver(currentVersion)
-        for (i in 0 until 3) {
+        val count = maxOf(remoteParts.size, currentParts.size, 3)
+        for (i in 0 until count) {
             val r = remoteParts.getOrElse(i) { 0 }
             val c = currentParts.getOrElse(i) { 0 }
             if (r > c) return true
@@ -207,10 +226,7 @@ class GitHubUpdater(
     }
 
     private fun parseSemver(raw: String): List<Int> {
-        return raw.removePrefix("v")
-            .removePrefix("V")
-            .substringBefore('-')
-            .split('.')
-            .map { it.toIntOrNull() ?: 0 }
+        val clean = raw.trim().substringBefore('-').substringBefore('+')
+        return Regex("""\d+""").findAll(clean).map { it.value.toIntOrNull() ?: 0 }.toList()
     }
 }
