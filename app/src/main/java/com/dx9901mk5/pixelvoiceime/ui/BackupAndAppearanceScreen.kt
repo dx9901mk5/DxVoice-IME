@@ -41,6 +41,7 @@ import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
 import com.dx9901mk5.pixelvoiceime.data.AppThemeMode
 import com.dx9901mk5.pixelvoiceime.data.BackupManager
 import com.dx9901mk5.pixelvoiceime.ime.FloatingMicService
+import com.dx9901mk5.pixelvoiceime.ime.PixelVoiceAccessibilityService
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -163,6 +164,26 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                         }
                     ) {
                         Text("授權「顯示於其他應用程式上層」權限")
+                    }
+                }
+
+                val accessibilityActive = PixelVoiceAccessibilityService.isRunning()
+                Text(
+                    text = if (accessibilityActive) {
+                        "跟隨鍵盤顯示＋一鍵直切：已啟用 ✓（僅在鍵盤出現時顯示，點擊直接切換收音）"
+                    } else {
+                        "提示：啟用「PixelVoice 無障礙輔助」後，懸浮球會在鍵盤出現才顯示、鍵盤關閉就消失，且點擊直接切到本輸入法開始收音（免跳系統選單）。"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (accessibilityActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (!accessibilityActive) {
+                    OutlinedButton(
+                        onClick = {
+                            context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        }
+                    ) {
+                        Text("前往開啟「PixelVoice 語音輸入法」無障礙輔助")
                     }
                 }
 

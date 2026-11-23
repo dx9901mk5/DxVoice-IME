@@ -49,12 +49,19 @@ class FloatingMicService : Service() {
     private var ballView: ImageView? = null
     private var layoutParams: WindowManager.LayoutParams? = null
     private var isImeActiveForeground: Boolean = false
+    private var isExternalKeyboardVisible: Boolean = false
 
     private val imeVisibilityReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTION_IME_VISIBILITY) {
-                isImeActiveForeground = intent.getBooleanExtra(EXTRA_IME_VISIBLE, false)
-                updateBallVisibility()
+            when (intent?.action) {
+                ACTION_IME_VISIBILITY -> {
+                    isImeActiveForeground = intent.getBooleanExtra(EXTRA_IME_VISIBLE, false)
+                    updateBallVisibility()
+                }
+                ACTION_EXTERNAL_IME_VISIBILITY -> {
+                    isExternalKeyboardVisible = intent.getBooleanExtra(EXTRA_EXTERNAL_IME_VISIBLE, false)
+                    updateBallVisibility()
+                }
             }
         }
     }
@@ -67,7 +74,10 @@ class FloatingMicService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         startForeground(NOTIFICATION_ID, buildNotification())
 
-        val filter = IntentFilter(ACTION_IME_VISIBILITY)
+        val filter = IntentFilter().apply {
+            addAction(ACTION_IME_VISIBILITY)
+            addAction(ACTION_EXTERNAL_IME_VISIBILITY)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(imeVisibilityReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {
@@ -248,10 +258,18 @@ class FloatingMicService : Service() {
     }
 
     private fun updateBallVisibility() {
-        ballView?.visibility = if (isImeActiveForeground) View.GONE else View.VISIBLE
+        val visible = if (PixelVoiceAccessibilityService.isRunning()) {
+            !isImeActiveForeground && isExternalKeyboardVisible
+        } else {
+            !isImeActiveForeground
+        }
+        ballView?.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     private fun launchImeSwitcher() {
+        if (PixelVoiceAccessibilityService.switchToPixelVoiceIme(this)) {
+            return
+        }
         val intent = Intent(this, ImeSwitchBridgeActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
         }
@@ -300,6 +318,8 @@ class FloatingMicService : Service() {
     companion object {
         const val ACTION_IME_VISIBILITY = "com.dx9901mk5.pixelvoiceime.IME_VISIBILITY"
         const val EXTRA_IME_VISIBLE = "ime_visible"
+        const val ACTION_EXTERNAL_IME_VISIBILITY = "com.dx9901mk5.pixelvoiceime.EXTERNAL_IME_VISIBILITY"
+        const val EXTRA_EXTERNAL_IME_VISIBLE = "external_ime_visible"
         private const val CHANNEL_ID = "pixelvoice_floating_ball"
         private const val NOTIFICATION_ID = 5030
 
@@ -316,6 +336,14 @@ class FloatingMicService : Service() {
             val intent = Intent(ACTION_IME_VISIBILITY).apply {
                 setPackage(context.packageName)
                 putExtra(EXTRA_IME_VISIBLE, visible)
+            }
+            context.sendBroadcast(intent)
+        }
+
+        fun notifyExternalKeyboardVisible(context: Context, visible: Boolean) {
+            val intent = Intent(ACTION_EXTERNAL_IME_VISIBILITY).apply {
+                setPackage(context.packageName)
+                putExtra(EXTRA_EXTERNAL_IME_VISIBLE, visible)
             }
             context.sendBroadcast(intent)
         }

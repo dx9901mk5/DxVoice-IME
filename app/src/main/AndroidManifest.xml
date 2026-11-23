@@ -52,6 +52,19 @@
         </service>
 
         <service
+            android:name=".ime.PixelVoiceAccessibilityService"
+            android:exported="false"
+            android:label="@string/ime_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <service
             android:name=".ime.FloatingMicService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
