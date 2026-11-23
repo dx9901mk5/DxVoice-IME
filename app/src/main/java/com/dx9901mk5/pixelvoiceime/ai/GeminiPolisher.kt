@@ -41,7 +41,8 @@ class GeminiPolisher(
         beforeCursor: String = "",
         afterCursor: String = "",
         autoPunctuation: Boolean = true,
-        removeFillers: Boolean = true
+        removeFillers: Boolean = true,
+        referenceHints: String = ""
     ): GeminiResult<String> {
         val cleanInput = rawText.trim()
         if (cleanInput.isBlank()) return GeminiResult.Success("")
@@ -58,6 +59,10 @@ class GeminiPolisher(
             }
             if (removeFillers) {
                 appendLine("- 去除無意義的口語贅詞與結巴重複（如：嗯、啊、那個、呃、就是說）。")
+            }
+            if (referenceHints.isNotBlank()) {
+                appendLine("- 修飾依據／個人詞庫（僅作同音字與專有名詞拼寫參考，嚴禁插入未說出的詞）：")
+                appendLine(referenceHints)
             }
             appendLine("- 嚴格規則：只輸出修正後的最終文字本身，不要加任何解釋、引號、前綴或 Markdown。")
             if (beforeCursor.isNotBlank() || afterCursor.isNotBlank()) {
@@ -85,7 +90,8 @@ class GeminiPolisher(
         draftText: String = "",
         beforeCursor: String = "",
         autoPunctuation: Boolean = true,
-        removeFillers: Boolean = true
+        removeFillers: Boolean = true,
+        referenceHints: String = ""
     ): GeminiResult<String> {
         val prompt = buildString {
             appendLine("你是高精度語音輸入法引擎。請直接聆聽這段音訊，精準轉錄並修潤為最終要輸入的文字。")
@@ -101,6 +107,10 @@ class GeminiPolisher(
             }
             if (beforeCursor.isNotBlank()) {
                 appendLine("- 游標前文參考（請勿重複輸出）：${beforeCursor.takeLast(60)}")
+            }
+            if (referenceHints.isNotBlank()) {
+                appendLine("- 修飾依據／個人詞庫（僅作同音字與專有名詞拼寫參考，嚴禁插入未說出的詞）：")
+                appendLine(referenceHints)
             }
             appendLine("- 嚴格規則：只輸出最終文字本身，不要加任何說明、引號或時間戳記。若完全沒有人聲，請回覆空字串。")
         }

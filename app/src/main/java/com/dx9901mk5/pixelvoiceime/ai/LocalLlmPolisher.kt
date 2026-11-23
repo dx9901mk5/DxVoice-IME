@@ -61,7 +61,8 @@ class LocalLlmPolisher(
         languageTag: String,
         autoPunctuation: Boolean,
         removeFillers: Boolean,
-        polisherHelper: GeminiPolisher
+        polisherHelper: GeminiPolisher,
+        referenceHints: String = ""
     ): Result<String> = withContext(Dispatchers.IO) {
         val clean = rawText.trim()
         if (clean.isBlank()) return@withContext Result.success("")
@@ -90,6 +91,9 @@ class LocalLlmPolisher(
                 appendLine("輸出：今天天氣應該不錯，我們去吃午飯吧。")
                 appendLine("輸入：簡單測試幫忙看看我的話有沒有錯")
                 appendLine("輸出：簡單測試，幫忙看看我的話有沒有錯。")
+                if (referenceHints.isNotBlank()) {
+                    appendLine("參考詞彙（僅供拼寫參考）：${referenceHints.take(300)}")
+                }
             } else {
                 appendLine("你是语音错字标点修正器。只输出修正后的句子本身，严禁任何问候、解释、引号或重复。")
                 appendLine("输入：嗯今天天气应该不错我们去吃午饭吧")

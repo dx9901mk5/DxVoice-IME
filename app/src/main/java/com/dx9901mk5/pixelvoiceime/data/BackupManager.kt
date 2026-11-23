@@ -29,16 +29,20 @@ object BackupManager {
     fun exportJson(
         prefs: VoiceImePrefs,
         apiKeyStore: ApiKeyStore,
-        modelManager: OfflineModelManager
+        modelManager: OfflineModelManager,
+        dictionaryStore: CustomDictionaryStore? = null
     ): String {
         val cfg = prefs.config.value
         val root = JSONObject().apply {
-            put("schemaVersion", 1)
+            put("schemaVersion", 2)
             put("appVersion", BuildConfig.VERSION_NAME)
             put("deviceName", cfg.backupDeviceName)
             put("exportedAt", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date()))
             put("selectedGeminiModel", apiKeyStore.selectedModel.value)
             put("enabledLanguages", JSONArray(modelManager.enabledLanguages.value.toList()))
+            if (dictionaryStore != null) {
+                put("customDictionary", dictionaryStore.exportJson())
+            }
             put(
                 "config",
                 JSONObject().apply {
@@ -119,7 +123,8 @@ object BackupManager {
         docUri: Uri,
         prefs: VoiceImePrefs,
         apiKeyStore: ApiKeyStore,
-        modelManager: OfflineModelManager
+        modelManager: OfflineModelManager,
+        dictionaryStore: CustomDictionaryStore? = null
     ): Result<String> {
         return try {
             val raw = context.contentResolver.openInputStream(docUri)?.use { input ->
@@ -139,6 +144,11 @@ object BackupManager {
                     val tag = langs.optString(i)
                     if (tag.isNotBlank()) modelManager.enableLanguage(tag)
                 }
+            }
+
+            val dictJson = root.optJSONObject("customDictionary")
+            if (dictJson != null && dictionaryStore != null) {
+                dictionaryStore.importJson(dictJson, merge = true)
             }
 
             prefs.update { cur ->

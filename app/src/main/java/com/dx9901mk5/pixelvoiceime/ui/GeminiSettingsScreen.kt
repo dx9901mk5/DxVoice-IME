@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -68,6 +69,7 @@ fun GeminiSettingsScreen(
     var customModel by remember(selectedModel) { mutableStateOf(selectedModel) }
     var testStatus by remember { mutableStateOf<String?>(null) }
     var testing by remember { mutableStateOf(false) }
+    var subTab by remember { mutableIntStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -76,6 +78,25 @@ fun GeminiSettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            FilterChip(
+                selected = subTab == 0,
+                onClick = { subTab = 0 },
+                label = { Text("AI 模型與 Whisper/DeepSeek 端點") }
+            )
+            FilterChip(
+                selected = subTab == 1,
+                onClick = { subTab = 1 },
+                label = { Text("詞庫、替換與學習慣用語") }
+            )
+        }
+
+        if (subTab == 1) {
+            DictionarySettingsSection(dictionaryStore = app.customDictionaryStore)
+        } else {
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -492,6 +513,7 @@ fun GeminiSettingsScreen(
                     }
                 }
             }
+        }
         }
 
         Spacer(Modifier.height(16.dp))

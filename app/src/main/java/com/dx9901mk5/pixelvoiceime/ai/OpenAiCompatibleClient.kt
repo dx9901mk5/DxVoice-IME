@@ -27,7 +27,8 @@ class OpenAiCompatibleClient(
         endpoint: String,
         model: String,
         apiKey: String,
-        languageTag: String
+        languageTag: String,
+        promptHint: String = ""
     ): GeminiResult<String> = withContext(Dispatchers.IO) {
         val url = buildUrl(endpoint, "/audio/transcriptions")
         val isoLang = languageTag.substringBefore('-').lowercase().let {
@@ -44,6 +45,9 @@ class OpenAiCompatibleClient(
             .addFormDataPart("model", model.trim().ifBlank { "whisper-1" })
             .addFormDataPart("language", isoLang)
             .addFormDataPart("response_format", "json")
+        if (promptHint.isNotBlank()) {
+            bodyBuilder.addFormDataPart("prompt", promptHint.take(550))
+        }
 
         val reqBuilder = Request.Builder()
             .url(url)
@@ -80,7 +84,8 @@ class OpenAiCompatibleClient(
         languageTag: String,
         autoPunctuation: Boolean,
         removeFillers: Boolean,
-        targetTranslationName: String = ""
+        targetTranslationName: String = "",
+        referenceHints: String = ""
     ): GeminiResult<String> = withContext(Dispatchers.IO) {
         val clean = text.trim()
         if (clean.isBlank()) return@withContext GeminiResult.Success("")
@@ -96,6 +101,10 @@ class OpenAiCompatibleClient(
             if (removeFillers) {
                 appendLine("- 去除無意義口語贅詞（嗯、啊、呃、那個等）。")
             }
+            if (referenceHints.isNotBlank()) {
+                appendLine("- 修飾依據／個人詞庫（僅作同音字與專有名詞拼寫參考，嚴禁無中生有插入未說出的詞）：")
+                appendLine(referenceHints)
+            }
             if (targetTranslationName.isNotBlank()) {
                 appendLine("- 最後請將修潤後的結果直接翻譯成「$targetTranslationName」。")
             }
@@ -110,6 +119,7 @@ class OpenAiCompatibleClient(
             .put("model", model.trim().ifBlank { "deepseek-chat" })
             .put("messages", messages)
             .put("temperature", 0.1)
+            .put("max_tokens", 512)
 
         val reqBuilder = Request.Builder()
             .url(url)
@@ -126,13 +136,15 @@ class OpenAiCompatibleClient(
                     val errMsg = parseOpenAiError(raw) ?: "HTTP ${resp.code}"
                     return@withContext GeminiResult.Error(errMsg, resp.code)
                 }
-                val content = JSONObject(raw)
+                val rawContent = JSONObject(raw)
                     .optJSONArray("choices")
                     ?.optJSONObject(0)
                     ?.optJSONObject("message")
                     ?.optString("content")
-                    ?.trim()
                     .orEmpty()
+                val content = rawContent
+                    .replace(THINK_TAG_REGEX, "")
+                    .trim()
                 if (content.isBlank()) {
                     GeminiResult.Error("LLM 端點回傳空白內容")
                 } else {
@@ -155,5 +167,9 @@ class OpenAiCompatibleClient(
         } catch (_: Exception) {
             null
         }
+    }
+
+    companion object {
+        private val THINK_TAG_REGEX = Regex("""<think>[\s\S]*?</think>""", RegexOption.IGNORE_CASE)
     }
 }

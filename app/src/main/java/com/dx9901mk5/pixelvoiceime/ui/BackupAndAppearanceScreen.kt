@@ -57,7 +57,7 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
             }
             app.prefs.update { it.copy(backupTreeUri = uri.toString()) }
             val fileName = BackupManager.buildBackupFileName(config.backupDeviceName)
-            val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager)
+            val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager, app.customDictionaryStore)
             val res = BackupManager.writeBackupToTreeUri(context, uri, fileName, json)
             backupStatus = res.fold(
                 onSuccess = { savedName -> "已記住備份路徑並完成備份：$savedName" },
@@ -70,7 +70,7 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null) {
-            val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager)
+            val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager, app.customDictionaryStore)
             val res = BackupManager.writeBackupToDocumentUri(context, uri, json)
             backupStatus = res.fold(
                 onSuccess = { "已成功匯出備份檔案" },
@@ -88,7 +88,8 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                 docUri = uri,
                 prefs = app.prefs,
                 apiKeyStore = app.apiKeyStore,
-                modelManager = app.modelManager
+                modelManager = app.modelManager,
+                dictionaryStore = app.customDictionaryStore
             )
             backupStatus = res.fold(
                 onSuccess = { dev -> "已從「$dev」的備份檔還原設定" },
@@ -164,7 +165,7 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                     )
                     Button(
                         onClick = {
-                            val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager)
+                            val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager, app.customDictionaryStore)
                             val res = BackupManager.writeBackupToTreeUri(
                                 context = context,
                                 treeUri = Uri.parse(config.backupTreeUri),

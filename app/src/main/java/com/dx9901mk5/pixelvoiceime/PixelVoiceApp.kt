@@ -6,6 +6,7 @@ import com.dx9901mk5.pixelvoiceime.ai.LocalLlmPolisher
 import com.dx9901mk5.pixelvoiceime.ai.OpenAiCompatibleClient
 import com.dx9901mk5.pixelvoiceime.asr.LocalSherpaAsrEngine
 import com.dx9901mk5.pixelvoiceime.data.ApiKeyStore
+import com.dx9901mk5.pixelvoiceime.data.CustomDictionaryStore
 import com.dx9901mk5.pixelvoiceime.data.VoiceImePrefs
 import com.dx9901mk5.pixelvoiceime.models.OfflineModelManager
 import com.dx9901mk5.pixelvoiceime.updater.AutoUpdateWorker
@@ -14,6 +15,8 @@ import com.dx9901mk5.pixelvoiceime.updater.GitHubUpdater
 class PixelVoiceApp : Application() {
 
     lateinit var apiKeyStore: ApiKeyStore
+        private set
+    lateinit var customDictionaryStore: CustomDictionaryStore
         private set
     lateinit var prefs: VoiceImePrefs
         private set
@@ -33,6 +36,7 @@ class PixelVoiceApp : Application() {
     override fun onCreate() {
         super.onCreate()
         apiKeyStore = ApiKeyStore(this)
+        customDictionaryStore = CustomDictionaryStore(this)
         prefs = VoiceImePrefs(this)
         modelManager = OfflineModelManager(this)
         localSherpaAsrEngine = LocalSherpaAsrEngine(modelManager)

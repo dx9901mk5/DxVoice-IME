@@ -65,6 +65,9 @@ class PixelVoiceImeService : InputMethodService() {
     private var usingCustomOpenAi: Boolean = false
     private var lastCommittedLength: Int = 0
     private var lastRawTranscript: String = ""
+    private var lastCommittedPrefix: String = ""
+    private var lastCommittedOutput: String = ""
+    private var lastCommitTimestampMs: Long = 0L
 
     private val screenOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -179,6 +182,7 @@ class PixelVoiceImeService : InputMethodService() {
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
+        checkPendingUserCorrection()
         super.onFinishInputView(finishingInput)
         stopAllListening()
         cancelPendingJobs()
@@ -455,13 +459,16 @@ class PixelVoiceImeService : InputMethodService() {
                 statusText = "正在送交自架 / OpenAI 語音端點辨識…"
             )
             val wav = WavEncoder.pcm16ToWav(pcmBytes)
+            val whisperPrompt = app.customDictionaryStore.buildWhisperPrompt()
+            val llmHints = app.customDictionaryStore.buildLlmReferenceHints()
             when (
                 val asrRes = app.openAiClient.transcribeAudio(
                     wavBytes = wav,
                     endpoint = config.customAsrEndpoint,
                     model = config.customAsrModel,
                     apiKey = config.customAsrApiKey,
-                    languageTag = config.activeLanguageTag
+                    languageTag = config.activeLanguageTag,
+                    promptHint = whisperPrompt
                 )
             ) {
                 is GeminiResult.Success -> {
@@ -488,7 +495,8 @@ class PixelVoiceImeService : InputMethodService() {
                             languageTag = config.activeLanguageTag,
                             autoPunctuation = config.autoPunctuation,
                             removeFillers = config.removeFillerWords,
-                            targetTranslationName = targetName
+                            targetTranslationName = targetName,
+                            referenceHints = llmHints
                         )
                         if (llmRes is GeminiResult.Success) {
                             val normalized = if (config.targetTranslationLang.isBlank()) {
@@ -577,7 +585,8 @@ class PixelVoiceImeService : InputMethodService() {
                         beforeCursor = beforeCursor,
                         afterCursor = afterCursor,
                         autoPunctuation = config.autoPunctuation,
-                        removeFillers = config.removeFillerWords
+                        removeFillers = config.removeFillerWords,
+                        referenceHints = app.customDictionaryStore.buildLlmReferenceHints()
                     )
                 ) {
                     is GeminiResult.Success -> {
@@ -598,7 +607,8 @@ class PixelVoiceImeService : InputMethodService() {
                     languageTag = config.activeLanguageTag,
                     autoPunctuation = config.autoPunctuation,
                     removeFillers = config.removeFillerWords,
-                    polisherHelper = app.geminiPolisher
+                    polisherHelper = app.geminiPolisher,
+                    referenceHints = app.customDictionaryStore.buildLlmReferenceHints()
                 )
                 if (llmRes.isSuccess) {
                     wasAiPolished = true
@@ -683,7 +693,8 @@ class PixelVoiceImeService : InputMethodService() {
                     languageTag = config.activeLanguageTag,
                     beforeCursor = beforeCursor,
                     autoPunctuation = config.autoPunctuation,
-                    removeFillers = config.removeFillerWords
+                    removeFillers = config.removeFillerWords,
+                    referenceHints = app.customDictionaryStore.buildLlmReferenceHints()
                 )
             ) {
                 is GeminiResult.Success -> {
@@ -717,8 +728,9 @@ class PixelVoiceImeService : InputMethodService() {
         finalText: String,
         wasAiPolished: Boolean
     ) {
+        checkPendingUserCorrection()
         val config = app.prefs.config.value
-        val outputText = if (
+        val convertedText = if (
             config.targetTranslationLang.isBlank() &&
             !config.activeLanguageTag.startsWith("zh-CN", ignoreCase = true) &&
             (config.activeLanguageTag.startsWith("zh", ignoreCase = true) ||
@@ -728,10 +740,15 @@ class PixelVoiceImeService : InputMethodService() {
         } else {
             finalText
         }
+        val outputText = app.customDictionaryStore.applyReplacements(convertedText)
 
+        lastCommittedPrefix = currentInputConnection?.getTextBeforeCursor(24, 0)?.toString().orEmpty()
         currentInputConnection?.commitText(outputText, 1)
         lastCommittedLength = outputText.length
         lastRawTranscript = rawText
+        lastCommittedOutput = outputText
+        lastCommitTimestampMs = System.currentTimeMillis()
+        app.customDictionaryStore.recordCommittedText(outputText)
 
         val shouldAutoReturn = config.autoReturnToPreviousIme
         sessionState.value = VoiceSessionState.Committed(
@@ -749,6 +766,29 @@ class PixelVoiceImeService : InputMethodService() {
                 returnToPreviousInputMethod()
             }
         }
+    }
+
+    private fun checkPendingUserCorrection() {
+        val committed = lastCommittedOutput
+        val ts = lastCommitTimestampMs
+        if (committed.isBlank() || ts == 0L) return
+        if (System.currentTimeMillis() - ts > 45_000L) {
+            lastCommittedOutput = ""
+            lastCommitTimestampMs = 0L
+            return
+        }
+        val ic = currentInputConnection ?: return
+        val beforeNow = ic.getTextBeforeCursor(committed.length + 48, 0)?.toString().orEmpty()
+        if (beforeNow.isBlank()) return
+        val editedSlice = if (lastCommittedPrefix.isNotEmpty()) {
+            val idx = beforeNow.lastIndexOf(lastCommittedPrefix)
+            if (idx >= 0) beforeNow.substring(idx + lastCommittedPrefix.length) else return
+        } else {
+            beforeNow
+        }
+        app.customDictionaryStore.learnFromUserCorrection(committed, editedSlice)
+        lastCommittedOutput = ""
+        lastCommitTimestampMs = 0L
     }
 
     private fun undoLastAiPolish() {
