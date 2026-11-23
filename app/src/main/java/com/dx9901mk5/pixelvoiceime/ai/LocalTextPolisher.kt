@@ -144,6 +144,7 @@ object LocalTextPolisher {
 
     private val charMap: Map<Char, Char> = mapOf(
         '这' to '這', '个' to '個', '们' to '們', '说' to '說', '话' to '話',
+        '啓' to '啟',
         '会' to '會', '对' to '對', '吗' to '嗎', '吧' to '吧', '呢' to '呢',
         '听' to '聽', '见' to '見', '看' to '看', '写' to '寫', '读' to '讀',
         '买' to '買', '卖' to '賣', '开' to '開', '关' to '關', '门' to '門',

@@ -69,7 +69,7 @@ class LocalSherpaAsrEngine(
                 rec.decode(stream)
                 val text = rec.getResult(stream).text
                     .replace(tagRegex, "")
-                    .trim()
+                    .trim(' ', '\t', '\n', '\r', '，', '。', '？', '！', '、', ',', '.', '?', '!')
                 if (text.isNotBlank()) {
                     decodedParts.add(text)
                 }

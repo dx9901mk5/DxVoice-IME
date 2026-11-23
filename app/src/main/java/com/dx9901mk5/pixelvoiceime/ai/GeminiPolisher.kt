@@ -150,7 +150,8 @@ class GeminiPolisher(
     }
 
     /**
-     * Ensures CJK pauses/clauses use commas (，) and only the final ending uses a period (。).
+     * Ensures CJK pauses/clauses use single commas (，), collapses duplicate punctuation (e.g. ，， -> ，, ，。 -> 。),
+     * and only the final ending uses a period (。) / question / exclamation mark.
      */
     fun normalizeClausePunctuation(text: String, languageTag: String): String {
         val trimmed = text.trim()
@@ -171,6 +172,15 @@ class GeminiPolisher(
             }
         }
         return sb.toString()
+            .replace(Regex("""[，,]+"""), "，")
+            .replace(Regex("""[、]+"""), "、")
+            .replace(Regex("""[。]+"""), "。")
+            .replace(Regex("""[？]+"""), "？")
+            .replace(Regex("""[！]+"""), "！")
+            .replace(Regex("""[，、；,;]+([。？！])"""), "$1")
+            .replace(Regex("""([。？！])[，、；,;]+"""), "$1")
+            .replace(Regex("""^[，、；。,.!?;:\s]+"""), "")
+            .trim()
     }
 
     /**
@@ -186,13 +196,16 @@ class GeminiPolisher(
         val withClauseCommas = if (isCjk) {
             val spaceBetweenCjk = Regex("""(?<=[\p{IsHan}\p{IsHiragana}\p{IsKatakana}])\s+(?=[\p{IsHan}\p{IsHiragana}\p{IsKatakana}])""")
             normalizeClausePunctuation(trimmed.replace(spaceBetweenCjk, "，"), languageTag)
+                .replace(Regex("""[，、；,;]+$"""), "")
+                .trim()
         } else {
-            trimmed
+            trimmed.replace(Regex("""[,;]+$"""), "").trim()
         }
+        if (withClauseCommas.isBlank()) return ""
 
         val lastChar = withClauseCommas.last()
-        val alreadyPunctuated = lastChar in setOf('。', '？', '！', '，', '.', '?', '!', ',', '；', ';')
-        if (alreadyPunctuated) return withClauseCommas
+        val alreadyEnded = lastChar in setOf('。', '？', '！', '.', '?', '!')
+        if (alreadyEnded) return withClauseCommas
 
         return if (isCjk) {
             val isQuestion = withClauseCommas.endsWith("嗎") || withClauseCommas.endsWith("呢") ||
