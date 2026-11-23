@@ -21,7 +21,7 @@ enum class AppThemeMode {
 data class VoiceImeConfig(
     val autoListenOnStart: Boolean = true,
     val autoReturnToPreviousIme: Boolean = true,
-    val autoReturnDelayMs: Long = 450L,
+    val autoReturnDelayMs: Long = 2500L,
     val silenceTimeoutMs: Long = 3000L,
     val noSpeechTimeoutMs: Long = 6000L,
     val geminiPolishEnabled: Boolean = true,
@@ -76,10 +76,21 @@ class VoiceImePrefs(context: Context) {
             .getOrDefault(AppThemeMode.DYNAMIC_PIXEL)
         val rawSilence = prefs.getLong(KEY_SILENCE_TIMEOUT, 3000L)
         val silenceTimeoutMs = if (rawSilence < 2500L) 3000L else rawSilence
+        val rawDelay = prefs.getLong(KEY_AUTO_RETURN_DELAY, 2500L)
+        val migratedDelay = if (!prefs.getBoolean(KEY_MIGRATED_DELAY_2500, false)) {
+            val nextDelay = if (rawDelay == 450L) 2500L else rawDelay
+            prefs.edit()
+                .putLong(KEY_AUTO_RETURN_DELAY, nextDelay)
+                .putBoolean(KEY_MIGRATED_DELAY_2500, true)
+                .apply()
+            nextDelay
+        } else {
+            rawDelay
+        }
         return VoiceImeConfig(
             autoListenOnStart = prefs.getBoolean(KEY_AUTO_LISTEN, true),
             autoReturnToPreviousIme = prefs.getBoolean(KEY_AUTO_RETURN, true),
-            autoReturnDelayMs = prefs.getLong(KEY_AUTO_RETURN_DELAY, 450L),
+            autoReturnDelayMs = migratedDelay,
             silenceTimeoutMs = silenceTimeoutMs,
             noSpeechTimeoutMs = prefs.getLong(KEY_NO_SPEECH_TIMEOUT, 6000L),
             geminiPolishEnabled = prefs.getBoolean(KEY_GEMINI_POLISH, true),
@@ -172,6 +183,7 @@ class VoiceImePrefs(context: Context) {
         private const val KEY_AUTO_LISTEN = "auto_listen_on_start"
         private const val KEY_AUTO_RETURN = "auto_return_prev_ime"
         private const val KEY_AUTO_RETURN_DELAY = "auto_return_delay_ms"
+        private const val KEY_MIGRATED_DELAY_2500 = "migrated_auto_return_delay_2500"
         private const val KEY_SILENCE_TIMEOUT = "silence_timeout_ms"
         private const val KEY_NO_SPEECH_TIMEOUT = "no_speech_timeout_ms"
         private const val KEY_GEMINI_POLISH = "gemini_polish_enabled"

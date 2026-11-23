@@ -717,15 +717,26 @@ class PixelVoiceImeService : InputMethodService() {
         finalText: String,
         wasAiPolished: Boolean
     ) {
-        currentInputConnection?.commitText(finalText, 1)
-        lastCommittedLength = finalText.length
+        val config = app.prefs.config.value
+        val outputText = if (
+            config.targetTranslationLang.isBlank() &&
+            !config.activeLanguageTag.startsWith("zh-CN", ignoreCase = true) &&
+            (config.activeLanguageTag.startsWith("zh", ignoreCase = true) ||
+                config.activeLanguageTag.startsWith("yue", ignoreCase = true))
+        ) {
+            LocalTextPolisher.toTraditionalTaiwan(finalText, applyTaiwanTypoFix = config.localTaiwanTypoFixEnabled)
+        } else {
+            finalText
+        }
+
+        currentInputConnection?.commitText(outputText, 1)
+        lastCommittedLength = outputText.length
         lastRawTranscript = rawText
 
-        val config = app.prefs.config.value
         val shouldAutoReturn = config.autoReturnToPreviousIme
         sessionState.value = VoiceSessionState.Committed(
             rawText = rawText,
-            finalText = finalText,
+            finalText = outputText,
             wasAiPolished = wasAiPolished,
             returningSoon = shouldAutoReturn
         )

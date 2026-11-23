@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.dx9901mk5.pixelvoiceime.BuildConfig
 import com.dx9901mk5.pixelvoiceime.models.OfflineModelManager
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
+import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -12,8 +13,8 @@ import kotlinx.coroutines.withContext
 
 /**
  * Optional flagship-only on-device LLM polisher powered by MediaPipe Tasks GenAI (Gemma 3 1B INT4).
- * Uses tasks-genai 0.10.35+ (Gemma 3 compatible), GPU-to-CPU automatic fallback, and a persistent
- * native-crash circuit breaker so an incompatible device never enters an IME crash loop.
+ * Uses tasks-genai 0.10.35+, low-temperature single-turn session, strict few-shot formatting,
+ * anti-chatter / repetition sanity guardrails, and a native-crash circuit breaker.
  */
 class LocalLlmPolisher(
     private val context: Context,
@@ -32,10 +33,6 @@ class LocalLlmPolisher(
         return file.exists() && file.length() >= MIN_VALID_MODEL_BYTES
     }
 
-    /**
-     * Returns true if a previous native crash occurred during load on this exact app version.
-     * Automatically resets whenever the user installs a newer app version or manually re-enables the toggle.
-     */
     fun isBlockedByCrashGuard(): Boolean {
         val crashedInProgress = guardPrefs.getBoolean(KEY_LOADING_IN_PROGRESS, false)
         val recordedVersion = guardPrefs.getInt(KEY_VERSION_CODE, -1)
@@ -75,35 +72,139 @@ class LocalLlmPolisher(
         val engine = ensureLoaded()
             ?: return@withContext Result.failure(IllegalStateException("尚未下載或無法初始化本地 Gemma 3 1B 模型"))
 
+        val preferTraditional = !languageTag.startsWith("zh-CN", ignoreCase = true)
+        val preInput = if (preferTraditional) {
+            LocalTextPolisher.toTraditionalTaiwan(clean, applyTaiwanTypoFix = true)
+        } else {
+            clean
+        }
+
         val prompt = buildString {
             append("<start_of_turn>user\n")
-            appendLine("你是台灣繁體中文語音輸入法錯字與標點修潤助手。")
-            appendLine("請修正以下語音辨識文字中的同音錯別字與語病，保持台灣在地用語習慣（絕對不可改成簡體或中國大陸用語）。")
-            if (autoPunctuation) {
-                appendLine("標點規則：句與句或停頓之間使用全形逗號「，」，僅在整段話最後結尾使用句號「。」（或「？」「！」）。")
+            if (preferTraditional) {
+                appendLine("你是語音錯字標點修正器。只輸出修正後的繁體中文句子本身，嚴禁任何問候、解釋、引號或重複。")
+                if (removeFillers) {
+                    appendLine("去除口語贅詞，句中停頓用「，」，句尾用「。」或「？」。")
+                }
+                appendLine("輸入：嗯今天天氣因該不錯我們去吃午飯吧")
+                appendLine("輸出：今天天氣應該不錯，我們去吃午飯吧。")
+                appendLine("輸入：簡單測試幫忙看看我的話有沒有錯")
+                appendLine("輸出：簡單測試，幫忙看看我的話有沒有錯。")
+            } else {
+                appendLine("你是语音错字标点修正器。只输出修正后的句子本身，严禁任何问候、解释、引号或重复。")
+                appendLine("输入：嗯今天天气应该不错我们去吃午饭吧")
+                appendLine("输出：今天天气应该不错，我们去吃午饭吧。")
             }
-            if (removeFillers) {
-                appendLine("去除無意義口語贅詞（嗯、啊、呃、那個等）。")
-            }
-            appendLine("只輸出修正後的最終文字本身，不要任何解釋或引號。")
-            appendLine()
-            append(clean)
-            append("<end_of_turn>\n<start_of_turn>model\n")
+            append("輸入：")
+            appendLine(preInput)
+            append("輸出：<end_of_turn>\n<start_of_turn>model\n")
         }
 
         try {
-            val rawOut = engine.generateResponse(prompt).trim()
-            if (rawOut.isBlank()) {
-                return@withContext Result.failure(IllegalStateException("本地模型回傳空白"))
+            val rawOut = generateLowTempResponse(engine, prompt)
+            val sanitized = sanitizeAndValidateOutput(rawOut = rawOut, originalInput = preInput)
+                ?: return@withContext Result.failure(IllegalStateException("本地模型輸出異常，已自動改用本地規則直出"))
+
+            var finalOut = if (preferTraditional) {
+                LocalTextPolisher.toTraditionalTaiwan(sanitized, applyTaiwanTypoFix = true)
+            } else {
+                sanitized
             }
-            var finalOut = LocalTextPolisher.toTraditionalTaiwan(rawOut, applyTaiwanTypoFix = true)
             if (autoPunctuation) {
                 finalOut = polisherHelper.normalizeClausePunctuation(finalOut, languageTag)
             }
-            Result.success(finalOut)
+            Result.success(finalOut.trim())
         } catch (t: Throwable) {
             Result.failure(RuntimeException(t.localizedMessage ?: "本地模型推論失敗", t))
         }
+    }
+
+    private fun generateLowTempResponse(engine: LlmInference, prompt: String): String {
+        val sessionResult = runCatching {
+            val sessionOpts = LlmInferenceSession.LlmInferenceSessionOptions.builder()
+                .setTemperature(0.1f)
+                .setTopK(12)
+                .build()
+            LlmInferenceSession.createFromOptions(engine, sessionOpts).use { session ->
+                session.addQueryChunk(prompt)
+                session.generateResponse()
+            }
+        }
+        return sessionResult.getOrElse {
+            engine.generateResponse(prompt)
+        }.trim()
+    }
+
+    /**
+     * Strips model chatter / prefixes / quotes and rejects hallucinated or looping responses
+     * so the IME seamlessly falls back to ultra-clean local punctuation + Traditional Chinese output.
+     */
+    private fun sanitizeAndValidateOutput(rawOut: String, originalInput: String): String? {
+        if (rawOut.isBlank()) return null
+
+        val firstTurn = rawOut
+            .substringBefore("<end_of_turn>")
+            .substringBefore("<start_of_turn>")
+            .trim()
+
+        val firstLine = firstTurn
+            .lineSequence()
+            .map { it.trim() }
+            .firstOrNull { it.isNotBlank() }
+            ?: return null
+
+        var text = firstLine
+            .removePrefix("輸出：")
+            .removePrefix("输出：")
+            .removePrefix("輸出:")
+            .removePrefix("输出:")
+            .removePrefix("修正：")
+            .removePrefix("修正後：")
+            .trim()
+
+        // Strip wrapping quotes if the model enclosed the sentence
+        val quotePairs = listOf("「" to "」", "『" to "』", "“" to "”", "\"" to "\"")
+        for ((open, close) in quotePairs) {
+            if (text.startsWith(open) && text.endsWith(close) && text.length > open.length + close.length) {
+                text = text.substring(open.length, text.length - close.length).trim()
+            }
+        }
+
+        if (text.isBlank()) return null
+
+        // Reject conversational assistant chatter that wasn't in the user's speech
+        for (marker in CHATTER_MARKERS) {
+            if (text.contains(marker) && !originalInput.contains(marker)) {
+                return null
+            }
+        }
+
+        // Reject runaway / bloated outputs (e.g. looping repetitions)
+        val maxAllowedLen = (originalInput.length * 1.6f + 12).toInt().coerceAtLeast(24)
+        if (text.length > maxAllowedLen) {
+            return null
+        }
+
+        // Reject obvious repetition loops inside the single line
+        if (hasRepetitionLoop(text) && !hasRepetitionLoop(originalInput)) {
+            return null
+        }
+
+        return text
+    }
+
+    private fun hasRepetitionLoop(text: String): Boolean {
+        val compact = text.replace(Regex("[\\s，。！？、,.!?\"“”「」]"), "")
+        if (compact.length < 12) return false
+        for (span in 4..minOf(14, compact.length / 2)) {
+            for (i in 0..(compact.length - span * 2)) {
+                val chunk = compact.substring(i, i + span)
+                if (compact.indexOf(chunk, i + span) != -1) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     private suspend fun ensureLoaded(): LlmInference? = mutex.withLock {
@@ -117,7 +218,6 @@ class LocalLlmPolisher(
         llm = null
         loadedPath = null
 
-        // Persist guard synchronously before invoking native JNI so any SIGABRT/SIGSEGV is detected next launch.
         guardPrefs.edit()
             .putBoolean(KEY_LOADING_IN_PROGRESS, true)
             .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
@@ -142,7 +242,7 @@ class LocalLlmPolisher(
         return try {
             val options = LlmInference.LlmInferenceOptions.builder()
                 .setModelPath(modelPath)
-                .setMaxTokens(512)
+                .setMaxTokens(256)
                 .setPreferredBackend(backend)
                 .build()
             LlmInference.createFromOptions(context.applicationContext, options)
@@ -162,5 +262,23 @@ class LocalLlmPolisher(
         private const val KEY_LOADING_IN_PROGRESS = "loading_in_progress"
         private const val KEY_VERSION_CODE = "version_code"
         private const val MIN_VALID_MODEL_BYTES = 50L * 1024L * 1024L
+
+        private val CHATTER_MARKERS = listOf(
+            "您好",
+            "您說的是",
+            "您说的是",
+            "我認為",
+            "我认为",
+            "我覺得",
+            "我觉得",
+            "以下是",
+            "好的，",
+            "好的,",
+            "修正後的",
+            "修正后的",
+            "這句話",
+            "这句话",
+            "原文："
+        )
     }
 }

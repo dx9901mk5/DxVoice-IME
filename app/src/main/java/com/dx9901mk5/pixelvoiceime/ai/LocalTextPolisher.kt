@@ -1,14 +1,25 @@
 package com.dx9901mk5.pixelvoiceime.ai
 
+import android.icu.text.Transliterator
+import android.os.Build
 import com.k2fsa.sherpa.onnx.OfflinePunctuation
 
 /**
  * Ultra-fast (< 5ms) on-device text polish:
  * 1. Removes spoken fillers (嗯、啊、呃、那個).
- * 2. Normalizes common Simplified Chinese characters/terms into Traditional Chinese (Taiwan).
+ * 2. Converts Simplified Chinese to full Traditional Chinese (Taiwan) using Android ICU Transliterator
+ *    plus Taiwan terminology and common homophone typo tables.
  * 3. Runs local CT-Transformer punctuation (if loaded) and enforces clause-comma / ending-period rules.
  */
 object LocalTextPolisher {
+
+    private val s2tTransliterator: Transliterator? by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            runCatching { Transliterator.getInstance("Simplified-Traditional") }.getOrNull()
+        } else {
+            null
+        }
+    }
 
     private val fillerRegex = Regex("""^(嗯+|啊+|呃+|那個+|就是說+)[，,\s]*""")
     private val midFillerRegex = Regex("""[，,\s]+(嗯+|呃+|那個+)[，,\s]+""")
@@ -226,10 +237,11 @@ object LocalTextPolisher {
             text = text.replace(fillerRegex, "").replace(midFillerRegex, "，").trim()
         }
 
-        if (languageTag.startsWith("zh-TW", ignoreCase = true) ||
-            languageTag.startsWith("zh-HK", ignoreCase = true) ||
-            languageTag.startsWith("yue", ignoreCase = true)
-        ) {
+        val shouldConvertTraditional = !languageTag.startsWith("zh-CN", ignoreCase = true) &&
+            (languageTag.startsWith("zh", ignoreCase = true) ||
+                languageTag.startsWith("yue", ignoreCase = true) ||
+                languageTag.isBlank())
+        if (shouldConvertTraditional) {
             text = toTraditionalTaiwan(text, applyTaiwanTypoFix)
         }
 
@@ -249,21 +261,33 @@ object LocalTextPolisher {
             text = polisherHelper.localFallbackPunctuate(text, languageTag)
         }
 
+        if (shouldConvertTraditional) {
+            text = toTraditionalTaiwan(text, applyTaiwanTypoFix)
+        }
+
         return text.trim()
     }
 
     fun toTraditionalTaiwan(input: String, applyTaiwanTypoFix: Boolean = true): String {
         var result = input
+        // 1. Taiwan-specific multi-character terminology first (e.g. 软件->軟體, 视频->影片)
         for ((src, dst) in termReplacements) {
             if (result.contains(src)) {
                 result = result.replace(src, dst)
             }
         }
+        // 2. Full Unicode CLDR Simplified -> Traditional conversion via Android ICU (API 29+)
+        val icu = s2tTransliterator
+        if (icu != null) {
+            result = runCatching { icu.transliterate(result) }.getOrDefault(result)
+        }
+        // 3. Fallback character table for API 26-28 or edge chars
         val sb = StringBuilder(result.length)
         for (ch in result) {
             sb.append(charMap[ch] ?: ch)
         }
         var out = sb.toString()
+        // 4. Optional Taiwanese common homophone/typo fix table
         if (applyTaiwanTypoFix) {
             for ((wrong, right) in taiwanTypoReplacements) {
                 if (out.contains(wrong)) {
