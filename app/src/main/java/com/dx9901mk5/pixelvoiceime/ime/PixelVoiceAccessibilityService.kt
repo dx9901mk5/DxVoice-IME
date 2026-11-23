@@ -42,16 +42,23 @@ class PixelVoiceAccessibilityService : AccessibilityService() {
     }
 
     private fun updateKeyboardVisibility() {
-        val hasImeWindow = try {
-            windows?.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD } == true
+        val visible = computeExternalKeyboardVisible()
+        FloatingMicService.notifyExternalKeyboardVisible(this, visible)
+    }
+
+    private fun computeExternalKeyboardVisible(): Boolean {
+        val winList = try {
+            windows
         } catch (_: Exception) {
-            false
-        }
+            null
+        } ?: return false
+        if (winList.isEmpty()) return false
+        val hasImeWindow = winList.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
         val activeIme = runCatching {
             Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD).orEmpty()
         }.getOrDefault("")
         val isOwnIme = activeIme.contains(packageName)
-        FloatingMicService.notifyExternalKeyboardVisible(this, hasImeWindow && !isOwnIme)
+        return hasImeWindow && !isOwnIme
     }
 
     companion object {
@@ -59,6 +66,10 @@ class PixelVoiceAccessibilityService : AccessibilityService() {
         private var instanceRef: WeakReference<PixelVoiceAccessibilityService>? = null
 
         fun isRunning(): Boolean = instanceRef?.get() != null
+
+        fun queryExternalKeyboardVisible(): Boolean {
+            return instanceRef?.get()?.computeExternalKeyboardVisible() ?: false
+        }
 
         fun switchToPixelVoiceIme(context: Context): Boolean {
             val svc = instanceRef?.get() ?: return false

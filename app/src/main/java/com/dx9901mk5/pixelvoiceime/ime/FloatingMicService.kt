@@ -50,6 +50,7 @@ class FloatingMicService : Service() {
     private var layoutParams: WindowManager.LayoutParams? = null
     private var isImeActiveForeground: Boolean = false
     private var isExternalKeyboardVisible: Boolean = false
+    private var isDraggingOverlay: Boolean = false
 
     private val imeVisibilityReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -86,6 +87,7 @@ class FloatingMicService : Service() {
         }
 
         createOrUpdateOverlay()
+        isExternalKeyboardVisible = PixelVoiceAccessibilityService.queryExternalKeyboardVisible()
 
         serviceScope.launch {
             app.prefs.config.collectLatest { config ->
@@ -94,6 +96,9 @@ class FloatingMicService : Service() {
                     return@collectLatest
                 }
                 applyStyleFromConfig()
+                if (!isDraggingOverlay) {
+                    applyPositionForCurrentScreen(resources.configuration)
+                }
                 updateBallVisibility()
             }
         }
@@ -105,7 +110,9 @@ class FloatingMicService : Service() {
             return START_NOT_STICKY
         }
         createOrUpdateOverlay()
+        isExternalKeyboardVisible = PixelVoiceAccessibilityService.queryExternalKeyboardVisible()
         applyStyleFromConfig()
+        applyPositionForCurrentScreen(resources.configuration)
         updateBallVisibility()
         return START_STICKY
     }
@@ -168,7 +175,6 @@ class FloatingMicService : Service() {
         var initialY = 0
         var touchStartX = 0f
         var touchStartY = 0f
-        var isDragging = false
 
         imageView.setOnTouchListener { _, event ->
             when (event.actionMasked) {
@@ -177,7 +183,7 @@ class FloatingMicService : Service() {
                     initialY = params.y
                     touchStartX = event.rawX
                     touchStartY = event.rawY
-                    isDragging = false
+                    isDraggingOverlay = false
                     true
                 }
 
@@ -185,9 +191,9 @@ class FloatingMicService : Service() {
                     val dx = (event.rawX - touchStartX).toInt()
                     val dy = (event.rawY - touchStartY).toInt()
                     if (abs(dx) > 8 || abs(dy) > 8) {
-                        isDragging = true
+                        isDraggingOverlay = true
                     }
-                    if (isDragging) {
+                    if (isDraggingOverlay) {
                         val metrics = resources.displayMetrics
                         params.x = (initialX + dx).coerceIn(0, (metrics.widthPixels - sizePx).coerceAtLeast(0))
                         params.y = (initialY + dy).coerceIn(0, (metrics.heightPixels - sizePx).coerceAtLeast(0))
@@ -197,7 +203,9 @@ class FloatingMicService : Service() {
                 }
 
                 MotionEvent.ACTION_UP -> {
-                    if (isDragging) {
+                    val wasDragging = isDraggingOverlay
+                    isDraggingOverlay = false
+                    if (wasDragging) {
                         val curInner = isInnerScreen()
                         app.prefs.update { cur ->
                             if (curInner) {
