@@ -4,5 +4,5 @@
     <string name="ime_name">PixelVoice 語音輸入法</string>
     <string name="subtype_voice_zh_tw">語音輸入 (繁體中文 / AI 自動修潤)</string>
     <string name="subtype_voice_en_us">Voice Typing (English / AI Polish)</string>
-    <string name="accessibility_service_description">僅用於偵測系統鍵盤顯示/隱藏狀態以自動顯示或隱藏懸浮語音球，並在點擊懸浮球時直接切換至 PixelVoice 語音輸入法（不讀取任何螢幕文字內容）。</string>
+    <string name="accessibility_service_description">用於偵測系統鍵盤顯示/隱藏狀態以自動顯示或隱藏懸浮語音球，並在點擊懸浮球時直接切換啟動 PixelVoice 語音輸入法（絕不記錄或上傳任何個人輸入內容）。</string>
 </resources>

@@ -247,7 +247,26 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
     var isImeEnabled by remember { mutableStateOf(checkImeEnabled(context)) }
     var canOverlay by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var accessibilityActive by remember { mutableStateOf(PixelVoiceAccessibilityService.isRunning()) }
+    var accessibilityEnabledInSettings by remember {
+        mutableStateOf(PixelVoiceAccessibilityService.isEnabledInSystemSettings(context))
+    }
     var sandboxText by remember { mutableStateOf("") }
+
+    val openAccessibilitySettings: () -> Unit = {
+        val serviceComponent = ComponentName(
+            context,
+            PixelVoiceAccessibilityService::class.java
+        ).flattenToString()
+        val args = Bundle().apply {
+            putString(":settings:fragment_args_key", serviceComponent)
+        }
+        val directIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+            putExtra(":settings:fragment_args_key", serviceComponent)
+            putExtra(":settings:show_fragment_args", args)
+        }
+        runCatching { context.startActivity(directIntent) }
+            .onFailure { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+    }
 
     val micPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -266,6 +285,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 isImeEnabled = checkImeEnabled(context)
                 canOverlay = Settings.canDrawOverlays(context)
                 accessibilityActive = PixelVoiceAccessibilityService.isRunning()
+                accessibilityEnabledInSettings = PixelVoiceAccessibilityService.isEnabledInSystemSettings(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -440,38 +460,34 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 }
 
                 Text(
-                    text = if (accessibilityActive) {
-                        "跟隨鍵盤顯示＋一鍵直切：已啟用 ✓（僅在鍵盤出現時顯示，點擊直接切換收音）"
-                    } else {
-                        "提示：啟用「PixelVoice 無障礙輔助」後，懸浮球會在鍵盤出現才顯示、鍵盤關閉就消失，且點擊直接切到本輸入法開始收音（免跳系統選單）。"
+                    text = when {
+                        accessibilityActive ->
+                            "跟隨鍵盤顯示＋一鍵直接啟動輸入法：運作中 ✓（僅在其他鍵盤出現時顯示，點擊直接啟動收音）"
+                        accessibilityEnabledInSettings ->
+                            "注意：系統已勾選無障礙，但服務尚未連線（常見於剛更新安裝或省電限制）。請點擊下方按鈕進入無障礙將開關「關閉再重開一次」，即可恢復點擊直接啟動本輸入法。"
+                        else ->
+                            "重要：啟用「PixelVoice 語音輸入法」無障礙輔助後，懸浮球會在鍵盤出現才顯示，且點擊懸浮球會直接啟動本輸入法開始收音（不再跳出系統輸入法選單）。"
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (accessibilityActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (accessibilityActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
                 if (!accessibilityActive) {
-                    OutlinedButton(
-                        onClick = {
-                            val serviceComponent = ComponentName(
-                                context,
-                                PixelVoiceAccessibilityService::class.java
-                            ).flattenToString()
-                            val args = Bundle().apply {
-                                putString(":settings:fragment_args_key", serviceComponent)
-                            }
-                            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                                putExtra(":settings:fragment_args_key", serviceComponent)
-                                putExtra(":settings:show_fragment_args", args)
-                            }
-                            context.startActivity(intent)
-                        }
+                    Button(
+                        onClick = openAccessibilitySettings
                     ) {
-                        Text("前往開啟「PixelVoice 語音輸入法」無障礙輔助")
+                        Text(
+                            if (accessibilityEnabledInSettings) {
+                                "前往無障礙重新開關「PixelVoice 語音輸入法」"
+                            } else {
+                                "開啟「PixelVoice 語音輸入法」無障礙（點擊直接切換必備）"
+                            }
+                        )
                     }
                 }
 
                 SettingSwitchRow(
                     title = "啟用懸浮語音捷徑球",
-                    subtitle = if (canOverlay) "切換到其他鍵盤時自動顯示，可自由拖曳記憶位置" else "請先授予上層顯示權限",
+                    subtitle = if (canOverlay) "切換到其他鍵盤時自動顯示，點擊直接啟動語音輸入法" else "請先授予上層顯示權限",
                     checked = config.floatingBallEnabled,
                     onCheckedChange = { enabled ->
                         if (enabled && !Settings.canDrawOverlays(context)) {
@@ -484,6 +500,9 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                             app.prefs.update { it.copy(floatingBallEnabled = enabled) }
                             if (enabled) {
                                 FloatingMicService.start(context)
+                                if (!PixelVoiceAccessibilityService.isRunning()) {
+                                    openAccessibilitySettings()
+                                }
                             } else {
                                 FloatingMicService.stop(context)
                             }

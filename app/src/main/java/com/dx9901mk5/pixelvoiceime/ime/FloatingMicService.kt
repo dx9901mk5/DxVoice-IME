@@ -15,11 +15,14 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.ImageView
 import androidx.core.app.NotificationCompat
@@ -35,6 +38,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * Floating microphone shortcut overlay shown while other IMEs are active.
@@ -44,6 +48,7 @@ class FloatingMicService : Service() {
 
     private lateinit var app: PixelVoiceApp
     private lateinit var windowManager: WindowManager
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private var ballView: ImageView? = null
@@ -119,10 +124,13 @@ class FloatingMicService : Service() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        applyDimensionsForDensity()
+        applyStyleFromConfig()
         applyPositionForCurrentScreen(newConfig)
     }
 
     override fun onDestroy() {
+        mainHandler.removeCallbacksAndMessages(null)
         runCatching { unregisterReceiver(imeVisibilityReceiver) }
         removeOverlay()
         serviceScope.cancel()
@@ -133,18 +141,40 @@ class FloatingMicService : Service() {
         return config.smallestScreenWidthDp >= 600
     }
 
+    private fun computeBallSizePx(): Int {
+        return (BALL_SIZE_DP * resources.displayMetrics.density).roundToInt()
+    }
+
+    private fun computeBallPaddingPx(): Int {
+        return (BALL_PADDING_DP * resources.displayMetrics.density).roundToInt()
+    }
+
+    private fun applyDimensionsForDensity() {
+        val view = ballView ?: return
+        val params = layoutParams ?: return
+        val density = resources.displayMetrics.density
+        val sizePx = computeBallSizePx()
+        val padPx = computeBallPaddingPx()
+        view.setPadding(padPx, padPx, padPx, padPx)
+        view.elevation = BALL_ELEVATION_DP * density
+        params.width = sizePx
+        params.height = sizePx
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun createOrUpdateOverlay() {
         if (ballView != null) return
         val density = resources.displayMetrics.density
-        val sizePx = (56 * density).toInt()
-        val padPx = (14 * density).toInt()
+        val sizePx = computeBallSizePx()
+        val padPx = computeBallPaddingPx()
+        val dragSlop = ViewConfiguration.get(this).scaledTouchSlop.coerceAtLeast((5 * density).roundToInt())
 
         val imageView = ImageView(this).apply {
             setImageResource(android.R.drawable.ic_btn_speak_now)
+            scaleType = ImageView.ScaleType.FIT_CENTER
             setColorFilter(Color.WHITE)
             setPadding(padPx, padPx, padPx, padPx)
-            elevation = 8 * density
+            elevation = BALL_ELEVATION_DP * density
         }
 
         val inner = isInnerScreen()
@@ -190,13 +220,14 @@ class FloatingMicService : Service() {
                 MotionEvent.ACTION_MOVE -> {
                     val dx = (event.rawX - touchStartX).toInt()
                     val dy = (event.rawY - touchStartY).toInt()
-                    if (abs(dx) > 8 || abs(dy) > 8) {
+                    if (abs(dx) > dragSlop || abs(dy) > dragSlop) {
                         isDraggingOverlay = true
                     }
                     if (isDraggingOverlay) {
                         val metrics = resources.displayMetrics
-                        params.x = (initialX + dx).coerceIn(0, (metrics.widthPixels - sizePx).coerceAtLeast(0))
-                        params.y = (initialY + dy).coerceIn(0, (metrics.heightPixels - sizePx).coerceAtLeast(0))
+                        val curSize = params.width
+                        params.x = (initialX + dx).coerceIn(0, (metrics.widthPixels - curSize).coerceAtLeast(0))
+                        params.y = (initialY + dy).coerceIn(0, (metrics.heightPixels - curSize).coerceAtLeast(0))
                         runCatching { windowManager.updateViewLayout(imageView, params) }
                     }
                     true
@@ -243,10 +274,11 @@ class FloatingMicService : Service() {
             Color.parseColor("#A8C7FA")
         }
         val density = resources.displayMetrics.density
+        val strokePx = (BALL_STROKE_DP * density).roundToInt().coerceAtLeast(1)
         view.background = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(bgColor)
-            setStroke((1.5f * density).toInt(), strokeColor)
+            setStroke(strokePx, strokeColor)
         }
         view.alpha = cfg.floatingBallAlpha.coerceIn(0.25f, 1.0f)
     }
@@ -275,8 +307,31 @@ class FloatingMicService : Service() {
     }
 
     private fun launchImeSwitcher() {
+        PixelVoiceAccessibilityService.rememberCurrentExternalIme(this)
         if (PixelVoiceAccessibilityService.switchToPixelVoiceIme(this)) {
+            // Verify after a short beat in case an OEM ROM silently ignores SoftKeyboardController
+            mainHandler.postDelayed({
+                if (!isImeActiveForeground && !PixelVoiceAccessibilityService.isOwnImeCurrentlyActive(this)) {
+                    fallbackDirectOrPickerSwitch()
+                }
+            }, 180L)
             return
+        }
+        fallbackDirectOrPickerSwitch()
+    }
+
+    private fun fallbackDirectOrPickerSwitch() {
+        val imeId = PixelVoiceAccessibilityService.resolveOwnImeId(this)
+        val wroteSecure = try {
+            Settings.Secure.putString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD, imeId)
+            PixelVoiceAccessibilityService.isOwnImeCurrentlyActive(this)
+        } catch (_: Exception) {
+            false
+        }
+        if (wroteSecure) return
+
+        if (PixelVoiceAccessibilityService.isRunning()) {
+            PixelVoiceAccessibilityService.armAutoSelectPickerWindow(2200L)
         }
         val intent = Intent(this, ImeSwitchBridgeActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
@@ -316,7 +371,7 @@ class FloatingMicService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("PixelVoice 懸浮語音捷徑運作中")
-            .setContentText("使用其他鍵盤時點擊懸浮球即可切換語音輸入")
+            .setContentText("使用其他鍵盤時點擊懸浮球即可直接啟動語音輸入法")
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_MIN)
@@ -324,6 +379,11 @@ class FloatingMicService : Service() {
     }
 
     companion object {
+        private const val BALL_SIZE_DP = 28f
+        private const val BALL_PADDING_DP = 3f
+        private const val BALL_STROKE_DP = 0.75f
+        private const val BALL_ELEVATION_DP = 4f
+
         const val ACTION_IME_VISIBILITY = "com.dx9901mk5.pixelvoiceime.IME_VISIBILITY"
         const val EXTRA_IME_VISIBLE = "ime_visible"
         const val ACTION_EXTERNAL_IME_VISIBILITY = "com.dx9901mk5.pixelvoiceime.EXTERNAL_IME_VISIBILITY"
