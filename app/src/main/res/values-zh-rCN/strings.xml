@@ -133,7 +133,7 @@
     <string name="sandbox_placeholder">点此开始测试语音输入…</string>
 
     <!-- Offline Languages Screen -->
-    <string name="offline_title">离线语音文件库（仿 Google 语音输入法）</string>
+    <string name="offline_title">离线语音文件库</string>
     <string name="offline_desc">支持 %1$d 种语系与地区变体。多语共用底层权重，下载一次即可离线识别同组语系。</string>
     <string name="offline_stats">已安装离线包：%1$d 组 • 已用空间：%2$.1f MB • 当前语系：%3$s</string>
     <string name="offline_search_placeholder">搜索语系（例如：简体中文、繁體中文、日文、English、粤语）</string>
@@ -249,7 +249,7 @@
     <string name="backup_status_one_click_ok">已一键备份至记忆路径（含自定义词库）：%1$s</string>
     <string name="backup_status_one_click_fail">写入失败（请重新指定文件夹）：%1$s</string>
     <string name="theme_title">界面主题</string>
-    <string name="theme_dynamic">默认动态色彩 (Pixel)</string>
+    <string name="theme_dynamic">默认动态色彩 (Material You)</string>
     <string name="theme_orange">橘色灰黑底 (Orange Charcoal)</string>
 
     <!-- Update & About Screen -->

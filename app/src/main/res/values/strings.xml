@@ -133,7 +133,7 @@
     <string name="sandbox_placeholder">點此開始測試語音輸入…</string>
 
     <!-- Offline Languages Screen -->
-    <string name="offline_title">離線語音檔案庫（仿 Google 語音輸入法）</string>
+    <string name="offline_title">離線語音檔案庫</string>
     <string name="offline_desc">支援 %1$d 種語系與地區變體。多語共用底層權重，下載一次即可離線辨識同組語系。</string>
     <string name="offline_stats">已安裝離線包：%1$d 組 • 已用空間：%2$.1f MB • 目前語系：%3$s</string>
     <string name="offline_search_placeholder">搜尋語系（例如：繁體中文、日文、English、粵語）</string>
@@ -249,7 +249,7 @@
     <string name="backup_status_one_click_ok">已一鍵備份至記憶路徑（含自定義詞庫）：%1$s</string>
     <string name="backup_status_one_click_fail">寫入失敗（請重新指定資料夾）：%1$s</string>
     <string name="theme_title">介面主題</string>
-    <string name="theme_dynamic">預設動態色彩 (Pixel)</string>
+    <string name="theme_dynamic">預設動態色彩 (Material You)</string>
     <string name="theme_orange">橘色灰黑底 (Orange Charcoal)</string>
 
     <!-- Update & About Screen -->

@@ -249,7 +249,7 @@
     <string name="backup_status_one_click_ok">Backed up to saved folder (with dictionary): %1$s</string>
     <string name="backup_status_one_click_fail">Write failed (please re-select folder): %1$s</string>
     <string name="theme_title">App Theme</string>
-    <string name="theme_dynamic">Dynamic Color (Pixel)</string>
+    <string name="theme_dynamic">Dynamic Color (Material You)</string>
     <string name="theme_orange">Orange Charcoal</string>
 
     <!-- Update & About Screen -->

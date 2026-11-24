@@ -249,7 +249,7 @@
     <string name="backup_status_one_click_ok">記憶済みフォルダへ保存完了（辞書含む）：%1$s</string>
     <string name="backup_status_one_click_fail">書き込み失敗（フォルダを再指定してください）：%1$s</string>
     <string name="theme_title">テーマ設定</string>
-    <string name="theme_dynamic">ダイナミックカラー (Pixel)</string>
+    <string name="theme_dynamic">ダイナミックカラー (Material You)</string>
     <string name="theme_orange">オレンジチャコール (Orange Charcoal)</string>
 
     <!-- Update & About Screen -->
