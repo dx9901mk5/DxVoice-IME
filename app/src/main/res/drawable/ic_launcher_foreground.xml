@@ -13,4 +13,15 @@
     <path
         android:fillColor="#A8C7FA"
         android:pathData="M74,30l2.2,5.3L81.5,37.5l-5.3,2.2L74,45l-2.2,-5.3L66.5,37.5l5.3,-2.2z" />
+    <!-- Small DX badge at bottom-right inside adaptive safe zone -->
+    <path
+        android:fillColor="#FF7A00"
+        android:pathData="M67,68h14a3,3 0,0 1,3 3v5a3,3 0,0 1,-3 3h-14a3,3 0,0 1,-3 -3v-5a3,3 0,0 1,3 -3z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M68,70.5 L68,76.5 M68,70.5 L70.2,70.5 C71.8,70.5 72.5,71.7 72.5,73.5 C72.5,75.3 71.8,76.5 70.2,76.5 L68,76.5 M75,70.5 L79.5,76.5 M79.5,70.5 L75,76.5" />
 </vector>
