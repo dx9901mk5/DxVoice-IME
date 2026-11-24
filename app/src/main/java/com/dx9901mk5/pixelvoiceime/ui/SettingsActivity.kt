@@ -37,6 +37,8 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.KeyboardVoice
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.SystemUpdate
+import androidx.compose.material.icons.rounded.VerticalSplit
+import androidx.compose.material.icons.rounded.ViewAgenda
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -113,7 +115,8 @@ private data class SettingsNavItem(
 @Composable
 private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    var companionTab by remember { mutableIntStateOf(3) }
+    var companionTab by remember { mutableIntStateOf(2) }
+    var userSideBySideOverride by remember { mutableStateOf<Boolean?>(null) }
 
     val navItems = remember {
         listOf(
@@ -126,7 +129,9 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val isTwoPane = maxWidth >= 680.dp
+        val canSideBySide = maxWidth >= 480.dp
+        val defaultTwoPane = maxWidth >= 600.dp
+        val isTwoPane = canSideBySide && (userSideBySideOverride ?: defaultTwoPane)
         val useRail = maxWidth >= 540.dp
 
         Scaffold(
@@ -136,10 +141,25 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                         Column {
                             Text("DxVoice-IME", fontWeight = FontWeight.Bold)
                             Text(
-                                text = "本地極速 / Gemini / 自架端點語音輸入法",
+                                text = "本地極速 / 詞庫與本地模型 / 自架端點語音輸入法",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                    },
+                    actions = {
+                        if (canSideBySide) {
+                            TextButton(
+                                onClick = {
+                                    userSideBySideOverride = !isTwoPane
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (isTwoPane) Icons.Rounded.ViewAgenda else Icons.Rounded.VerticalSplit,
+                                    contentDescription = null
+                                )
+                                Text(if (isTwoPane) " 單欄" else " 並排")
+                            }
                         }
                     }
                 )

@@ -372,7 +372,7 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
             productId = SKU_PRO_LIFETIME,
             title = "DxVoice-IME Pro 終身買斷版",
             subtitle = "正式版含首次 3 天免費試用；一次買斷永久解鎖 5 大進階功能，無任何月費或年費",
-            fallbackPriceLabel = "NT$200 終身買斷",
+            fallbackPriceLabel = "NT$300 終身買斷",
             isSubscription = false,
             badge = "一次買斷・無月費"
         )
