@@ -10,6 +10,7 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
@@ -126,7 +127,11 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
         runCatching {
             val client = BillingClient.newBuilder(appContext)
                 .setListener(this)
-                .enablePendingPurchases()
+                .enablePendingPurchases(
+                    PendingPurchasesParams.newBuilder()
+                        .enableOneTimeProducts()
+                        .build()
+                )
                 .build()
             billingClient = client
             connectAndQuery(client)
@@ -299,7 +304,8 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
         )
         client.queryProductDetailsAsync(
             QueryProductDetailsParams.newBuilder().setProductList(inAppList).build()
-        ) { result, detailsList ->
+        ) { result, queryResult ->
+            val detailsList = queryResult.productDetailsList
             if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
                 mergeProductDetails(detailsList)
             }
@@ -317,7 +323,8 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
         )
         client.queryProductDetailsAsync(
             QueryProductDetailsParams.newBuilder().setProductList(subsList).build()
-        ) { result, detailsList ->
+        ) { result, queryResult ->
+            val detailsList = queryResult.productDetailsList
             if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
                 mergeProductDetails(detailsList)
             }

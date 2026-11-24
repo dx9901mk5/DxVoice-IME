@@ -12,8 +12,8 @@ android {
         applicationId = "com.dx9901mk5.pixelvoiceime"
         minSdk = 26
         targetSdk = 36
-        versionCode = 36
-        versionName = "3.4.8"
+        versionCode = 37
+        versionName = "3.4.9"
         ndk {
             // Supports all modern & legacy Android phones/tablets plus x86_64 Chromebooks / Pixelbooks
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -33,6 +33,9 @@ android {
         release {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -98,6 +101,6 @@ dependencies {
     implementation(files("libs/sherpa-onnx-2.0.2.aar"))
     implementation("com.google.mlkit:translate:17.0.3")
     implementation("com.google.mediapipe:tasks-genai:0.10.35")
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    implementation("com.android.billingclient:billing-ktx:8.0.0")
     debugImplementation(libs.androidx.ui.tooling)
 }
