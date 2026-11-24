@@ -47,7 +47,17 @@ class OfflineModelManager(
     val enabledLanguages: StateFlow<Set<String>> = _enabledLanguages.asStateFlow()
 
     init {
+        cleanupLegacyLocalLlm()
         refreshInstalledStates()
+    }
+
+    private fun cleanupLegacyLocalLlm() {
+        runCatching {
+            val legacyDir = File(modelsRoot, VoiceLanguageCatalog.LEGACY_PACK_GEMMA3_1B)
+            if (legacyDir.exists()) legacyDir.deleteRecursively()
+            val legacyTmp = File(modelsRoot, "${VoiceLanguageCatalog.LEGACY_PACK_GEMMA3_1B}.download.tmp")
+            if (legacyTmp.exists()) legacyTmp.delete()
+        }
     }
 
     fun refreshInstalledStates() {
@@ -112,10 +122,10 @@ class OfflineModelManager(
     }
 
     fun isLocalLlmReady(): Boolean =
-        _packStates.value[VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B] is PackDownloadState.Installed
+        _packStates.value[VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B] is PackDownloadState.Installed
 
     fun findLocalLlmModelFile(): File? {
-        val dir = getPackDirectory(VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B)
+        val dir = getPackDirectory(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
         if (!File(dir, ".ready").exists()) return null
         val files = dir.walkTopDown().filter { it.isFile }.toList()
         return files.firstOrNull { it.name.endsWith(".task", ignoreCase = true) }

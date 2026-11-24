@@ -419,7 +419,7 @@ class PixelVoiceImeService : InputMethodService() {
                 val localLlmOut = if (config.localLlmEnabled && app.localLlmPolisher.isModelDownloaded()) {
                     sessionState.value = VoiceSessionState.Polishing(
                         rawText = cleanRaw,
-                        statusText = "本地 Gemma 3 1B 台灣口語修潤中…"
+                        statusText = "本地 Qwen2.5 0.5B 極速修潤中…"
                     )
                     app.localLlmPolisher.polish(
                         rawText = cleanRaw,
@@ -600,7 +600,7 @@ class PixelVoiceImeService : InputMethodService() {
             if (polished == null && config.localLlmEnabled && app.localLlmPolisher.isModelDownloaded()) {
                 sessionState.value = VoiceSessionState.Polishing(
                     rawText = rawText,
-                    statusText = "本地 Gemma 3 1B 台灣口語修潤中…"
+                    statusText = "本地 Qwen2.5 0.5B 極速修潤中…"
                 )
                 val llmRes = app.localLlmPolisher.polish(
                     rawText = rawText,

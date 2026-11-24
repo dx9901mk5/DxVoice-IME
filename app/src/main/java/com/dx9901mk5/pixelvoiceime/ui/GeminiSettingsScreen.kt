@@ -63,7 +63,7 @@ fun GeminiSettingsScreen(
     val uriHandler = LocalUriHandler.current
     val app = LocalContext.current.applicationContext as PixelVoiceApp
     val packStates by app.modelManager.packStates.collectAsState()
-    val localLlmState = packStates[VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B] ?: PackDownloadState.NotInstalled
+    val localLlmState = packStates[VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B] ?: PackDownloadState.NotInstalled
 
     var keyInput by remember { mutableStateOf(apiKeyStore.getApiKey()) }
     var customModel by remember(selectedModel) { mutableStateOf(selectedModel) }
@@ -431,8 +431,8 @@ fun GeminiSettingsScreen(
                     onCheckedChange = { v -> prefs.update { it.copy(localTaiwanTypoFixEnabled = v) } }
                 )
                 SettingSwitchRow(
-                    title = "旗艦機本地小模型修潤 (Gemma 3 1B INT4)",
-                    subtitle = "無須網路即可用本地 LLM 潤飾語氣與修正錯字（須先下載 555 MB 模型，關閉時改走極速規則與詞庫）",
+                    title = "旗艦機本地極速小模型修潤 (Qwen2.5 0.5B)",
+                    subtitle = "無須網路、GPU 優先加速，中文錯字修潤更快更精準（約 521 MB，自動清理舊 Gemma 3 模型；關閉時改走 0ms 詞庫直出）",
                     checked = config.localLlmEnabled,
                     onCheckedChange = { v ->
                         prefs.update { it.copy(localLlmEnabled = v) }
@@ -444,7 +444,7 @@ fun GeminiSettingsScreen(
                     }
                 )
                 Text(
-                    text = "⚠️ 硬體建議：僅適合旗艦機使用（約需 555 MB 空間與 1.5GB+ 額外 RAM）。推薦處理器：Snapdragon 8 Gen 3 / 8 Elite、MediaTek Dimensity 9300 / 9400+、Google Tensor G4+（建議 12GB RAM 以上）；一般手機建議維持關閉以維持最快反應速度。",
+                    text = "⚡ 加速說明：預設啟用 GPU 優先推論（若驅動不相容將自動安全降級 CPU），建議具備 8GB+ RAM 之中高階或旗艦機使用。",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -454,11 +454,11 @@ fun GeminiSettingsScreen(
                         OutlinedButton(
                             onClick = {
                                 scope.launch {
-                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B)
+                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
                                 }
                             }
                         ) {
-                            Text("下載 Gemma 3 1B INT4 本地模型 (約 555 MB)")
+                            Text("下載 Qwen2.5 0.5B 極速中文模型 (約 521 MB)")
                         }
                     }
                     is PackDownloadState.Downloading -> {
@@ -478,7 +478,7 @@ fun GeminiSettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "本地模型已就緒 (${s.sizeBytes / (1024 * 1024)} MB)",
+                                text = "Qwen2.5 0.5B 已就緒 (${s.sizeBytes / (1024 * 1024)} MB · ${app.localLlmPolisher.activeBackendLabel()})",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.weight(1f)
@@ -487,7 +487,7 @@ fun GeminiSettingsScreen(
                                 onClick = {
                                     scope.launch {
                                         app.localLlmPolisher.release()
-                                        app.modelManager.deletePack(VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B)
+                                        app.modelManager.deletePack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
                                     }
                                 }
                             ) {
@@ -504,11 +504,11 @@ fun GeminiSettingsScreen(
                         OutlinedButton(
                             onClick = {
                                 scope.launch {
-                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_GEMMA3_1B)
+                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
                                 }
                             }
                         ) {
-                            Text("重試下載 Gemma 3 1B")
+                            Text("重試下載 Qwen2.5 0.5B")
                         }
                     }
                 }

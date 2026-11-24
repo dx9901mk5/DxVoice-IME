@@ -267,5 +267,42 @@ fun UpdateSettingsScreen(
                 }
             }
         }
+
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "開源模型與特別銘謝",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "DxVoice-IME 的離線語音辨識、標點與本地修潤能力建構於以下優秀開源模型與推論框架，特此致謝：",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "• SenseVoice (FunAudioLLM / Alibaba)：中／粵／英／日／韓多語離線語音辨識模型 (Apache-2.0)\n" +
+                        "• Whisper Tiny / Base (OpenAI)：全球多語系離線語音辨識模型 (MIT)\n" +
+                        "• CT-Transformer (FunASR / Alibaba)：中／英離線自動標點模型 (MIT)\n" +
+                        "• Qwen2.5-0.5B-Instruct (Alibaba Qwen / LiteRT Community)：裝置端極速中文錯字與語意修潤小模型 (Apache-2.0)\n" +
+                        "• Sherpa-ONNX (k2-fsa) & MediaPipe Tasks GenAI (Google AI Edge)：裝置端離線推論引擎 (Apache-2.0)\n" +
+                        "• Android ICU & Google ML Kit：本地完整繁簡轉換與多語翻譯支援",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "特別銘謝：誠摯感謝輔助開發人員「曉東」的協助與支持！",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
     }
 }

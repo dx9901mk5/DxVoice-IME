@@ -12,8 +12,8 @@ android {
         applicationId = "com.dx9901mk5.pixelvoiceime"
         minSdk = 26
         targetSdk = 36
-        versionCode = 28
-        versionName = "3.4.0"
+        versionCode = 29
+        versionName = "3.4.1"
         ndk {
             abiFilters += "arm64-v8a"
         }

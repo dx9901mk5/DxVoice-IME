@@ -12,9 +12,11 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Optional flagship-only on-device LLM polisher powered by MediaPipe Tasks GenAI (Gemma 3 1B INT4).
- * Uses tasks-genai 0.10.35+, low-temperature single-turn session, strict few-shot formatting,
- * anti-chatter / repetition sanity guardrails, and a native-crash circuit breaker.
+ * Fast on-device Chinese LLM polisher powered by MediaPipe Tasks GenAI (Qwen2.5-0.5B-Instruct Q8).
+ * Features:
+ * 1. GPU-first acceleration with automatic persistent fallback to CPU if GPU init crashes or fails.
+ * 2. Compact Qwen ChatML prompt + low-temperature single-turn session for minimal latency.
+ * 3. Anti-chatter / repetition sanity guardrails + native-crash circuit breaker.
  */
 class LocalLlmPolisher(
     private val context: Context,
@@ -23,6 +25,9 @@ class LocalLlmPolisher(
     private val mutex = Mutex()
     private var llm: LlmInference? = null
     private var loadedPath: String? = null
+
+    @Volatile
+    private var activeBackend: LlmInference.Backend? = null
 
     private val guardPrefs: SharedPreferences =
         context.applicationContext.getSharedPreferences(GUARD_PREFS_NAME, Context.MODE_PRIVATE)
@@ -33,20 +38,53 @@ class LocalLlmPolisher(
         return file.exists() && file.length() >= MIN_VALID_MODEL_BYTES
     }
 
-    fun isBlockedByCrashGuard(): Boolean {
-        val crashedInProgress = guardPrefs.getBoolean(KEY_LOADING_IN_PROGRESS, false)
+    fun activeBackendLabel(): String {
+        return when (activeBackend) {
+            LlmInference.Backend.GPU -> "GPU 加速"
+            LlmInference.Backend.CPU -> "CPU 模式"
+            else -> if (shouldSkipGpu()) "CPU 降級" else "GPU 優先"
+        }
+    }
+
+    private fun shouldSkipGpu(): Boolean {
         val recordedVersion = guardPrefs.getInt(KEY_VERSION_CODE, -1)
-        if (!crashedInProgress) return false
+        if (recordedVersion != BuildConfig.VERSION_CODE) {
+            return false
+        }
+        val gpuFailed = guardPrefs.getBoolean(KEY_GPU_FAILED, false)
+        val gpuCrashed = guardPrefs.getBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
+        if (gpuCrashed && !gpuFailed) {
+            guardPrefs.edit()
+                .putBoolean(KEY_GPU_FAILED, true)
+                .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
+                .apply()
+            return true
+        }
+        return gpuFailed
+    }
+
+    fun isBlockedByCrashGuard(): Boolean {
+        val recordedVersion = guardPrefs.getInt(KEY_VERSION_CODE, -1)
         if (recordedVersion != BuildConfig.VERSION_CODE) {
             clearCrashGuard()
             return false
         }
-        return true
+        // If GPU crashed previously, we do NOT block local LLM — we automatically fall back to CPU.
+        if (guardPrefs.getBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)) {
+            guardPrefs.edit()
+                .putBoolean(KEY_GPU_FAILED, true)
+                .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
+                .apply()
+            return false
+        }
+        return guardPrefs.getBoolean(KEY_CPU_LOADING_IN_PROGRESS, false)
     }
 
     fun clearCrashGuard() {
         guardPrefs.edit()
-            .putBoolean(KEY_LOADING_IN_PROGRESS, false)
+            .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
+            .putBoolean(KEY_GPU_FAILED, false)
+            .putBoolean(KEY_CPU_LOADING_IN_PROGRESS, false)
             .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
             .apply()
     }
@@ -71,7 +109,7 @@ class LocalLlmPolisher(
         }
 
         val engine = ensureLoaded()
-            ?: return@withContext Result.failure(IllegalStateException("尚未下載或無法初始化本地 Gemma 3 1B 模型"))
+            ?: return@withContext Result.failure(IllegalStateException("尚未下載或無法初始化本地 Qwen2.5 0.5B 模型"))
 
         val preferTraditional = !languageTag.startsWith("zh-CN", ignoreCase = true)
         val preInput = if (preferTraditional) {
@@ -80,28 +118,30 @@ class LocalLlmPolisher(
             clean
         }
 
+        // Compact Qwen2.5 ChatML prompt for low prefill latency & strict direct output
         val prompt = buildString {
-            append("<start_of_turn>user\n")
+            append("<|im_start|>system\n")
             if (preferTraditional) {
-                appendLine("你是語音錯字標點修正器。只輸出修正後的繁體中文句子本身，嚴禁任何問候、解釋、引號或重複。")
+                append("你是繁體中文語音錯字標點修正器。只輸出修正後的這一句話，禁止問候、解釋、引號或重複。")
                 if (removeFillers) {
-                    appendLine("去除口語贅詞，句中停頓用「，」，句尾用「。」或「？」。")
+                    append("去除口語贅詞，句中用「，」，句尾用「。」或「？」。")
                 }
-                appendLine("輸入：嗯今天天氣因該不錯我們去吃午飯吧")
-                appendLine("輸出：今天天氣應該不錯，我們去吃午飯吧。")
-                appendLine("輸入：簡單測試幫忙看看我的話有沒有錯")
-                appendLine("輸出：簡單測試，幫忙看看我的話有沒有錯。")
                 if (referenceHints.isNotBlank()) {
-                    appendLine("參考詞彙（僅供拼寫參考）：${referenceHints.take(300)}")
+                    append("\n參考詞彙：").append(referenceHints.take(220))
                 }
             } else {
-                appendLine("你是语音错字标点修正器。只输出修正后的句子本身，严禁任何问候、解释、引号或重复。")
-                appendLine("输入：嗯今天天气应该不错我们去吃午饭吧")
-                appendLine("输出：今天天气应该不错，我们去吃午饭吧。")
+                append("你是语音错字标点修正器。只输出修正后的这一句话，禁止问候、解释、引号或重复。")
             }
-            append("輸入：")
-            appendLine(preInput)
-            append("輸出：<end_of_turn>\n<start_of_turn>model\n")
+            append("<|im_end|>\n")
+            append("<|im_start|>user\n")
+            if (preferTraditional) {
+                appendLine("嗯今天天氣因該不錯我們去吃午飯吧")
+                append("<|im_end|>\n<|im_start|>assistant\n")
+                appendLine("今天天氣應該不錯，我們去吃午飯吧。")
+                append("<|im_end|>\n<|im_start|>user\n")
+            }
+            append(preInput)
+            append("<|im_end|>\n<|im_start|>assistant\n")
         }
 
         try {
@@ -139,16 +179,14 @@ class LocalLlmPolisher(
         }.trim()
     }
 
-    /**
-     * Strips model chatter / prefixes / quotes and rejects hallucinated or looping responses
-     * so the IME seamlessly falls back to ultra-clean local punctuation + Traditional Chinese output.
-     */
     private fun sanitizeAndValidateOutput(rawOut: String, originalInput: String): String? {
         if (rawOut.isBlank()) return null
 
         val firstTurn = rawOut
+            .substringBefore("<|im_end|>")
+            .substringBefore("<|endoftext|>")
+            .substringBefore("<|im_start|>")
             .substringBefore("<end_of_turn>")
-            .substringBefore("<start_of_turn>")
             .trim()
 
         val firstLine = firstTurn
@@ -166,7 +204,6 @@ class LocalLlmPolisher(
             .removePrefix("修正後：")
             .trim()
 
-        // Strip wrapping quotes if the model enclosed the sentence
         val quotePairs = listOf("「" to "」", "『" to "』", "“" to "”", "\"" to "\"")
         for ((open, close) in quotePairs) {
             if (text.startsWith(open) && text.endsWith(close) && text.length > open.length + close.length) {
@@ -176,20 +213,17 @@ class LocalLlmPolisher(
 
         if (text.isBlank()) return null
 
-        // Reject conversational assistant chatter that wasn't in the user's speech
         for (marker in CHATTER_MARKERS) {
             if (text.contains(marker) && !originalInput.contains(marker)) {
                 return null
             }
         }
 
-        // Reject runaway / bloated outputs (e.g. looping repetitions)
         val maxAllowedLen = (originalInput.length * 1.6f + 12).toInt().coerceAtLeast(24)
         if (text.length > maxAllowedLen) {
             return null
         }
 
-        // Reject obvious repetition loops inside the single line
         if (hasRepetitionLoop(text) && !hasRepetitionLoop(originalInput)) {
             return null
         }
@@ -221,23 +255,59 @@ class LocalLlmPolisher(
         runCatching { llm?.close() }
         llm = null
         loadedPath = null
+        activeBackend = null
 
-        guardPrefs.edit()
-            .putBoolean(KEY_LOADING_IN_PROGRESS, true)
-            .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
-            .commit()
+        var created: LlmInference? = null
+        var usedBackend: LlmInference.Backend? = null
 
-        val created = tryCreateInference(modelFile.absolutePath, LlmInference.Backend.CPU)
-            ?: tryCreateInference(modelFile.absolutePath, LlmInference.Backend.GPU)
+        // Phase 1: Try GPU acceleration first (2~3x faster on flagship chips) with crash guard
+        if (!shouldSkipGpu()) {
+            guardPrefs.edit()
+                .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, true)
+                .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
+                .commit()
 
-        guardPrefs.edit()
-            .putBoolean(KEY_LOADING_IN_PROGRESS, false)
-            .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
-            .apply()
+            val gpuInstance = tryCreateInference(modelFile.absolutePath, LlmInference.Backend.GPU)
+            if (gpuInstance != null) {
+                guardPrefs.edit()
+                    .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
+                    .putBoolean(KEY_GPU_FAILED, false)
+                    .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
+                    .apply()
+                created = gpuInstance
+                usedBackend = LlmInference.Backend.GPU
+            } else {
+                guardPrefs.edit()
+                    .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
+                    .putBoolean(KEY_GPU_FAILED, true)
+                    .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
+                    .apply()
+            }
+        }
+
+        // Phase 2: Automatic fallback to CPU if GPU is unavailable or previously crashed
+        if (created == null) {
+            guardPrefs.edit()
+                .putBoolean(KEY_CPU_LOADING_IN_PROGRESS, true)
+                .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
+                .commit()
+
+            val cpuInstance = tryCreateInference(modelFile.absolutePath, LlmInference.Backend.CPU)
+            guardPrefs.edit()
+                .putBoolean(KEY_CPU_LOADING_IN_PROGRESS, false)
+                .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
+                .apply()
+
+            if (cpuInstance != null) {
+                created = cpuInstance
+                usedBackend = LlmInference.Backend.CPU
+            }
+        }
 
         if (created != null) {
             llm = created
             loadedPath = modelFile.absolutePath
+            activeBackend = usedBackend
         }
         return created
     }
@@ -246,7 +316,7 @@ class LocalLlmPolisher(
         return try {
             val options = LlmInference.LlmInferenceOptions.builder()
                 .setModelPath(modelPath)
-                .setMaxTokens(256)
+                .setMaxTokens(192)
                 .setPreferredBackend(backend)
                 .build()
             LlmInference.createFromOptions(context.applicationContext, options)
@@ -259,11 +329,14 @@ class LocalLlmPolisher(
         runCatching { llm?.close() }
         llm = null
         loadedPath = null
+        activeBackend = null
     }
 
     companion object {
         private const val GUARD_PREFS_NAME = "pixelvoice_local_llm_guard"
-        private const val KEY_LOADING_IN_PROGRESS = "loading_in_progress"
+        private const val KEY_GPU_LOADING_IN_PROGRESS = "gpu_loading_in_progress"
+        private const val KEY_GPU_FAILED = "gpu_failed_fallback_cpu"
+        private const val KEY_CPU_LOADING_IN_PROGRESS = "cpu_loading_in_progress"
         private const val KEY_VERSION_CODE = "version_code"
         private const val MIN_VALID_MODEL_BYTES = 50L * 1024L * 1024L
 

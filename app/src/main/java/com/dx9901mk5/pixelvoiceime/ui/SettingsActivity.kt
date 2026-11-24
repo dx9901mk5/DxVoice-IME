@@ -116,7 +116,7 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
             SettingsNavItem(1, "離線語系", Icons.Rounded.Language),
             SettingsNavItem(2, "AI 與端點", Icons.Rounded.AutoAwesome),
             SettingsNavItem(3, "外觀備份", Icons.Rounded.Backup),
-            SettingsNavItem(4, "檢查更新", Icons.Rounded.SystemUpdate)
+            SettingsNavItem(4, "更新關於", Icons.Rounded.SystemUpdate)
         )
     }
 
