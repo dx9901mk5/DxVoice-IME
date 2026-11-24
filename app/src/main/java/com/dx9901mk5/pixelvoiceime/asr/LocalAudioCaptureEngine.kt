@@ -115,12 +115,12 @@ class LocalAudioCaptureEngine {
                         noiseFloorRms = (noiseFloorRms * 0.92f + rms * 0.08f).coerceIn(80f, 1600f)
                     }
 
-                    val dynamicThreshold = (noiseFloorRms * 3.0f).coerceIn(680f, 3200f)
+                    val dynamicThreshold = (noiseFloorRms * 2.6f).coerceIn(380f, 2600f)
                     val normalized = (rms / (dynamicThreshold * 2.5f)).coerceIn(0.05f, 1f)
 
                     if (calibratedFrames >= 3 && rms >= dynamicThreshold) {
                         consecutiveSpeechFrames++
-                        if (speechStarted || consecutiveSpeechFrames >= 3) {
+                        if (speechStarted || consecutiveSpeechFrames >= 2) {
                             speechStarted = true
                             lastSpeechTime = now
                         }

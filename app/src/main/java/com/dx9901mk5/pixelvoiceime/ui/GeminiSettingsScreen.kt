@@ -444,7 +444,7 @@ fun GeminiSettingsScreen(
                     }
                 )
                 Text(
-                    text = "⚡ 加速說明：預設啟用 GPU 優先推論（若驅動不相容將自動安全降級 CPU），建議具備 8GB+ RAM 之中高階或旗艦機使用。",
+                    text = "⚡ 加速說明：Qwen2.5 0.5B 採 XNNPACK 多執行緒極速 CPU 推論（避免 GPU 編譯卡頓，內建 4.5 秒超時自動降級保護），建議具備 8GB+ RAM 之手機使用。",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

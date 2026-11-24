@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Fast on-device Chinese LLM polisher powered by MediaPipe Tasks GenAI (Qwen2.5-0.5B-Instruct Q8).
@@ -40,9 +41,9 @@ class LocalLlmPolisher(
 
     fun activeBackendLabel(): String {
         return when (activeBackend) {
+            LlmInference.Backend.CPU -> "XNNPACK 極速 CPU"
             LlmInference.Backend.GPU -> "GPU 加速"
-            LlmInference.Backend.CPU -> "CPU 模式"
-            else -> if (shouldSkipGpu()) "CPU 降級" else "GPU 優先"
+            else -> "XNNPACK 極速 CPU"
         }
     }
 
@@ -145,7 +146,9 @@ class LocalLlmPolisher(
         }
 
         try {
-            val rawOut = generateLowTempResponse(engine, prompt)
+            val rawOut = withTimeoutOrNull(4500L) {
+                generateLowTempResponse(engine, prompt)
+            } ?: return@withContext Result.failure(IllegalStateException("本地模型回應逾時，已自動改用 0ms 本地詞庫直出"))
             val sanitized = sanitizeAndValidateOutput(rawOut = rawOut, originalInput = preInput)
                 ?: return@withContext Result.failure(IllegalStateException("本地模型輸出異常，已自動改用本地規則直出"))
 
@@ -260,47 +263,41 @@ class LocalLlmPolisher(
         var created: LlmInference? = null
         var usedBackend: LlmInference.Backend? = null
 
-        // Phase 1: Try GPU acceleration first (2~3x faster on flagship chips) with crash guard
-        if (!shouldSkipGpu()) {
+        // Phase 1: Qwen2.5-0.5B multi-prefill-seq_q8_ekv1280 is optimized for XNNPACK CPU
+        // (zero OpenCL shader compilation freeze and ~30 tok/s on flagship chips).
+        guardPrefs.edit()
+            .putBoolean(KEY_CPU_LOADING_IN_PROGRESS, true)
+            .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
+            .commit()
+
+        val cpuInstance = tryCreateInference(modelFile.absolutePath, LlmInference.Backend.CPU)
+        guardPrefs.edit()
+            .putBoolean(KEY_CPU_LOADING_IN_PROGRESS, false)
+            .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
+            .apply()
+
+        if (cpuInstance != null) {
+            created = cpuInstance
+            usedBackend = LlmInference.Backend.CPU
+        }
+
+        // Phase 2: Fallback to GPU only if CPU delegate fails
+        if (created == null && !shouldSkipGpu()) {
             guardPrefs.edit()
                 .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, true)
                 .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
                 .commit()
 
             val gpuInstance = tryCreateInference(modelFile.absolutePath, LlmInference.Backend.GPU)
-            if (gpuInstance != null) {
-                guardPrefs.edit()
-                    .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
-                    .putBoolean(KEY_GPU_FAILED, false)
-                    .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
-                    .apply()
-                created = gpuInstance
-                usedBackend = LlmInference.Backend.GPU
-            } else {
-                guardPrefs.edit()
-                    .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
-                    .putBoolean(KEY_GPU_FAILED, true)
-                    .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
-                    .apply()
-            }
-        }
-
-        // Phase 2: Automatic fallback to CPU if GPU is unavailable or previously crashed
-        if (created == null) {
             guardPrefs.edit()
-                .putBoolean(KEY_CPU_LOADING_IN_PROGRESS, true)
-                .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
-                .commit()
-
-            val cpuInstance = tryCreateInference(modelFile.absolutePath, LlmInference.Backend.CPU)
-            guardPrefs.edit()
-                .putBoolean(KEY_CPU_LOADING_IN_PROGRESS, false)
+                .putBoolean(KEY_GPU_LOADING_IN_PROGRESS, false)
+                .putBoolean(KEY_GPU_FAILED, gpuInstance == null)
                 .putInt(KEY_VERSION_CODE, BuildConfig.VERSION_CODE)
                 .apply()
 
-            if (cpuInstance != null) {
-                created = cpuInstance
-                usedBackend = LlmInference.Backend.CPU
+            if (gpuInstance != null) {
+                created = gpuInstance
+                usedBackend = LlmInference.Backend.GPU
             }
         }
 
@@ -316,7 +313,7 @@ class LocalLlmPolisher(
         return try {
             val options = LlmInference.LlmInferenceOptions.builder()
                 .setModelPath(modelPath)
-                .setMaxTokens(192)
+                .setMaxTokens(512)
                 .setPreferredBackend(backend)
                 .build()
             LlmInference.createFromOptions(context.applicationContext, options)

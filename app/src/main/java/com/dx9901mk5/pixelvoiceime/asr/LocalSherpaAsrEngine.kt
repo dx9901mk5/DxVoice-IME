@@ -215,7 +215,7 @@ class LocalSherpaAsrEngine(
     private fun splitPcmBySilence(pcmBytes: ByteArray): List<ByteArray> {
         val frameBytes = 1600 // 50ms at 16kHz 16-bit mono
         val minSilenceFrames = 9 // 9 * 50ms = 450ms
-        val minSpeechFramesPerSegment = 4 // 4 * 50ms = 200ms
+        val minSpeechFramesPerSegment = 3 // 3 * 50ms = 150ms (keeps short replies like 好喔/謝謝)
 
         val frameRmsList = ArrayList<Float>(pcmBytes.size / frameBytes + 1)
         var pos = 0
@@ -224,13 +224,13 @@ class LocalSherpaAsrEngine(
             pos += frameBytes
         }
         if (frameRmsList.isEmpty()) {
-            return emptyList()
+            return if (pcmBytes.size > 3200) listOf(pcmBytes) else emptyList()
         }
 
         val sortedRms = frameRmsList.sorted()
         val noiseFloor = sortedRms[(sortedRms.size * 0.2f).toInt().coerceIn(0, sortedRms.lastIndex)]
-        val speechThresholdRms = (noiseFloor * 2.8f).coerceIn(650f, 3000f)
-        val minSegmentPeakRms = maxOf(900f, speechThresholdRms * 1.25f)
+        val speechThresholdRms = (noiseFloor * 2.4f).coerceIn(340f, 2400f)
+        val minSegmentPeakRms = maxOf(480f, speechThresholdRms * 1.15f)
 
         val segments = mutableListOf<ByteArray>()
         var segStart = -1
@@ -276,6 +276,11 @@ class LocalSherpaAsrEngine(
             lastVoiceEnd > segStart + 3200
         ) {
             segments.add(pcmBytes.copyOfRange(segStart, lastVoiceEnd))
+        }
+        // Safe fallback: if recording already passed capture VAD and has audible speech peak,
+        // let SenseVoice decide (pure noise will still be filtered by <|nospeech|> / <|BGM|>).
+        if (segments.isEmpty() && pcmBytes.size > 3200 && (frameRmsList.maxOrNull() ?: 0f) >= 360f) {
+            segments.add(pcmBytes)
         }
         return segments
     }
