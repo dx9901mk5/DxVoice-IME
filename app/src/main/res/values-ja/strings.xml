@@ -12,7 +12,7 @@
     <string name="nav_languages">オフライン言語</string>
     <string name="nav_models">辞書とモデル</string>
     <string name="nav_backup">バックアップ</string>
-    <string name="nav_about">更新・情報</string>
+    <string name="nav_about">テーマと更新</string>
     <string name="layout_single_pane"> 1画面</string>
     <string name="layout_side_by_side"> 2画面</string>
     <string name="ui_language_title">表示言語</string>
@@ -256,7 +256,8 @@
     <string name="about_play_title">バージョン情報と Google Play 更新</string>
     <string name="about_current_version">現在のバージョン：v%1$s (Code %2$d)</string>
     <string name="about_play_desc">Google Play 配信版です。すべてのアップデートは Google Play 経由で安全に配信されます。</string>
-    <string name="about_play_btn">Google Play で更新を確認 ↗</string>
+    <string name="about_play_btn">Google Play で更新 ↗</string>
+    <string name="about_github_project_btn">GitHub プロジェクト ↗</string>
     <string name="about_github_title">GitHub リポジトリ設定</string>
     <string name="about_github_desc">標準リポジトリのまま、またはご自身の Fork / カスタム GitHub Release URL に変更できます。</string>
     <string name="about_github_invalid">形式エラー：https://github.com/owner/repo の形式で入力してください</string>

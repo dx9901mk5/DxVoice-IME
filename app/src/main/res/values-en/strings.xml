@@ -12,7 +12,7 @@
     <string name="nav_languages">Languages</string>
     <string name="nav_models">Dict &amp; Models</string>
     <string name="nav_backup">Backup</string>
-    <string name="nav_about">About</string>
+    <string name="nav_about">Theme &amp; Updates</string>
     <string name="layout_single_pane"> Single</string>
     <string name="layout_side_by_side"> Split</string>
     <string name="ui_language_title">App Language</string>
@@ -256,7 +256,8 @@
     <string name="about_play_title">Version &amp; Google Play Updates</string>
     <string name="about_current_version">Installed version: v%1$s (Code %2$d)</string>
     <string name="about_play_desc">This is the Google Play release. All updates are delivered securely through Google Play.</string>
-    <string name="about_play_btn">Check Updates on Google Play ↗</string>
+    <string name="about_play_btn">Update on Google Play ↗</string>
+    <string name="about_github_project_btn">GitHub Project ↗</string>
     <string name="about_github_title">GitHub Repository Settings</string>
     <string name="about_github_desc">Keep the default repository or enter your own Fork / custom GitHub Releases URL.</string>
     <string name="about_github_invalid">Invalid format. Please enter https://github.com/owner/repo</string>

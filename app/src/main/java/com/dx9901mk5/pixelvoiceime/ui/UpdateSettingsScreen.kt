@@ -6,6 +6,8 @@ import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -38,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dx9901mk5.pixelvoiceime.BuildConfig
 import com.dx9901mk5.pixelvoiceime.R
+import com.dx9901mk5.pixelvoiceime.data.AppThemeMode
 import com.dx9901mk5.pixelvoiceime.data.VoiceImeConfig
 import com.dx9901mk5.pixelvoiceime.data.VoiceImePrefs
 import com.dx9901mk5.pixelvoiceime.updater.AutoUpdateWorker
@@ -46,6 +50,7 @@ import com.dx9901mk5.pixelvoiceime.updater.ReleaseInfo
 import com.dx9901mk5.pixelvoiceime.updater.UpdateCheckResult
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UpdateSettingsScreen(
     prefs: VoiceImePrefs,
@@ -65,6 +70,15 @@ fun UpdateSettingsScreen(
     var releaseInfo by remember { mutableStateOf<ReleaseInfo?>(null) }
 
     val canInstall = if (BuildConfig.IS_PLAY_BUILD) false else updater.canInstallPackages(context)
+
+    fun openExternalUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            if (activityContext !is android.app.Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
+        runCatching { activityContext.startActivity(intent) }
+    }
 
     fun startDownloadAndInstall(apkUrl: String, versionLabel: String? = null) {
         downloading = true
@@ -96,6 +110,32 @@ fun UpdateSettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        // Theme Card
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.theme_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = config.appThemeMode == AppThemeMode.DYNAMIC_PIXEL,
+                        onClick = { prefs.update { it.copy(appThemeMode = AppThemeMode.DYNAMIC_PIXEL) } },
+                        label = { Text(stringResource(R.string.theme_dynamic)) }
+                    )
+                    FilterChip(
+                        selected = config.appThemeMode == AppThemeMode.ORANGE_CHARCOAL,
+                        onClick = { prefs.update { it.copy(appThemeMode = AppThemeMode.ORANGE_CHARCOAL) } },
+                        label = { Text(stringResource(R.string.theme_orange)) }
+                    )
+                }
+            }
+        }
+
         if (BuildConfig.IS_PLAY_BUILD) {
             Card(
                 shape = RoundedCornerShape(20.dp),
@@ -116,16 +156,24 @@ fun UpdateSettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Button(
-                        onClick = {
-                            val marketIntent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
-                            )
-                            runCatching { activityContext.startActivity(marketIntent) }
-                        }
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(stringResource(R.string.about_play_btn))
+                        Button(
+                            onClick = {
+                                openExternalUrl("https://play.google.com/store/apps/details?id=${context.packageName}")
+                            }
+                        ) {
+                            Text(stringResource(R.string.about_play_btn))
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                openExternalUrl(VoiceImeConfig.DEFAULT_GITHUB_REPO)
+                            }
+                        ) {
+                            Text(stringResource(R.string.about_github_project_btn))
+                        }
                     }
                 }
             }
@@ -154,7 +202,10 @@ fun UpdateSettingsScreen(
                         placeholder = { Text(VoiceImeConfig.DEFAULT_GITHUB_REPO) },
                         shape = RoundedCornerShape(14.dp)
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Button(
                             onClick = {
                                 val parsed = updater.parseOwnerRepo(repoInput)
@@ -178,6 +229,20 @@ fun UpdateSettingsScreen(
                             }
                         ) {
                             Text(stringResource(R.string.about_github_reset_btn))
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                openExternalUrl("https://play.google.com/store/apps/details?id=${context.packageName}")
+                            }
+                        ) {
+                            Text(stringResource(R.string.about_play_btn))
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                openExternalUrl(VoiceImeConfig.DEFAULT_GITHUB_REPO)
+                            }
+                        ) {
+                            Text(stringResource(R.string.about_github_project_btn))
                         }
                     }
                     if (!repoSaveHint.isNullOrBlank()) {
@@ -221,7 +286,7 @@ fun UpdateSettingsScreen(
                                     Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                                     Uri.parse("package:${context.packageName}")
                                 )
-                                activityContext.startActivity(intent)
+                                runCatching { activityContext.startActivity(intent) }
                             }
                         ) {
                             Text(stringResource(R.string.about_allow_install))
@@ -336,11 +401,7 @@ fun UpdateSettingsScreen(
                 Spacer(Modifier.height(2.dp))
                 OutlinedButton(
                     onClick = {
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse("https://github.com/dx9901mk5/DxVoice-IME/blob/main/PRIVACY_POLICY.md")
-                        )
-                        activityContext.startActivity(intent)
+                        openExternalUrl("https://github.com/dx9901mk5/DxVoice-IME/blob/main/PRIVACY_POLICY.md")
                     }
                 ) {
                     Text(stringResource(R.string.credits_privacy_btn))

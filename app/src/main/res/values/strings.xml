@@ -12,7 +12,7 @@
     <string name="nav_languages">離線語系</string>
     <string name="nav_models">詞庫與本地模型</string>
     <string name="nav_backup">備份</string>
-    <string name="nav_about">更新說明</string>
+    <string name="nav_about">主題與更新</string>
     <string name="layout_single_pane"> 單欄</string>
     <string name="layout_side_by_side"> 並排</string>
     <string name="ui_language_title">介面語言</string>
@@ -256,7 +256,8 @@
     <string name="about_play_title">版本資訊與 Google Play 更新</string>
     <string name="about_current_version">目前安裝版本：v%1$s (Code %2$d)</string>
     <string name="about_play_desc">此為 Google Play 商店發行版本，所有版本更新皆透過 Google Play 安全推送。</string>
-    <string name="about_play_btn">前往 Google Play 檢查更新 ↗</string>
+    <string name="about_play_btn">前往 Google Play 更新 ↗</string>
+    <string name="about_github_project_btn">GitHub 專案連結 ↗</string>
     <string name="about_github_title">GitHub 專案連結設定</string>
     <string name="about_github_desc">可保留預設專案連結，或改為你自己的 Fork / 自訂 GitHub Release 儲存庫。</string>
     <string name="about_github_invalid">格式錯誤，請輸入 https://github.com/帳號/專案名稱</string>

@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
 import com.dx9901mk5.pixelvoiceime.R
 import com.dx9901mk5.pixelvoiceime.billing.ProFeature
-import com.dx9901mk5.pixelvoiceime.data.AppThemeMode
 import com.dx9901mk5.pixelvoiceime.data.AppUiLanguage
 import com.dx9901mk5.pixelvoiceime.data.BackupManager
 
@@ -264,32 +263,6 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                         selected = config.uiLanguage == AppUiLanguage.JA,
                         onClick = { app.prefs.update { it.copy(uiLanguage = AppUiLanguage.JA) } },
                         label = { Text(stringResource(R.string.ui_language_ja)) }
-                    )
-                }
-            }
-        }
-
-        // Theme Card
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = stringResource(R.string.theme_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = config.appThemeMode == AppThemeMode.DYNAMIC_PIXEL,
-                        onClick = { app.prefs.update { it.copy(appThemeMode = AppThemeMode.DYNAMIC_PIXEL) } },
-                        label = { Text(stringResource(R.string.theme_dynamic)) }
-                    )
-                    FilterChip(
-                        selected = config.appThemeMode == AppThemeMode.ORANGE_CHARCOAL,
-                        onClick = { app.prefs.update { it.copy(appThemeMode = AppThemeMode.ORANGE_CHARCOAL) } },
-                        label = { Text(stringResource(R.string.theme_orange)) }
                     )
                 }
             }
