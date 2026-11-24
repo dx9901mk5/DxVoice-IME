@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
+import com.dx9901mk5.pixelvoiceime.billing.ProFeature
 import com.dx9901mk5.pixelvoiceime.data.AppThemeMode
 import com.dx9901mk5.pixelvoiceime.data.BackupManager
 
@@ -45,6 +46,16 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
     val config by app.prefs.config.collectAsState()
     val dictState by app.customDictionaryStore.state.collectAsState()
     var backupStatus by remember { mutableStateOf<String?>(null) }
+    var showUpgradeDialog by remember { mutableStateOf(false) }
+    val hasProAccess = app.entitlementManager.hasProAccess()
+
+    if (showUpgradeDialog) {
+        ProUpgradeDialog(
+            entitlementManager = app.entitlementManager,
+            highlightedFeature = ProFeature.CLOUD_BACKUP,
+            onDismiss = { showUpgradeDialog = false }
+        )
+    }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
@@ -143,6 +154,10 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                     )
                     Button(
                         onClick = {
+                            if (!hasProAccess) {
+                                showUpgradeDialog = true
+                                return@Button
+                            }
                             val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager, app.customDictionaryStore)
                             val res = BackupManager.writeBackupToTreeUri(
                                 context = context,
@@ -165,17 +180,23 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
-                        onClick = { folderPickerLauncher.launch(null) }
+                        onClick = {
+                            if (!hasProAccess) showUpgradeDialog = true else folderPickerLauncher.launch(null)
+                        }
                     ) {
                         Text(if (config.backupTreeUri.isBlank()) "指定 Google 雲端硬碟 / 本地資料夾" else "更換備份資料夾")
                     }
                     OutlinedButton(
-                        onClick = { createLocalDocLauncher.launch(previewName) }
+                        onClick = {
+                            if (!hasProAccess) showUpgradeDialog = true else createLocalDocLauncher.launch(previewName)
+                        }
                     ) {
                         Text("單次另存備份檔")
                     }
                     OutlinedButton(
-                        onClick = { restoreDocLauncher.launch(arrayOf("application/json", "*/*")) }
+                        onClick = {
+                            if (!hasProAccess) showUpgradeDialog = true else restoreDocLauncher.launch(arrayOf("application/json", "*/*"))
+                        }
                     ) {
                         Text("從備份檔還原")
                     }

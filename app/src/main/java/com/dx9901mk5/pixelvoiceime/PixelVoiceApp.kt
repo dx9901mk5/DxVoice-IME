@@ -5,6 +5,7 @@ import com.dx9901mk5.pixelvoiceime.ai.GeminiPolisher
 import com.dx9901mk5.pixelvoiceime.ai.LocalLlmPolisher
 import com.dx9901mk5.pixelvoiceime.ai.OpenAiCompatibleClient
 import com.dx9901mk5.pixelvoiceime.asr.LocalSherpaAsrEngine
+import com.dx9901mk5.pixelvoiceime.billing.ProEntitlementManager
 import com.dx9901mk5.pixelvoiceime.data.ApiKeyStore
 import com.dx9901mk5.pixelvoiceime.data.CustomDictionaryStore
 import com.dx9901mk5.pixelvoiceime.data.VoiceImePrefs
@@ -32,6 +33,8 @@ class PixelVoiceApp : Application() {
         private set
     lateinit var updater: GitHubUpdater
         private set
+    lateinit var entitlementManager: ProEntitlementManager
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -44,8 +47,9 @@ class PixelVoiceApp : Application() {
         geminiPolisher = GeminiPolisher(apiKeyStore)
         openAiClient = OpenAiCompatibleClient()
         updater = GitHubUpdater()
+        entitlementManager = ProEntitlementManager(this)
 
-        if (prefs.config.value.autoUpdateEnabled) {
+        if (!BuildConfig.IS_PLAY_BUILD && prefs.config.value.autoUpdateEnabled) {
             AutoUpdateWorker.schedule(this)
         }
     }

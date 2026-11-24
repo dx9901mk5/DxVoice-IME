@@ -93,6 +93,40 @@ fun UpdateSettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        if (BuildConfig.IS_PLAY_BUILD) {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "版本資訊與 Google Play 更新",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "目前安裝版本：v${BuildConfig.VERSION_NAME} (Code ${BuildConfig.VERSION_CODE})",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "此為 Google Play 商店發行版本，所有版本更新皆透過 Google Play 安全推送。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(
+                        onClick = {
+                            val marketIntent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
+                            )
+                            runCatching { context.startActivity(marketIntent) }
+                        }
+                    ) {
+                        Text("前往 Google Play 檢查更新 ↗")
+                    }
+                }
+            }
+        } else {
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -267,6 +301,7 @@ fun UpdateSettingsScreen(
                 }
             }
         }
+        }
 
         Card(
             shape = RoundedCornerShape(20.dp),
@@ -274,32 +309,49 @@ fun UpdateSettingsScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "開源模型與特別銘謝",
+                    text = "開源模型、函式庫與特別銘謝",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "DxVoice-IME 的離線語音辨識、標點與本地修潤能力建構於以下優秀開源模型與推論框架，特此致謝：",
+                    text = "DxVoice-IME 建構於以下優秀的開源 AI 模型與開源軟體專案，特此列出並致上誠摯感謝：",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "• SenseVoice (FunAudioLLM / Alibaba)：中／粵／英／日／韓多語離線語音辨識模型 (Apache-2.0)\n" +
-                        "• Whisper Tiny / Base (OpenAI)：全球多語系離線語音辨識模型 (MIT)\n" +
+                    text = "【開源語音與語言模型】\n" +
+                        "• SenseVoice (FunAudioLLM / Alibaba)：中／粵／英／日／韓多語離線語音辨識模型 (Apache-2.0)\n" +
+                        "• OpenAI Whisper (Tiny / Base)：全球多語系離線語音辨識模型 (MIT)\n" +
                         "• CT-Transformer (FunASR / Alibaba)：中／英離線自動標點模型 (MIT)\n" +
-                        "• Qwen2.5-0.5B-Instruct (Alibaba Qwen / LiteRT Community)：裝置端極速中文錯字與語意修潤小模型 (Apache-2.0)\n" +
-                        "• Sherpa-ONNX (k2-fsa) & MediaPipe Tasks GenAI (Google AI Edge)：裝置端離線推論引擎 (Apache-2.0)\n" +
-                        "• Android ICU & Google ML Kit：本地完整繁簡轉換與多語翻譯支援",
+                        "• Qwen2.5-0.5B-Instruct (Alibaba Qwen / LiteRT Community)：裝置端極速中文錯字與語意修潤小模型 (Apache-2.0)\n\n" +
+                        "【開源推論引擎與函式庫】\n" +
+                        "• Sherpa-ONNX (k2-fsa / Next-gen Kaldi)：裝置端語音辨識與標點推論框架 (Apache-2.0)\n" +
+                        "• Google MediaPipe Tasks GenAI (Google AI Edge)：裝置端 LLM 推論引擎 (Apache-2.0)\n" +
+                        "• AndroidX / Jetpack Compose / Material 3 (Google)：現代化介面與自適應雙欄元件 (Apache-2.0)\n" +
+                        "• OkHttp (Square) & Apache Commons Compress：網路連線與離線模型壓縮檔解包 (Apache-2.0)\n" +
+                        "• Android ICU (Unicode) & Google ML Kit：完整繁簡中文轉換與裝置端翻譯",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "特別銘謝：誠摯感謝輔助開發人員「曉東」的協助與支持！",
+                    text = "特別銘謝：感謝協助開發與參與測試人員 — 曉東、Kimi！",
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
+                Spacer(Modifier.height(2.dp))
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://github.com/dx9901mk5/DxVoice-IME/blob/main/PRIVACY_POLICY.md")
+                        )
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text("檢視隱私權政策 ↗")
+                }
             }
         }
 

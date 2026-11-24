@@ -96,7 +96,10 @@ class FloatingMicService : Service() {
 
         serviceScope.launch {
             app.prefs.config.collectLatest { config ->
-                if (!config.floatingBallEnabled || !Settings.canDrawOverlays(this@FloatingMicService)) {
+                if (!config.floatingBallEnabled ||
+                    !app.entitlementManager.hasProAccess() ||
+                    !Settings.canDrawOverlays(this@FloatingMicService)
+                ) {
                     stopSelf()
                     return@collectLatest
                 }
@@ -110,7 +113,10 @@ class FloatingMicService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!Settings.canDrawOverlays(this) || !app.prefs.config.value.floatingBallEnabled) {
+        if (!Settings.canDrawOverlays(this) ||
+            !app.prefs.config.value.floatingBallEnabled ||
+            !app.entitlementManager.hasProAccess()
+        ) {
             stopSelf()
             return START_NOT_STICKY
         }

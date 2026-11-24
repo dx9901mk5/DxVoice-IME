@@ -161,6 +161,7 @@ class PixelVoiceImeService : InputMethodService() {
         val cfg = app.prefs.config.value
         val activeLangTag = cfg.activeLanguageTag
         val needLocalLlm = cfg.localLlmEnabled &&
+            app.entitlementManager.hasProAccess() &&
             !(cfg.geminiPolishEnabled && app.apiKeyStore.hasApiKey.value) &&
             app.localLlmPolisher.isModelDownloaded() &&
             !app.localLlmPolisher.isBlockedByCrashGuard()
@@ -750,7 +751,7 @@ class PixelVoiceImeService : InputMethodService() {
         lastCommitTimestampMs = System.currentTimeMillis()
         app.customDictionaryStore.recordCommittedText(outputText)
 
-        val shouldAutoReturn = config.autoReturnToPreviousIme
+        val shouldAutoReturn = config.autoReturnToPreviousIme && app.entitlementManager.hasProAccess()
         sessionState.value = VoiceSessionState.Committed(
             rawText = rawText,
             finalText = outputText,

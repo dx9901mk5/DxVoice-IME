@@ -12,8 +12,8 @@ android {
         applicationId = "com.dx9901mk5.pixelvoiceime"
         minSdk = 26
         targetSdk = 36
-        versionCode = 31
-        versionName = "3.4.3"
+        versionCode = 32
+        versionName = "3.4.4"
         ndk {
             abiFilters += "arm64-v8a"
         }
@@ -36,6 +36,21 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("github") {
+            dimension = "distribution"
+            buildConfigField("boolean", "IS_PLAY_BUILD", "false")
+            buildConfigField("boolean", "IS_BETA_FREE", "true")
+        }
+        create("play") {
+            dimension = "distribution"
+            buildConfigField("boolean", "IS_PLAY_BUILD", "true")
+            // Set to false when promoting to Google Play Production to activate the 3-day free trial & IAP paywall.
+            buildConfigField("boolean", "IS_BETA_FREE", "true")
         }
     }
 
@@ -82,5 +97,6 @@ dependencies {
     implementation(files("libs/sherpa-onnx-2.0.2.aar"))
     implementation("com.google.mlkit:translate:17.0.3")
     implementation("com.google.mediapipe:tasks-genai:0.10.35")
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
     debugImplementation(libs.androidx.ui.tooling)
 }

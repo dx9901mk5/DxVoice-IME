@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
 import com.dx9901mk5.pixelvoiceime.ai.GeminiPolisher
 import com.dx9901mk5.pixelvoiceime.ai.GeminiResult
+import com.dx9901mk5.pixelvoiceime.billing.ProFeature
 import com.dx9901mk5.pixelvoiceime.data.ApiKeyStore
 import com.dx9901mk5.pixelvoiceime.data.PolishMode
 import com.dx9901mk5.pixelvoiceime.data.VoiceImePrefs
@@ -70,6 +71,16 @@ fun GeminiSettingsScreen(
     var testStatus by remember { mutableStateOf<String?>(null) }
     var testing by remember { mutableStateOf(false) }
     var subTab by remember { mutableIntStateOf(0) }
+    var upgradeFeature by remember { mutableStateOf<ProFeature?>(null) }
+    val hasProAccess = app.entitlementManager.hasProAccess()
+
+    if (upgradeFeature != null) {
+        ProUpgradeDialog(
+            entitlementManager = app.entitlementManager,
+            highlightedFeature = upgradeFeature,
+            onDismiss = { upgradeFeature = null }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -112,15 +123,19 @@ fun GeminiSettingsScreen(
                         onCheckedChange = { v -> prefs.update { it.copy(localTaiwanTypoFixEnabled = v) } }
                     )
                     SettingSwitchRow(
-                        title = "旗艦機本地極速小模型修潤 (Qwen2.5 0.5B)",
+                        title = "旗艦機本地極速小模型修潤 (Qwen2.5 0.5B · Pro)",
                         subtitle = "無須網路、XNNPACK 極速推論，中文錯字修潤更快更精準（約 521 MB，自動清理舊 Gemma 3 模型；關閉時改走 0ms 詞庫直出）",
-                        checked = config.localLlmEnabled,
+                        checked = config.localLlmEnabled && hasProAccess,
                         onCheckedChange = { v ->
-                            prefs.update { it.copy(localLlmEnabled = v) }
-                            if (v) {
-                                app.localLlmPolisher.clearCrashGuard()
+                            if (v && !hasProAccess) {
+                                upgradeFeature = ProFeature.LOCAL_LLM
                             } else {
-                                app.localLlmPolisher.release()
+                                prefs.update { it.copy(localLlmEnabled = v) }
+                                if (v) {
+                                    app.localLlmPolisher.clearCrashGuard()
+                                } else {
+                                    app.localLlmPolisher.release()
+                                }
                             }
                         }
                     )
@@ -196,7 +211,30 @@ fun GeminiSettingsScreen(
                 }
             }
 
-            DictionarySettingsSection(dictionaryStore = app.customDictionaryStore)
+            if (hasProAccess) {
+                DictionarySettingsSection(dictionaryStore = app.customDictionaryStore)
+            } else {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "自定義詞庫、0ms 替換與習慣用語學習（Pro）",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "升級 DxVoice-IME Pro 即可解鎖專屬詞彙表、即時詞彙替換與個人習慣用語自動學習。",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Button(onClick = { upgradeFeature = ProFeature.CUSTOM_DICTIONARY }) {
+                            Text("解鎖 Pro 自定義詞庫")
+                        }
+                    }
+                }
+            }
         } else {
         Card(
             shape = RoundedCornerShape(20.dp),

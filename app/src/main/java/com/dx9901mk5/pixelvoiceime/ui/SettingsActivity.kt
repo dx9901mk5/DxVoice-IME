@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.KeyboardVoice
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.SystemUpdate
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,6 +54,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -74,6 +76,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
+import com.dx9901mk5.pixelvoiceime.billing.ProAccessState
+import com.dx9901mk5.pixelvoiceime.billing.ProFeature
 import com.dx9901mk5.pixelvoiceime.ime.FloatingMicService
 import com.dx9901mk5.pixelvoiceime.ime.PixelVoiceAccessibilityService
 import com.dx9901mk5.pixelvoiceime.ui.theme.PixelVoiceTheme
@@ -255,6 +259,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val config by app.prefs.config.collectAsState()
+    val accessState by app.entitlementManager.accessState.collectAsState()
 
     var hasMicPermission by remember { mutableStateOf(checkMicPermission(context)) }
     var isImeEnabled by remember { mutableStateOf(checkImeEnabled(context)) }
@@ -264,8 +269,11 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
         mutableStateOf(PixelVoiceAccessibilityService.isEnabledInSystemSettings(context))
     }
     var sandboxText by remember { mutableStateOf("") }
+    var showAccessibilityDisclosure by remember { mutableStateOf(false) }
+    var upgradeDialogFeature by remember { mutableStateOf<ProFeature?>(null) }
+    var showUpgradeDialog by remember { mutableStateOf(false) }
 
-    val openAccessibilitySettings: () -> Unit = {
+    val openAccessibilitySettingsDirect: () -> Unit = {
         val serviceComponent = ComponentName(
             context,
             PixelVoiceAccessibilityService::class.java
@@ -279,6 +287,52 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
         }
         runCatching { context.startActivity(directIntent) }
             .onFailure { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+    }
+
+    val openAccessibilitySettings: () -> Unit = {
+        showAccessibilityDisclosure = true
+    }
+
+    if (showAccessibilityDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showAccessibilityDisclosure = false },
+            title = { Text("無障礙服務權限使用說明", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    text = "DxVoice-IME 使用 Android 無障礙服務（AccessibilityService）僅為提供以下兩項核心便利功能：\n\n" +
+                        "1. 偵測系統軟鍵盤開啟或關閉，讓懸浮語音捷徑球僅在使用其他鍵盤時顯示。\n" +
+                        "2. 當您點擊懸浮球時，直接將系統輸入法切換為 DxVoice-IME 開始語音收音。\n\n" +
+                        "隱私承諾：本服務絕不讀取、紀錄、儲存或上傳任何螢幕文字、聊天內容、密碼或個人資料。",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showAccessibilityDisclosure = false
+                        openAccessibilitySettingsDirect()
+                    }
+                ) {
+                    Text("我了解並前往開啟")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAccessibilityDisclosure = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    if (showUpgradeDialog) {
+        ProUpgradeDialog(
+            entitlementManager = app.entitlementManager,
+            highlightedFeature = upgradeDialogFeature,
+            onDismiss = {
+                showUpgradeDialog = false
+                upgradeDialogFeature = null
+            }
+        )
     }
 
     val micPermissionLauncher = rememberLauncherForActivityResult(
@@ -312,6 +366,48 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        // Pro / Trial Status Card
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    val titleText = when (val s = accessState) {
+                        is ProAccessState.BetaFree -> "測試期間・全功能免費開放"
+                        is ProAccessState.ProPurchased -> "DxVoice-IME Pro 已解鎖 ✓"
+                        is ProAccessState.TrialActive -> "Pro 3 天免費試用中（剩餘 ${s.remainingHours} 小時）"
+                        is ProAccessState.FreeLocked -> "免費版（升級 Pro 解鎖 5 大進階功能）"
+                    }
+                    Text(
+                        text = titleText,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Text(
+                        text = "含懸浮球、自動切回鍵盤、本地小模型、自定義詞庫與雲端備份",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                    )
+                }
+                OutlinedButton(
+                    onClick = {
+                        upgradeDialogFeature = null
+                        showUpgradeDialog = true
+                    }
+                ) {
+                    Text(if (accessState is ProAccessState.ProPurchased) "方案" else "查看 Pro")
+                }
+            }
+        }
+
         // Quick Setup Checklist
         Card(
             shape = RoundedCornerShape(20.dp),
@@ -383,10 +479,17 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                     onCheckedChange = { v -> app.prefs.update { it.copy(autoListenOnStart = v) } }
                 )
                 SettingSwitchRow(
-                    title = "結束後立刻切回原輸入法",
+                    title = "結束後立刻切回原輸入法（Pro）",
                     subtitle = "記憶先前鍵盤，修正貼回完成後自動切回原本使用的輸入法",
-                    checked = config.autoReturnToPreviousIme,
-                    onCheckedChange = { v -> app.prefs.update { it.copy(autoReturnToPreviousIme = v) } }
+                    checked = config.autoReturnToPreviousIme && app.entitlementManager.hasProAccess(),
+                    onCheckedChange = { v ->
+                        if (v && !app.entitlementManager.hasProAccess()) {
+                            upgradeDialogFeature = ProFeature.AUTO_RETURN_IME
+                            showUpgradeDialog = true
+                        } else {
+                            app.prefs.update { it.copy(autoReturnToPreviousIme = v) }
+                        }
+                    }
                 )
 
                 Text(
@@ -499,11 +602,14 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 }
 
                 SettingSwitchRow(
-                    title = "啟用懸浮語音捷徑球",
+                    title = "啟用懸浮語音捷徑球（Pro）",
                     subtitle = if (canOverlay) "切換到其他鍵盤時自動顯示，點擊直接啟動語音輸入法" else "請先授予上層顯示權限",
-                    checked = config.floatingBallEnabled,
+                    checked = config.floatingBallEnabled && app.entitlementManager.hasProAccess(),
                     onCheckedChange = { enabled ->
-                        if (enabled && !Settings.canDrawOverlays(context)) {
+                        if (enabled && !app.entitlementManager.hasProAccess()) {
+                            upgradeDialogFeature = ProFeature.FLOATING_BALL
+                            showUpgradeDialog = true
+                        } else if (enabled && !Settings.canDrawOverlays(context)) {
                             val intent = Intent(
                                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                                 Uri.parse("package:${context.packageName}")
