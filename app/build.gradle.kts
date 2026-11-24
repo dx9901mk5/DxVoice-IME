@@ -12,8 +12,8 @@ android {
         applicationId = "com.dx9901mk5.pixelvoiceime"
         minSdk = 26
         targetSdk = 36
-        versionCode = 38
-        versionName = "3.4.10"
+        versionCode = 39
+        versionName = "3.4.11"
         ndk {
             // Supports all modern & legacy Android phones/tablets plus x86_64 Chromebooks / Pixelbooks
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")

@@ -189,8 +189,9 @@ class GitHubUpdater(
     }
 
     fun canInstallPackages(context: Context): Boolean {
+        if (BuildConfig.IS_PLAY_BUILD) return false
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.packageManager.canRequestPackageInstalls()
+            runCatching { context.packageManager.canRequestPackageInstalls() }.getOrDefault(false)
         } else {
             true
         }

@@ -64,7 +64,7 @@ fun UpdateSettingsScreen(
     var statusMessage by remember { mutableStateOf<String?>(null) }
     var releaseInfo by remember { mutableStateOf<ReleaseInfo?>(null) }
 
-    val canInstall = updater.canInstallPackages(context)
+    val canInstall = if (BuildConfig.IS_PLAY_BUILD) false else updater.canInstallPackages(context)
 
     fun startDownloadAndInstall(apkUrl: String, versionLabel: String? = null) {
         downloading = true
