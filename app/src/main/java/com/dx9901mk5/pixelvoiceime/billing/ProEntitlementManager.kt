@@ -15,18 +15,23 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import androidx.annotation.StringRes
 import com.dx9901mk5.pixelvoiceime.BuildConfig
+import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
+import com.dx9901mk5.pixelvoiceime.R
+import com.dx9901mk5.pixelvoiceime.data.AppUiLanguage
+import com.dx9901mk5.pixelvoiceime.ui.UiLocaleHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.security.MessageDigest
 
-enum class ProFeature(val displayName: String, val summary: String) {
-    FLOATING_BALL("懸浮語音捷徑球", "跟隨其他鍵盤自動顯示、點擊直切本輸入法與摺疊機雙螢幕記憶"),
-    AUTO_RETURN_IME("自動切回原本輸入法", "語音說完貼回文字後自動切回原先使用的鍵盤"),
-    LOCAL_LLM("本地極速小模型修潤", "離線使用 Qwen2.5 0.5B 本地 AI 進行台灣口語與錯字修潤"),
-    CUSTOM_DICTIONARY("自定義詞庫與慣用語學習", "專有名詞、0ms 即時詞彙替換與個人常用詞自動學習"),
-    CLOUD_BACKUP("雲端與資料夾備份還原", "將所有設定、懸浮球座標與自定義詞庫一鍵備份至 Google 雲端硬碟或本地資料夾")
+enum class ProFeature(@StringRes val displayNameRes: Int, @StringRes val summaryRes: Int) {
+    FLOATING_BALL(R.string.pro_feat_floating_name, R.string.pro_feat_floating_desc),
+    AUTO_RETURN_IME(R.string.pro_feat_autoreturn_name, R.string.pro_feat_autoreturn_desc),
+    LOCAL_LLM(R.string.pro_feat_llm_name, R.string.pro_feat_llm_desc),
+    CUSTOM_DICTIONARY(R.string.pro_feat_dict_name, R.string.pro_feat_dict_desc),
+    CLOUD_BACKUP(R.string.pro_feat_backup_name, R.string.pro_feat_backup_desc)
 }
 
 sealed interface ProAccessState {
@@ -148,13 +153,19 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
         })
     }
 
+    private fun str(@StringRes resId: Int, vararg args: Any): String {
+        val uiLang = (appContext as? PixelVoiceApp)?.prefs?.config?.value?.uiLanguage ?: AppUiLanguage.SYSTEM
+        val ctx = UiLocaleHelper.localizedContext(appContext, uiLang)
+        return if (args.isEmpty()) ctx.getString(resId) else ctx.getString(resId, *args)
+    }
+
     fun restorePurchases() {
         val client = billingClient
         if (client == null) {
-            _billingMessage.value = "Google Play 帳單服務尚未就緒"
+            _billingMessage.value = str(R.string.billing_not_ready)
             return
         }
-        _billingMessage.value = "正在檢查 Google Play 購買紀錄…"
+        _billingMessage.value = str(R.string.billing_checking)
         connectAndQuery(client)
     }
 
@@ -165,7 +176,7 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
     fun redeemPromoCode(activity: Activity?, rawCode: String): Boolean {
         val normalized = rawCode.trim().uppercase()
         if (normalized.isBlank()) {
-            _billingMessage.value = "請輸入親友兌換碼或 Google Play 促銷代碼"
+            _billingMessage.value = str(R.string.billing_enter_promo)
             return false
         }
         val hash = sha256Hex("dxvoice_vip_salt::$normalized")
@@ -175,7 +186,7 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
                 .putString(KEY_REDEEMED_CODE_HASH, hash)
                 .apply()
             refreshAccessState()
-            _billingMessage.value = "親友兌換碼驗證成功！已永久解鎖 DxVoice-IME Pro 全功能 ✓"
+            _billingMessage.value = str(R.string.billing_promo_success)
             return true
         }
         if (activity != null) {
@@ -183,13 +194,13 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(redeemUrl))
             runCatching { activity.startActivity(intent) }
                 .onSuccess {
-                    _billingMessage.value = "已開啟 Google Play 促銷代碼兌換頁，兌換完成後請點「恢復已購買項目」"
+                    _billingMessage.value = str(R.string.billing_promo_play_opened)
                 }
                 .onFailure {
-                    _billingMessage.value = "兌換碼無效，請確認輸入是否正確"
+                    _billingMessage.value = str(R.string.billing_promo_invalid)
                 }
         } else {
-            _billingMessage.value = "兌換碼無效，請確認輸入是否正確"
+            _billingMessage.value = str(R.string.billing_promo_invalid)
         }
         return false
     }
@@ -201,19 +212,19 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
 
     fun launchPurchaseFlow(activity: Activity, productId: String) {
         if (BuildConfig.IS_BETA_FREE) {
-            _billingMessage.value = "目前為測試期間，全功能已免費開放使用（正式版上架後開放內購結帳）。"
+            _billingMessage.value = str(R.string.billing_beta_free)
             return
         }
         val client = billingClient
         if (client == null || !client.isReady) {
-            _billingMessage.value = "無法連線至 Google Play 商店，請確認已登入 Google 帳號並重試。"
+            _billingMessage.value = str(R.string.billing_connect_failed)
             client?.let { connectAndQuery(it) }
             return
         }
         val option = _planOptions.value.firstOrNull { it.productId == productId }
         val details = option?.productDetails
         if (details == null) {
-            _billingMessage.value = "尚未從 Google Play 取得商品資訊，請稍後再試。"
+            _billingMessage.value = str(R.string.billing_no_product)
             queryAvailableProducts(client)
             return
         }
@@ -234,7 +245,7 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
 
         val result = client.launchBillingFlow(activity, flowParams)
         if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-            _billingMessage.value = "無法開啟結帳視窗（代碼 ${result.responseCode}）"
+            _billingMessage.value = str(R.string.billing_launch_failed, result.responseCode)
         }
     }
 
@@ -271,9 +282,9 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
                 }
                 if (foundActive) {
                     setProPurchased(true)
-                    _billingMessage.value = "已驗證 DxVoice-IME Pro 授權 ✓"
-                } else if (_billingMessage.value == "正在檢查 Google Play 購買紀錄…") {
-                    _billingMessage.value = "未查到先前的 Pro 購買紀錄"
+                    _billingMessage.value = str(R.string.billing_verified)
+                } else if (_billingMessage.value == str(R.string.billing_checking)) {
+                    _billingMessage.value = str(R.string.billing_not_found)
                 }
             }
         }
@@ -341,15 +352,15 @@ class ProEntitlementManager(context: Context) : PurchasesUpdatedListener {
                     if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
                         billingClient?.let { acknowledgeIfNeeded(it, purchase) }
                         setProPurchased(true)
-                        _billingMessage.value = "感謝支持！已成功解鎖 DxVoice-IME Pro 全功能 ✓"
+                        _billingMessage.value = str(R.string.billing_purchase_success)
                     }
                 }
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> {
-                _billingMessage.value = "已取消購買"
+                _billingMessage.value = str(R.string.billing_purchase_canceled)
             }
             else -> {
-                _billingMessage.value = "購買未完成（代碼 ${result.responseCode}）"
+                _billingMessage.value = str(R.string.billing_purchase_failed, result.responseCode)
             }
         }
     }

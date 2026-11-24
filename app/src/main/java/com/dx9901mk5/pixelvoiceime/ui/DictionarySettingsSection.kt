@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -29,8 +28,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dx9901mk5.pixelvoiceime.R
 import com.dx9901mk5.pixelvoiceime.data.CustomDictionaryStore
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -44,14 +45,13 @@ fun DictionarySettingsSection(
     var repToInput by remember { mutableStateOf("") }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        // 1. 修飾依據 & 學習開關
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "修飾依據與慣用語學習（參考 voice-keyboard v1.12）",
+                    text = stringResource(R.string.dict_learning_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -61,9 +61,9 @@ fun DictionarySettingsSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                        Text("將詞庫與慣用語作為 AI 修飾依據", fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.dict_hints_title), fontWeight = FontWeight.Medium)
                         Text(
-                            "自動餵給 Whisper prompt 與 DeepSeek / Gemini / 本地 LLM 作拼寫參考",
+                            stringResource(R.string.dict_hints_sub),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -79,9 +79,9 @@ fun DictionarySettingsSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                        Text("自動學習慣用語與手動改字", fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.dict_autolearn_title), fontWeight = FontWeight.Medium)
                         Text(
-                            "語音輸出後若您在輸入框手動改字，或高頻使用英文／專有名詞，將於本機自動累積學習",
+                            stringResource(R.string.dict_autolearn_sub),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -94,19 +94,18 @@ fun DictionarySettingsSection(
             }
         }
 
-        // 2. 自定義文字詞（專有名詞 / 人名 / 術語）
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "自定義文字詞庫（${state.customWords.size} 個）",
+                    text = stringResource(R.string.dict_words_title, state.customWords.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "支援逗號、頓號或換行一次新增多個詞（例：DxVoice, 台積電, Antigravity）。點擊詞彙標籤可移除。",
+                    text = stringResource(R.string.dict_words_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -114,8 +113,8 @@ fun DictionarySettingsSection(
                     value = newWordsInput,
                     onValueChange = { newWordsInput = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("輸入自定義詞彙") },
-                    placeholder = { Text("例：DxVoice, 傑克, Whisper") },
+                    label = { Text(stringResource(R.string.dict_words_label)) },
+                    placeholder = { Text(stringResource(R.string.dict_words_placeholder)) },
                     shape = RoundedCornerShape(14.dp)
                 )
                 Button(
@@ -125,7 +124,7 @@ fun DictionarySettingsSection(
                     },
                     enabled = newWordsInput.isNotBlank()
                 ) {
-                    Text("加入詞庫")
+                    Text(stringResource(R.string.dict_words_add_btn))
                 }
 
                 if (state.customWords.isNotEmpty()) {
@@ -145,19 +144,18 @@ fun DictionarySettingsSection(
             }
         }
 
-        // 3. 0ms 本地強制替換規則
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "強制文字替換規則（${state.replacements.size} 條）",
+                    text = stringResource(R.string.dict_rep_title, state.replacements.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "送出文字前於本機 0ms 直接替換，100% 修正固定誤判（例：哀鳳 -> iPhone）。",
+                    text = stringResource(R.string.dict_rep_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -170,7 +168,7 @@ fun DictionarySettingsSection(
                         onValueChange = { repFromInput = it },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
-                        label = { Text("原錯詞") },
+                        label = { Text(stringResource(R.string.dict_rep_from)) },
                         shape = RoundedCornerShape(14.dp)
                     )
                     OutlinedTextField(
@@ -178,7 +176,7 @@ fun DictionarySettingsSection(
                         onValueChange = { repToInput = it },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
-                        label = { Text("替換為") },
+                        label = { Text(stringResource(R.string.dict_rep_to)) },
                         shape = RoundedCornerShape(14.dp)
                     )
                 }
@@ -190,7 +188,7 @@ fun DictionarySettingsSection(
                     },
                     enabled = repFromInput.isNotBlank() && repToInput.isNotBlank()
                 ) {
-                    Text("新增替換規則")
+                    Text(stringResource(R.string.dict_rep_add_btn))
                 }
 
                 state.replacements.forEach { rule ->
@@ -206,14 +204,13 @@ fun DictionarySettingsSection(
                             modifier = Modifier.weight(1f)
                         )
                         TextButton(onClick = { dictionaryStore.removeReplacement(rule.from) }) {
-                            Text("刪除")
+                            Text(stringResource(R.string.common_delete))
                         }
                     }
                 }
             }
         }
 
-        // 4. 自動學習的慣用語清單
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -225,25 +222,25 @@ fun DictionarySettingsSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "自動學習的慣用語（${state.learnedPhrases.size}）",
+                        text = stringResource(R.string.dict_learned_title, state.learnedPhrases.size),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     if (state.learnedPhrases.isNotEmpty()) {
                         TextButton(onClick = { dictionaryStore.clearLearnedPhrases() }) {
-                            Text("全部清除")
+                            Text(stringResource(R.string.dict_learned_clear))
                         }
                     }
                 }
                 Text(
-                    text = "累計 ≥ 2 次自動成為修飾依據；≥ 3 次的改字規則會自動套用。可隨時釘選或封鎖。",
+                    text = stringResource(R.string.dict_learned_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 if (state.learnedPhrases.isEmpty()) {
                     Text(
-                        text = "目前尚無自動學習紀錄，正常語音輸入或手動修正錯字後會自動出現。",
+                        text = stringResource(R.string.dict_learned_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -264,7 +261,7 @@ fun DictionarySettingsSection(
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = "學習次數：${item.count}",
+                                    text = stringResource(R.string.dict_learned_count, item.count),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -279,10 +276,10 @@ fun DictionarySettingsSection(
                                         }
                                     }
                                 ) {
-                                    Text("釘選")
+                                    Text(stringResource(R.string.dict_learned_pin))
                                 }
                                 TextButton(onClick = { dictionaryStore.removeAndBlockLearned(item.phrase) }) {
-                                    Text("封鎖")
+                                    Text(stringResource(R.string.dict_learned_block))
                                 }
                             }
                         }

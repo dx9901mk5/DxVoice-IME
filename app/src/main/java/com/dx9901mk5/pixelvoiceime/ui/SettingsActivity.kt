@@ -14,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -37,15 +38,19 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.KeyboardVoice
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.SystemUpdate
+import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material.icons.rounded.VerticalSplit
 import androidx.compose.material.icons.rounded.ViewAgenda
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -70,6 +75,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -78,8 +84,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dx9901mk5.pixelvoiceime.PixelVoiceApp
+import com.dx9901mk5.pixelvoiceime.R
 import com.dx9901mk5.pixelvoiceime.billing.ProAccessState
 import com.dx9901mk5.pixelvoiceime.billing.ProFeature
+import com.dx9901mk5.pixelvoiceime.data.AppUiLanguage
 import com.dx9901mk5.pixelvoiceime.ime.FloatingMicService
 import com.dx9901mk5.pixelvoiceime.ime.PixelVoiceAccessibilityService
 import com.dx9901mk5.pixelvoiceime.ui.theme.PixelVoiceTheme
@@ -98,8 +106,13 @@ class SettingsActivity : ComponentActivity() {
 
         setContent {
             val config by app.prefs.config.collectAsState()
-            PixelVoiceTheme(themeMode = config.appThemeMode) {
-                PixelVoiceSettingsApp(app = app)
+            ProvideUiLanguage(
+                uiLanguage = config.uiLanguage,
+                hostActivity = this@SettingsActivity
+            ) {
+                PixelVoiceTheme(themeMode = config.appThemeMode) {
+                    PixelVoiceSettingsApp(app = app)
+                }
             }
         }
     }
@@ -107,24 +120,26 @@ class SettingsActivity : ComponentActivity() {
 
 private data class SettingsNavItem(
     val index: Int,
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
+    val config by app.prefs.config.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     var companionTab by remember { mutableIntStateOf(2) }
     var userSideBySideOverride by remember { mutableStateOf<Boolean?>(null) }
+    var showLangMenu by remember { mutableStateOf(false) }
 
     val navItems = remember {
         listOf(
-            SettingsNavItem(0, "啟用行為", Icons.Rounded.KeyboardVoice),
-            SettingsNavItem(1, "離線語系", Icons.Rounded.Language),
-            SettingsNavItem(2, "詞庫與本地模型", Icons.Rounded.AutoAwesome),
-            SettingsNavItem(3, "備份", Icons.Rounded.Backup),
-            SettingsNavItem(4, "更新說明", Icons.Rounded.SystemUpdate)
+            SettingsNavItem(0, R.string.nav_setup, Icons.Rounded.KeyboardVoice),
+            SettingsNavItem(1, R.string.nav_languages, Icons.Rounded.Language),
+            SettingsNavItem(2, R.string.nav_models, Icons.Rounded.AutoAwesome),
+            SettingsNavItem(3, R.string.nav_backup, Icons.Rounded.Backup),
+            SettingsNavItem(4, R.string.nav_about, Icons.Rounded.SystemUpdate)
         )
     }
 
@@ -141,13 +156,45 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                         Column {
                             Text("DxVoice-IME", fontWeight = FontWeight.Bold)
                             Text(
-                                text = "本地極速 / 詞庫與本地模型 / 自架端點語音輸入法",
+                                text = stringResource(R.string.app_subtitle),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     },
                     actions = {
+                        Box {
+                            IconButton(onClick = { showLangMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Translate,
+                                    contentDescription = stringResource(R.string.ui_language_title)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showLangMenu,
+                                onDismissRequest = { showLangMenu = false }
+                            ) {
+                                listOf(
+                                    AppUiLanguage.SYSTEM to R.string.ui_language_system,
+                                    AppUiLanguage.ZH_TW to R.string.ui_language_zh,
+                                    AppUiLanguage.EN to R.string.ui_language_en,
+                                    AppUiLanguage.JA to R.string.ui_language_ja
+                                ).forEach { (lang, labelRes) ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text = stringResource(labelRes) + if (config.uiLanguage == lang) " ✓" else "",
+                                                fontWeight = if (config.uiLanguage == lang) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                        },
+                                        onClick = {
+                                            app.prefs.update { it.copy(uiLanguage = lang) }
+                                            showLangMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
                         if (canSideBySide) {
                             TextButton(
                                 onClick = {
@@ -158,7 +205,13 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                     imageVector = if (isTwoPane) Icons.Rounded.ViewAgenda else Icons.Rounded.VerticalSplit,
                                     contentDescription = null
                                 )
-                                Text(if (isTwoPane) " 單欄" else " 並排")
+                                Text(
+                                    if (isTwoPane) {
+                                        stringResource(R.string.layout_single_pane)
+                                    } else {
+                                        stringResource(R.string.layout_side_by_side)
+                                    }
+                                )
                             }
                         }
                     }
@@ -174,7 +227,7 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                 icon = { Icon(item.icon, contentDescription = null) },
                                 label = {
                                     Text(
-                                        text = item.label,
+                                        text = stringResource(item.labelRes),
                                         maxLines = 2,
                                         textAlign = TextAlign.Center
                                     )
@@ -204,7 +257,7 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                 icon = { Icon(item.icon, contentDescription = null) },
                                 label = {
                                     Text(
-                                        text = item.label,
+                                        text = stringResource(item.labelRes),
                                         maxLines = 2,
                                         textAlign = TextAlign.Center
                                     )
@@ -239,7 +292,7 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                     FilterChip(
                                         selected = companionTab == item.index,
                                         onClick = { companionTab = item.index },
-                                        label = { Text(item.label) }
+                                        label = { Text(stringResource(item.labelRes)) }
                                     )
                                 }
                             }
@@ -277,6 +330,7 @@ private fun RenderSettingsTab(tabIndex: Int, app: PixelVoiceApp) {
 @Composable
 private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
     val context = LocalContext.current
+    val activityContext = LocalHostActivity.current ?: context
     val lifecycleOwner = LocalLifecycleOwner.current
     val config by app.prefs.config.collectAsState()
     val accessState by app.entitlementManager.accessState.collectAsState()
@@ -305,8 +359,8 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
             putExtra(":settings:fragment_args_key", serviceComponent)
             putExtra(":settings:show_fragment_args", args)
         }
-        runCatching { context.startActivity(directIntent) }
-            .onFailure { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        runCatching { activityContext.startActivity(directIntent) }
+            .onFailure { activityContext.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
     }
 
     val openAccessibilitySettings: () -> Unit = {
@@ -316,13 +370,10 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
     if (showAccessibilityDisclosure) {
         AlertDialog(
             onDismissRequest = { showAccessibilityDisclosure = false },
-            title = { Text("無障礙服務權限使用說明", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.a11y_disclosure_title), fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    text = "DxVoice-IME 使用 Android 無障礙服務（AccessibilityService）僅為提供以下兩項核心便利功能：\n\n" +
-                        "1. 偵測系統軟鍵盤開啟或關閉，讓懸浮語音捷徑球僅在使用其他鍵盤時顯示。\n" +
-                        "2. 當您點擊懸浮球時，直接將系統輸入法切換為 DxVoice-IME 開始語音收音。\n\n" +
-                        "隱私承諾：本服務絕不讀取、紀錄、儲存或上傳任何螢幕文字、聊天內容、密碼或個人資料。",
+                    text = stringResource(R.string.a11y_disclosure_body),
                     style = MaterialTheme.typography.bodySmall
                 )
             },
@@ -333,12 +384,12 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         openAccessibilitySettingsDirect()
                     }
                 ) {
-                    Text("我了解並前往開啟")
+                    Text(stringResource(R.string.a11y_disclosure_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showAccessibilityDisclosure = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -400,10 +451,10 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
             ) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     val titleText = when (val s = accessState) {
-                        is ProAccessState.BetaFree -> "測試期間・全功能免費開放"
-                        is ProAccessState.ProPurchased -> "DxVoice-IME Pro 已解鎖 ✓"
-                        is ProAccessState.TrialActive -> "Pro 3 天免費試用中（剩餘 ${s.remainingHours} 小時）"
-                        is ProAccessState.FreeLocked -> "免費版（升級 Pro 解鎖 5 大進階功能）"
+                        is ProAccessState.BetaFree -> stringResource(R.string.pro_status_beta)
+                        is ProAccessState.ProPurchased -> stringResource(R.string.pro_status_purchased)
+                        is ProAccessState.TrialActive -> stringResource(R.string.pro_status_trial, s.remainingHours)
+                        is ProAccessState.FreeLocked -> stringResource(R.string.pro_status_free)
                     }
                     Text(
                         text = titleText,
@@ -412,7 +463,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "含懸浮球、自動切回鍵盤、本地小模型、自定義詞庫與雲端備份",
+                        text = stringResource(R.string.pro_card_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
                     )
@@ -423,7 +474,13 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         showUpgradeDialog = true
                     }
                 ) {
-                    Text(if (accessState is ProAccessState.ProPurchased) "方案" else "查看 Pro")
+                    Text(
+                        if (accessState is ProAccessState.ProPurchased) {
+                            stringResource(R.string.pro_btn_plan)
+                        } else {
+                            stringResource(R.string.pro_btn_view)
+                        }
+                    )
                 }
             }
         }
@@ -435,7 +492,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "快速啟用步驟",
+                    text = stringResource(R.string.setup_quick_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -443,13 +500,19 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = {
-                            context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
+                            activityContext.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
                         }
                     ) {
                         if (isImeEnabled) {
                             Icon(Icons.Rounded.CheckCircle, contentDescription = null)
                         }
-                        Text(if (isImeEnabled) " 已啟用輸入法" else "1. 啟用 DxVoice-IME")
+                        Text(
+                            if (isImeEnabled) {
+                                stringResource(R.string.setup_ime_enabled)
+                            } else {
+                                stringResource(R.string.setup_enable_ime)
+                            }
+                        )
                     }
                     OutlinedButton(
                         onClick = {
@@ -457,7 +520,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                             imm?.showInputMethodPicker()
                         }
                     ) {
-                        Text("2. 切換輸入法")
+                        Text(stringResource(R.string.setup_switch_ime))
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -466,7 +529,13 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                             micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
                     ) {
-                        Text(if (hasMicPermission) "麥克風已授權 ✓" else "3. 授予麥克風權限")
+                        Text(
+                            if (hasMicPermission) {
+                                stringResource(R.string.setup_mic_granted)
+                            } else {
+                                stringResource(R.string.setup_mic_grant)
+                            }
+                        )
                     }
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         OutlinedButton(
@@ -474,7 +543,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                                 notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                             }
                         ) {
-                            Text("允許更新通知")
+                            Text(stringResource(R.string.setup_allow_notif))
                         }
                     }
                 }
@@ -488,19 +557,19 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "自動收音與切回原輸入法行為",
+                    text = stringResource(R.string.behavior_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 SettingSwitchRow(
-                    title = "切換輸入法時自主啟動收音",
-                    subtitle = "一旦切到 DxVoice-IME 立即開始語音接收與判定（密碼框自動略過）",
+                    title = stringResource(R.string.behavior_auto_listen_title),
+                    subtitle = stringResource(R.string.behavior_auto_listen_sub),
                     checked = config.autoListenOnStart,
                     onCheckedChange = { v -> app.prefs.update { it.copy(autoListenOnStart = v) } }
                 )
                 SettingSwitchRow(
-                    title = "結束後立刻切回原輸入法（Pro）",
-                    subtitle = "記憶先前鍵盤，修正貼回完成後自動切回原本使用的輸入法",
+                    title = stringResource(R.string.behavior_auto_return_title),
+                    subtitle = stringResource(R.string.behavior_auto_return_sub),
                     checked = config.autoReturnToPreviousIme && app.entitlementManager.hasProAccess(),
                     onCheckedChange = { v ->
                         if (v && !app.entitlementManager.hasProAccess()) {
@@ -513,18 +582,18 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 )
 
                 Text(
-                    text = "切回原輸入法延遲時間",
+                    text = stringResource(R.string.behavior_delay_label),
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
-                        0L to "立刻 (0秒)",
-                        450L to "極快 (0.45秒)",
-                        1000L to "預覽 (1秒)",
-                        1800L to "寬裕 (1.8秒)",
-                        2500L to "寬裕 (2.5秒 / 預設)"
-                    ).forEach { (delayMs, label) ->
+                        0L to R.string.delay_0,
+                        450L to R.string.delay_450,
+                        1000L to R.string.delay_1000,
+                        1800L to R.string.delay_1800,
+                        2500L to R.string.delay_2500
+                    ).forEach { (delayMs, labelRes) ->
                         FilterChip(
                             selected = config.autoReturnToPreviousIme && config.autoReturnDelayMs == delayMs,
                             onClick = {
@@ -532,32 +601,32 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                                     it.copy(autoReturnToPreviousIme = true, autoReturnDelayMs = delayMs)
                                 }
                             },
-                            label = { Text(label) }
+                            label = { Text(stringResource(labelRes)) }
                         )
                     }
                     FilterChip(
                         selected = !config.autoReturnToPreviousIme,
                         onClick = { app.prefs.update { it.copy(autoReturnToPreviousIme = false) } },
-                        label = { Text("手動點擊切回") }
+                        label = { Text(stringResource(R.string.delay_manual)) }
                     )
                 }
 
                 Text(
-                    text = "說話停頓自動結束時間 (2秒內停頓續講，停滿此秒數才結束收話)",
+                    text = stringResource(R.string.behavior_silence_label),
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
-                        2500L to "2.5秒",
-                        2700L to "2.7秒",
-                        3000L to "3.0秒 (預設)",
-                        4000L to "4.0秒"
-                    ).forEach { (ms, label) ->
+                        2500L to R.string.silence_2500,
+                        2700L to R.string.silence_2700,
+                        3000L to R.string.silence_3000,
+                        4000L to R.string.silence_4000
+                    ).forEach { (ms, labelRes) ->
                         FilterChip(
                             selected = config.silenceTimeoutMs == ms,
                             onClick = { app.prefs.update { it.copy(silenceTimeoutMs = ms) } },
-                            label = { Text(label) }
+                            label = { Text(stringResource(labelRes)) }
                         )
                     }
                 }
@@ -571,12 +640,12 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "懸浮語音捷徑球（跟隨其他輸入法）",
+                    text = stringResource(R.string.floating_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "使用其他輸入法時顯示可拖曳懸浮麥克風球，點擊直接切換至本輸入法開始收音；摺疊機將自動分開記憶外螢幕與內螢幕位置。",
+                    text = stringResource(R.string.floating_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -588,21 +657,18 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                                 Uri.parse("package:${context.packageName}")
                             )
-                            context.startActivity(intent)
+                            activityContext.startActivity(intent)
                         }
                     ) {
-                        Text("授權「顯示於其他應用程式上層」權限")
+                        Text(stringResource(R.string.floating_grant_overlay))
                     }
                 }
 
                 Text(
                     text = when {
-                        accessibilityActive ->
-                            "跟隨鍵盤顯示＋一鍵直接啟動輸入法：運作中 ✓（僅在其他鍵盤出現時顯示，點擊直接啟動收音）"
-                        accessibilityEnabledInSettings ->
-                            "注意：系統已勾選無障礙，但服務尚未連線（常見於剛更新安裝或省電限制）。請點擊下方按鈕進入無障礙將開關「關閉再重開一次」，即可恢復點擊直接啟動本輸入法。"
-                        else ->
-                            "重要：啟用「DxVoice-IME」無障礙輔助後，懸浮球會在鍵盤出現才顯示，且點擊懸浮球會直接啟動本輸入法開始收音（不再跳出系統輸入法選單）。"
+                        accessibilityActive -> stringResource(R.string.floating_a11y_active)
+                        accessibilityEnabledInSettings -> stringResource(R.string.floating_a11y_disconnected)
+                        else -> stringResource(R.string.floating_a11y_disabled)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (accessibilityActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
@@ -613,17 +679,21 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                     ) {
                         Text(
                             if (accessibilityEnabledInSettings) {
-                                "前往無障礙重新開關「DxVoice-IME」"
+                                stringResource(R.string.floating_a11y_btn_restart)
                             } else {
-                                "開啟「DxVoice-IME」無障礙（點擊直接切換必備）"
+                                stringResource(R.string.floating_a11y_btn_enable)
                             }
                         )
                     }
                 }
 
                 SettingSwitchRow(
-                    title = "啟用懸浮語音捷徑球（Pro）",
-                    subtitle = if (canOverlay) "切換到其他鍵盤時自動顯示，點擊直接啟動語音輸入法" else "請先授予上層顯示權限",
+                    title = stringResource(R.string.floating_enable_title),
+                    subtitle = if (canOverlay) {
+                        stringResource(R.string.floating_enable_sub_ok)
+                    } else {
+                        stringResource(R.string.floating_enable_sub_need_perm)
+                    },
                     checked = config.floatingBallEnabled && app.entitlementManager.hasProAccess(),
                     onCheckedChange = { enabled ->
                         if (enabled && !app.entitlementManager.hasProAccess()) {
@@ -634,7 +704,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                                 Uri.parse("package:${context.packageName}")
                             )
-                            context.startActivity(intent)
+                            activityContext.startActivity(intent)
                         } else {
                             app.prefs.update { it.copy(floatingBallEnabled = enabled) }
                             if (enabled) {
@@ -650,7 +720,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 )
 
                 Text(
-                    text = "懸浮球透明度：${(config.floatingBallAlpha * 100).roundToInt()}%",
+                    text = stringResource(R.string.floating_alpha, (config.floatingBallAlpha * 100).roundToInt()),
                     style = MaterialTheme.typography.labelLarge
                 )
                 Slider(
@@ -662,7 +732,13 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 )
 
                 Text(
-                    text = "記憶座標｜外螢幕/手機：(${config.floatingBallOuterX}, ${config.floatingBallOuterY}) ｜ 摺疊內螢幕/平板：(${config.floatingBallInnerX}, ${config.floatingBallInnerY})",
+                    text = stringResource(
+                        R.string.floating_coords,
+                        config.floatingBallOuterX,
+                        config.floatingBallOuterY,
+                        config.floatingBallInnerX,
+                        config.floatingBallInnerY
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -678,7 +754,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         }
                     }
                 ) {
-                    Text("重設內/外螢幕懸浮球位置")
+                    Text(stringResource(R.string.floating_reset_pos))
                 }
             }
         }
@@ -690,12 +766,12 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "即時語音輸入測試框",
+                    text = stringResource(R.string.sandbox_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "點擊下方輸入框並切換成「DxVoice-IME」，即可立即體驗自動收音 → AI 修正標點 → 自動貼回並切回原輸入法！",
+                    text = stringResource(R.string.sandbox_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -705,7 +781,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(110.dp),
-                    placeholder = { Text("點此開始測試語音輸入…") },
+                    placeholder = { Text(stringResource(R.string.sandbox_placeholder)) },
                     shape = RoundedCornerShape(14.dp)
                 )
             }

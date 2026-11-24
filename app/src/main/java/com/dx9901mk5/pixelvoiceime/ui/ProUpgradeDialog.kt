@@ -29,8 +29,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dx9901mk5.pixelvoiceime.R
 import com.dx9901mk5.pixelvoiceime.billing.ProAccessState
 import com.dx9901mk5.pixelvoiceime.billing.ProEntitlementManager
 import com.dx9901mk5.pixelvoiceime.billing.ProFeature
@@ -42,7 +44,7 @@ fun ProUpgradeDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val activity = context as? Activity
+    val activity = LocalHostActivity.current ?: (context as? Activity)
     val accessState by entitlementManager.accessState.collectAsState()
     val planOptions by entitlementManager.planOptions.collectAsState()
     val billingMessage by entitlementManager.billingMessage.collectAsState()
@@ -53,15 +55,15 @@ fun ProUpgradeDialog(
         title = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "DxVoice-IME Pro 進階授權",
+                    text = stringResource(R.string.pro_dialog_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 val statusSubtitle = when (val s = accessState) {
-                    is ProAccessState.BetaFree -> "測試期間全功能免費開放（正式版提供 3 天免費試用）"
-                    is ProAccessState.ProPurchased -> "您已解鎖 Pro 永久／訂閱授權 ✓"
-                    is ProAccessState.TrialActive -> "3 天免費試用中（剩餘約 ${s.remainingHours} 小時）"
-                    is ProAccessState.FreeLocked -> "3 天免費試用已結束，升級 Pro 即可繼續使用以下 5 大功能"
+                    is ProAccessState.BetaFree -> stringResource(R.string.pro_dialog_sub_beta)
+                    is ProAccessState.ProPurchased -> stringResource(R.string.pro_dialog_sub_purchased)
+                    is ProAccessState.TrialActive -> stringResource(R.string.pro_dialog_sub_trial, s.remainingHours)
+                    is ProAccessState.FreeLocked -> stringResource(R.string.pro_dialog_sub_free)
                 }
                 Text(
                     text = statusSubtitle,
@@ -79,14 +81,17 @@ fun ProUpgradeDialog(
             ) {
                 if (highlightedFeature != null) {
                     Text(
-                        text = "「${highlightedFeature.displayName}」屬於 Pro 進階功能。",
+                        text = stringResource(
+                            R.string.pro_dialog_feature_highlight,
+                            stringResource(highlightedFeature.displayNameRes)
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
 
                 Text(
-                    text = "免費版永久提供：核心語音輸入、離線語音辨識、自動標點、台灣繁中轉換與手動切回鍵盤。",
+                    text = stringResource(R.string.pro_dialog_free_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -100,13 +105,13 @@ fun ProUpgradeDialog(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "Pro 專屬 5 大效率功能：",
+                            text = stringResource(R.string.pro_dialog_features_header),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold
                         )
                         ProFeature.entries.forEach { feature ->
                             Text(
-                                text = "• ${feature.displayName}：${feature.summary}",
+                                text = "• ${stringResource(feature.displayNameRes)}：${stringResource(feature.summaryRes)}",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -114,10 +119,17 @@ fun ProUpgradeDialog(
                 }
 
                 planOptions.forEach { plan ->
+                    val isLifetime = plan.productId == ProEntitlementManager.SKU_PRO_LIFETIME
+                    val planTitle = if (isLifetime) stringResource(R.string.pro_plan_lifetime_title) else plan.title
+                    val planSubtitle = if (isLifetime) stringResource(R.string.pro_plan_lifetime_sub) else plan.subtitle
+                    val planBadge = if (isLifetime) stringResource(R.string.pro_plan_lifetime_badge) else plan.badge
+                    val planPrice = plan.productDetails?.oneTimePurchaseOfferDetails?.formattedPrice
+                        ?: if (isLifetime) stringResource(R.string.pro_plan_lifetime_price) else plan.fallbackPriceLabel
+
                     Card(
                         shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (plan.badge != null) {
+                            containerColor = if (planBadge != null) {
                                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f)
                             } else {
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
@@ -136,13 +148,13 @@ fun ProUpgradeDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = plan.title,
+                                    text = planTitle,
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                                if (plan.badge != null) {
+                                if (planBadge != null) {
                                     Text(
-                                        text = plan.badge,
+                                        text = planBadge,
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Bold
@@ -150,7 +162,7 @@ fun ProUpgradeDialog(
                                 }
                             }
                             Text(
-                                text = plan.subtitle,
+                                text = planSubtitle,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -166,9 +178,9 @@ fun ProUpgradeDialog(
                             ) {
                                 Text(
                                     if (accessState is ProAccessState.ProPurchased) {
-                                        "已解鎖"
+                                        stringResource(R.string.pro_dialog_unlocked)
                                     } else {
-                                        "選擇方案 · ${plan.fallbackPriceLabel}"
+                                        stringResource(R.string.pro_dialog_select_plan, planPrice)
                                     }
                                 )
                             }
@@ -176,7 +188,6 @@ fun ProUpgradeDialog(
                     }
                 }
 
-                // Friends & Family / Google Play Promo Code Redemption
                 Card(
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
@@ -188,7 +199,7 @@ fun ProUpgradeDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "親友兌換碼 / Google Play 促銷代碼",
+                            text = stringResource(R.string.pro_promo_title),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -202,7 +213,7 @@ fun ProUpgradeDialog(
                                 onValueChange = { promoCodeInput = it },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
-                                label = { Text("輸入兌換碼") },
+                                label = { Text(stringResource(R.string.pro_promo_label)) },
                                 shape = RoundedCornerShape(12.dp)
                             )
                             Button(
@@ -213,7 +224,7 @@ fun ProUpgradeDialog(
                                     }
                                 }
                             ) {
-                                Text("兌換")
+                                Text(stringResource(R.string.pro_promo_redeem))
                             }
                         }
                     }
@@ -231,13 +242,13 @@ fun ProUpgradeDialog(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { entitlementManager.restorePurchases() }
                 ) {
-                    Text("恢復 Google Play 已購買項目")
+                    Text(stringResource(R.string.pro_restore_btn))
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("關閉")
+                Text(stringResource(R.string.common_close))
             }
         }
     )

@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DxVoice-IME</string>
+    <string name="ime_name">DxVoice-IME</string>
+    <string name="subtype_voice_zh_tw">音声入力 (繁体字中国語 / AI 推敲)</string>
+    <string name="subtype_voice_en_us">音声入力 (英語 / AI 推敲)</string>
+    <string name="accessibility_service_description">システムキーボードの表示／非表示を検知してフローティング音声ボタンを自動制御し、タップ時に直接 DxVoice-IME を起動するためにのみ使用します（入力内容の記録や送信は一切行いません）。</string>
+
+    <!-- Top Bar & Navigation -->
+    <string name="app_subtitle">高速ローカル音声 / 辞書＆ローカルLLM / 自前エンドポイント入力</string>
+    <string name="nav_setup">設定・動作</string>
+    <string name="nav_languages">オフライン言語</string>
+    <string name="nav_models">辞書とモデル</string>
+    <string name="nav_backup">バックアップ</string>
+    <string name="nav_about">更新・情報</string>
+    <string name="layout_single_pane"> 1画面</string>
+    <string name="layout_side_by_side"> 2画面</string>
+    <string name="ui_language_title">表示言語</string>
+    <string name="ui_language_system">システムに従う</string>
+    <string name="ui_language_zh">繁體中文</string>
+    <string name="ui_language_en">English</string>
+    <string name="ui_language_ja">日本語</string>
+
+    <!-- Accessibility Disclosure -->
+    <string name="a11y_disclosure_title">ユーザー補助権限の使用目的</string>
+    <string name="a11y_disclosure_body">DxVoice-IME は以下の2つの利便機能のみに Android ユーザー補助サービス（AccessibilityService）を使用します：\n\n1. ソフトキーボードの表示／非表示を検知し、他のキーボード使用時のみフローティング音声ボタンを表示します。\n2. フローティングボタンをタップした際、直接 DxVoice-IME に切り替えて音声認識を開始します。\n\nプライバシーのお約束：画面上のテキスト、メッセージ、パスワード、個人情報を読み取ったり記録・送信することは一切ありません。</string>
+    <string name="a11y_disclosure_confirm">同意して設定を開く</string>
+    <string name="common_cancel">キャンセル</string>
+    <string name="common_close">閉じる</string>
+    <string name="common_apply">適用</string>
+    <string name="common_delete">削除</string>
+
+    <!-- Pro Status & Upgrade Dialog -->
+    <string name="pro_status_beta">テスト期間中・全機能無料開放</string>
+    <string name="pro_status_purchased">DxVoice-IME Pro 解放済み ✓</string>
+    <string name="pro_status_trial">Pro 3日間無料トライアル中（残り %1$d 時間）</string>
+    <string name="pro_status_free">無料版（Pro で 5 つの上位機能を解放）</string>
+    <string name="pro_card_subtitle">フローティング球・自動復帰・ローカルLLM・カスタム辞書・クラウドバックアップ</string>
+    <string name="pro_btn_plan">プラン</string>
+    <string name="pro_btn_view">Pro を見る</string>
+    <string name="pro_dialog_title">DxVoice-IME Pro ライセンス</string>
+    <string name="pro_dialog_sub_beta">テスト期間中は全機能を無料でご利用いただけます（正式版は3日間無料試用あり）</string>
+    <string name="pro_dialog_sub_purchased">Pro ライセンスは解放済みです ✓</string>
+    <string name="pro_dialog_sub_trial">3日間無料トライアル中（残り約 %1$d 時間）</string>
+    <string name="pro_dialog_sub_free">無料トライアルが終了しました。Pro へアップグレードすると以下5つの機能を引き続き利用できます。</string>
+    <string name="pro_dialog_feature_highlight">「%1$s」は Pro 限定機能です。</string>
+    <string name="pro_dialog_free_desc">無料版で永久利用可能：音声入力、オフライン音声認識、自動句読点、繁体字変換、手動キーボード切替。</string>
+    <string name="pro_dialog_features_header">Pro 専用の 5 つの高効率機能：</string>
+    <string name="pro_dialog_unlocked">解放済み</string>
+    <string name="pro_dialog_select_plan">プランを選択 · %1$s</string>
+    <string name="pro_promo_title">友人・関係者コード / Google Play プロモーションコード</string>
+    <string name="pro_promo_label">コードを入力</string>
+    <string name="pro_promo_redeem">適用</string>
+    <string name="pro_restore_btn">Google Play の購入履歴を復元</string>
+    <string name="pro_plan_lifetime_title">DxVoice-IME Pro 買い切り版</string>
+    <string name="pro_plan_lifetime_sub">正式版は初回3日間無料試用付き。一度の購入で5つの上位機能を永久解放（月額・年額なし）</string>
+    <string name="pro_plan_lifetime_price">NT$300 買い切り</string>
+    <string name="pro_plan_lifetime_badge">買い切り・月額なし</string>
+    <string name="pro_feat_floating_name">フローティング音声ショートカット球</string>
+    <string name="pro_feat_floating_desc">他キーボード連動表示、ワンタップ音声起動、折りたたみ端末の内外画面位置記憶</string>
+    <string name="pro_feat_autoreturn_name">元のキーボードへ自動復帰</string>
+    <string name="pro_feat_autoreturn_desc">音声入力の確定後、使用していた元のキーボードへ自動的に戻ります</string>
+    <string name="pro_feat_llm_name">ローカル高速小規模 LLM 推敲</string>
+    <string name="pro_feat_llm_desc">オフラインで Qwen2.5 0.5B を使用し、自然な表現や誤字脱字を高速補正</string>
+    <string name="pro_feat_dict_name">カスタム辞書＆常用表現の自動学習</string>
+    <string name="pro_feat_dict_desc">固有名詞登録、0ms 即時置換ルール、手動修正からの自動学習</string>
+    <string name="pro_feat_backup_name">クラウド＆フォルダバックアップ復元</string>
+    <string name="pro_feat_backup_desc">設定・フローティング球座標・カスタム辞書を Google ドライブや端末へ一括保存</string>
+
+    <!-- Billing Messages -->
+    <string name="billing_not_ready">Google Play 課金サービスの準備ができていません</string>
+    <string name="billing_checking">Google Play の購入履歴を確認中…</string>
+    <string name="billing_enter_promo">コードまたは Google Play プロモーションコードを入力してください</string>
+    <string name="billing_promo_success">コード認証に成功しました！DxVoice-IME Pro が永久解放されました ✓</string>
+    <string name="billing_promo_play_opened">Google Play のコード引き換え画面を開きました。完了後「購入履歴を復元」を押してください。</string>
+    <string name="billing_promo_invalid">無効なコードです。入力内容をご確認ください。</string>
+    <string name="billing_beta_free">テスト期間中のため全機能が無料で開放されています（正式版リリース後に購入可能になります）。</string>
+    <string name="billing_connect_failed">Google Play ストアに接続できません。Google アカウントのログイン状態をご確認ください。</string>
+    <string name="billing_no_product">Google Play から商品情報を取得できていません。しばらくしてから再試行してください。</string>
+    <string name="billing_launch_failed">決済画面を開けませんでした（コード %1$d）</string>
+    <string name="billing_verified">DxVoice-IME Pro ライセンスを確認しました ✓</string>
+    <string name="billing_not_found">過去の Pro 購入履歴は見つかりませんでした</string>
+    <string name="billing_purchase_success">ご購入ありがとうございます！DxVoice-IME Pro が解放されました ✓</string>
+    <string name="billing_purchase_canceled">購入をキャンセルしました</string>
+    <string name="billing_purchase_failed">購入が完了しませんでした（コード %1$d）</string>
+
+    <!-- Setup & Behavior Tab -->
+    <string name="setup_quick_title">クイック設定ステップ</string>
+    <string name="setup_ime_enabled"> 入力方式 有効済み</string>
+    <string name="setup_enable_ime">1. DxVoice-IME を有効化</string>
+    <string name="setup_switch_ime">2. キーボードを切替</string>
+    <string name="setup_mic_granted">マイク権限 許可済み ✓</string>
+    <string name="setup_mic_grant">3. マイク権限を許可</string>
+    <string name="setup_allow_notif">更新通知を許可</string>
+    <string name="behavior_title">自動録音とキーボード復帰の動作</string>
+    <string name="behavior_auto_listen_title">切替時に自動で音声認識を開始</string>
+    <string name="behavior_auto_listen_sub">DxVoice-IME に切り替えると即座に録音を開始（パスワード欄では自動スキップ）</string>
+    <string name="behavior_auto_return_title">入力完了後に元のキーボードへ自動復帰（Pro）</string>
+    <string name="behavior_auto_return_sub">直前のキーボードを記憶し、テキスト確定後に自動で戻ります</string>
+    <string name="behavior_delay_label">元のキーボードへ戻るまでの遅延</string>
+    <string name="delay_0">即時 (0秒)</string>
+    <string name="delay_450">最速 (0.45秒)</string>
+    <string name="delay_1000">確認 (1秒)</string>
+    <string name="delay_1800">ゆったり (1.8秒)</string>
+    <string name="delay_2500">ゆったり (2.5秒 / 標準)</string>
+    <string name="delay_manual">手動で戻る</string>
+    <string name="behavior_silence_label">無音での自動終了時間（2秒以内の間は継続して話し続けられます）</string>
+    <string name="silence_2500">2.5秒</string>
+    <string name="silence_2700">2.7秒</string>
+    <string name="silence_3000">3.0秒 (標準)</string>
+    <string name="silence_4000">4.0秒</string>
+
+    <!-- Floating Ball -->
+    <string name="floating_title">フローティング音声ショートカット球</string>
+    <string name="floating_desc">他のキーボード使用時にドラッグ可能なマイクボタンを表示し、タップで即音声入力へ切替。折りたたみ端末は内外画面の座標を別々に記憶します。</string>
+    <string name="floating_grant_overlay">「他のアプリの上に重ねて表示」を許可</string>
+    <string name="floating_a11y_active">キーボード連動＋ワンタップ起動：動作中 ✓（他キーボード表示時のみ出現し、タップで即録音）</string>
+    <string name="floating_a11y_disconnected">注意：ユーザー補助はオンですがサービスが未接続です（更新後や省電力制限で発生）。下のボタンから「DxVoice-IME」を一度オフ→オンにし直してください。</string>
+    <string name="floating_a11y_disabled">重要：「DxVoice-IME」のユーザー補助を有効にすると、キーボード表示時のみ球が出現し、タップで直接音声入力へ切り替わります。</string>
+    <string name="floating_a11y_btn_restart">ユーザー補助で「DxVoice-IME」を再オン</string>
+    <string name="floating_a11y_btn_enable">「DxVoice-IME」のユーザー補助を有効化（ワンタップ必須）</string>
+    <string name="floating_enable_title">フローティング音声球を有効にする（Pro）</string>
+    <string name="floating_enable_sub_ok">他のキーボード表示時に自動出現、タップで音声入力起動</string>
+    <string name="floating_enable_sub_need_perm">先にオーバーレイ権限を許可してください</string>
+    <string name="floating_alpha">フローティング球の透明度：%1$d%%</string>
+    <string name="floating_coords">記憶座標｜スマホ/外画面：(%1$d, %2$d) ｜ タブレット/内画面：(%3$d, %4$d)</string>
+    <string name="floating_reset_pos">内外画面のボタン位置をリセット</string>
+
+    <!-- Sandbox -->
+    <string name="sandbox_title">リアルタイム音声入力テスト欄</string>
+    <string name="sandbox_desc">下の入力欄をタップして「DxVoice-IME」へ切り替えると、自動録音 → AI 句読点補正 → 自動確定＆復帰をすぐ体験できます！</string>
+    <string name="sandbox_placeholder">ここをタップして音声入力をテスト…</string>
+
+    <!-- Offline Languages Screen -->
+    <string name="offline_title">オフライン音声パックライブラリ</string>
+    <string name="offline_desc">%1$d 種類の言語・地域バリアントに対応。多言語モデルは重みを共有するため、1回のダウンロードで同グループ全言語をオフライン認識できます。</string>
+    <string name="offline_stats">導入済みパック：%1$d 件 • 使用容量：%2$.1f MB • 現在の言語：%3$s</string>
+    <string name="offline_search_placeholder">言語を検索（例：日本語、English、繁体字中国語、広東語）</string>
+    <string name="offline_set_active">現在の言語に設定</string>
+    <string name="offline_installed">導入済み</string>
+    <string name="offline_delete_pack">パックを削除</string>
+    <string name="offline_download_pack">オフラインパックをダウンロード (~%1$dMB)</string>
+    <string name="offline_download_failed">ダウンロード失敗：%1$s</string>
+
+    <!-- Models & Cloud Screen -->
+    <string name="models_subtab_local">辞書とローカルモデル</string>
+    <string name="models_subtab_cloud">クラウド Gemini / 自前 API</string>
+    <string name="local_polish_title">ローカル推敲・誤字補正（任意）</string>
+    <string name="local_typo_title">中国語同音異字ローカル補正テーブル</string>
+    <string name="local_typo_sub">台湾繁体字の頻出誤字を 0.01 秒以内にオフライン自動修正</string>
+    <string name="local_llm_title">端末内高速小規模 LLM 推敲 (Qwen2.5 0.5B · Pro)</string>
+    <string name="local_llm_sub">通信不要・XNNPACK 高速推論で自然な文章と誤字を補正（約 521 MB、旧 Gemma 3 を自動削除、オフ時は 0ms 辞書出力）</string>
+    <string name="local_llm_accel_note">⚡ 性能メモ：Qwen2.5 0.5B は XNNPACK マルチスレッド CPU 推論を採用（GPU コンパイル遅延を回避し 4.5 秒タイムアウト保護付き）。8GB+ RAM 端末推奨。</string>
+    <string name="local_llm_download_btn">Qwen2.5 0.5B モデルをダウンロード (約 521 MB)</string>
+    <string name="local_llm_ready">Qwen2.5 0.5B 準備完了 (%1$d MB · %2$s)</string>
+    <string name="local_llm_remove">モデル削除</string>
+    <string name="local_llm_retry">Qwen2.5 0.5B を再ダウンロード</string>
+    <string name="dict_pro_locked_title">カスタム辞書・0ms 置換・自動学習（Pro）</string>
+    <string name="dict_pro_locked_desc">DxVoice-IME Pro にアップグレードすると、専用単語登録、即時置換ルール、常用表現の自動学習が解放されます。</string>
+    <string name="dict_pro_unlock_btn">Pro カスタム辞書を解放</string>
+
+    <!-- Cloud Gemini & Custom Endpoint -->
+    <string name="gemini_key_title">Gemini API Key (BYOK 暗号化保存)</string>
+    <string name="gemini_key_label">Google AI Studio API Key を入力</string>
+    <string name="gemini_key_saved">API Key を暗号化保存しました</string>
+    <string name="gemini_key_save_btn">キーを保存</string>
+    <string name="gemini_key_testing">接続テスト中…</string>
+    <string name="gemini_key_test_ok">接続成功：%1$s</string>
+    <string name="gemini_key_test_fail">接続失敗：%1$s</string>
+    <string name="gemini_key_test_btn">接続テスト</string>
+    <string name="gemini_howto_title">無料で Gemini API Key を取得する方法</string>
+    <string name="gemini_howto_body">1. 下のボタンから Google AI Studio を開き Google アカウントでログインします。\n2.「Create API key」をクリックして新しい API キーを作成します。\n3.「AIza...」で始まるキーをコピーして上の欄に貼り付け、「キーを保存」と「接続テスト」を押します。</string>
+    <string name="gemini_howto_btn">Google AI Studio で取得 ↗</string>
+    <string name="gemini_model_title">Gemini モデルと処理モード</string>
+    <string name="gemini_custom_model_label">またはカスタムモデル ID</string>
+    <string name="gemini_mode_label">音声認識・推敲モード（ローカルまたは API）</string>
+    <string name="mode_local_only">ローカル音声のみ (API 不使用)</string>
+    <string name="mode_fast_text">ローカル音声 + Gemini 推敲 (推奨)</string>
+    <string name="mode_audio_multimodal">Gemini 音声 API 直接認識</string>
+    <string name="mode_openai_compat">自前 / OpenAI 互換エンドポイント</string>
+    <string name="mode_desc_local">端末内のローカル音声認識のみを使用します（オフラインパック導入時は Sherpa-ONNX 高速エンジンを使用）。</string>
+    <string name="mode_desc_fast">ローカル／システム音声で高速文字起こし後、Gemini API で句読点と文章を推敲します。</string>
+    <string name="mode_desc_audio">16kHz WAV 音声を直接 Gemini API へ送信して文字起こしと句読点補正を行います。</string>
+    <string name="mode_desc_openai">自前の Mac / LAN Whisper サーバー、または Groq / OpenAI / DeepSeek 互換エンドポイントに接続します。</string>
+    <string name="custom_endpoint_title">自前 / OpenAI 互換エンドポイント設定</string>
+    <string name="preset_mac_lan">Mac LAN 例を適用</string>
+    <string name="preset_groq">Groq を適用</string>
+    <string name="preset_openai">OpenAI を適用</string>
+    <string name="custom_asr_url">ASR エンドポイント URL（/audio/transcriptions 自動補完）</string>
+    <string name="custom_asr_model">ASR モデル名（例：whisper-1 / whisper-large-v3-turbo）</string>
+    <string name="custom_asr_key">ASR API Key（LAN サーバーは空欄可）</string>
+    <string name="custom_llm_switch_title">カスタム LLM 推敲を追加（DeepSeek / Ollama 等）</string>
+    <string name="custom_llm_switch_sub">オフ時はローカル句読点と辞書のみでそのまま出力</string>
+    <string name="custom_llm_url">LLM エンドポイント URL（/chat/completions 自動補完）</string>
+    <string name="custom_llm_model">LLM モデル（例：deepseek-chat / gpt-4o-mini）</string>
+    <string name="custom_llm_key">LLM API Key（ローカル Ollama は空欄可）</string>
+    <string name="polish_rules_title">推敲と句読点ルール</string>
+    <string name="rule_gemini_title">Gemini 自動推敲を有効にする</string>
+    <string name="rule_gemini_sub">オフ時は完全ローカル・オフライン出力になります</string>
+    <string name="rule_punct_title">句読点を自動挿入</string>
+    <string name="rule_punct_sub">読点・句点・疑問符・感嘆符を自動で補完</string>
+    <string name="rule_filler_title">フィラー（言い淀み）を自動除去</string>
+    <string name="rule_filler_sub">「えーと」「あのー」などの不要なつなぎ言葉を除去</string>
+    <string name="rule_context_title">カーソル前後の文脈を参照</string>
+    <string name="rule_context_sub">入力欄の前後の短いテキストを共有して文体を自然に揃えます</string>
+
+    <!-- Dictionary Section -->
+    <string name="dict_learning_title">AI ヒントと常用表現の学習</string>
+    <string name="dict_hints_title">辞書と学習済み表現を AI 推敲ヒントに使用</string>
+    <string name="dict_hints_sub">Whisper prompt や DeepSeek / Gemini / ローカル LLM の綴り参照に自動提供</string>
+    <string name="dict_autolearn_title">常用表現と手動修正を自動学習</string>
+    <string name="dict_autolearn_sub">音声確定後の手動修正や高頻度の固有名詞を端末内で自動学習します</string>
+    <string name="dict_words_title">カスタム単語辞書（%1$d 件）</string>
+    <string name="dict_words_desc">カンマ・読点・改行で複数一括登録できます（例：DxVoice, TSMC, Antigravity）。タグをタップすると削除。</string>
+    <string name="dict_words_label">カスタム単語を入力</string>
+    <string name="dict_words_placeholder">例：DxVoice, 佐藤, Whisper</string>
+    <string name="dict_words_add_btn">辞書に追加</string>
+    <string name="dict_rep_title">強制テキスト置換ルール（%1$d 件）</string>
+    <string name="dict_rep_desc">確定直前に端末内で 0ms 自動置換し、固定の誤変換を 100% 修正します。</string>
+    <string name="dict_rep_from">誤認識ワード</string>
+    <string name="dict_rep_to">置換後</string>
+    <string name="dict_rep_add_btn">置換ルールを追加</string>
+    <string name="dict_learned_title">自動学習した表現（%1$d）</string>
+    <string name="dict_learned_clear">すべて消去</string>
+    <string name="dict_learned_desc">2回以上で AI ヒント化、3回以上の修正は自動置換。いつでもピン留め・ブロック可能。</string>
+    <string name="dict_learned_empty">まだ学習履歴はありません。音声入力や手動修正を行うと自動的に蓄積されます。</string>
+    <string name="dict_learned_count">学習回数：%1$d</string>
+    <string name="dict_learned_pin">固定</string>
+    <string name="dict_learned_block">ブロック</string>
+
+    <!-- Backup & Appearance Screen -->
+    <string name="backup_title">バックアップと復元（辞書含む・端末 / Google ドライブ）</string>
+    <string name="backup_desc">全入力設定、フローティング球座標、カスタム辞書（単語 %1$d 件・置換 %2$d 件・学習 %3$d 件）をまとめて保存します。</string>
+    <string name="backup_device_label">端末名（バックアップファイル名先頭）</string>
+    <string name="backup_preview">ファイル名プレビュー：%1$s</string>
+    <string name="backup_saved_path">記憶済みフォルダ：%1$s</string>
+    <string name="backup_one_click_btn">記憶済みフォルダへワンタップ保存</string>
+    <string name="backup_pick_folder">Google ドライブ / 端末フォルダを指定</string>
+    <string name="backup_change_folder">保存先フォルダを変更</string>
+    <string name="backup_save_once">バックアップファイルを単発保存</string>
+    <string name="backup_restore_btn">バックアップファイルから復元</string>
+    <string name="backup_status_folder_ok">保存先を記憶しバックアップ完了（辞書含む）：%1$s</string>
+    <string name="backup_status_folder_fail">フォルダ書き込み失敗：%1$s</string>
+    <string name="backup_status_export_ok">バックアップファイルを書き出しました（設定と辞書）</string>
+    <string name="backup_status_export_fail">書き出し失敗：%1$s</string>
+    <string name="backup_status_restore_ok">「%1$s」のバックアップから設定と辞書を復元しました</string>
+    <string name="backup_status_restore_fail">復元失敗：%1$s</string>
+    <string name="backup_status_one_click_ok">記憶済みフォルダへ保存完了（辞書含む）：%1$s</string>
+    <string name="backup_status_one_click_fail">書き込み失敗（フォルダを再指定してください）：%1$s</string>
+    <string name="theme_title">テーマ設定</string>
+    <string name="theme_dynamic">ダイナミックカラー (Pixel)</string>
+    <string name="theme_orange">オレンジチャコール (Orange Charcoal)</string>
+
+    <!-- Update & About Screen -->
+    <string name="about_play_title">バージョン情報と Google Play 更新</string>
+    <string name="about_current_version">現在のバージョン：v%1$s (Code %2$d)</string>
+    <string name="about_play_desc">Google Play 配信版です。すべてのアップデートは Google Play 経由で安全に配信されます。</string>
+    <string name="about_play_btn">Google Play で更新を確認 ↗</string>
+    <string name="about_github_title">GitHub リポジトリ設定</string>
+    <string name="about_github_desc">標準リポジトリのまま、またはご自身の Fork / カスタム GitHub Release URL に変更できます。</string>
+    <string name="about_github_invalid">形式エラー：https://github.com/owner/repo の形式で入力してください</string>
+    <string name="about_github_saved">更新ソースを保存しました：%1$s</string>
+    <string name="about_github_reset_msg">標準リンクにリセットしました</string>
+    <string name="about_github_save_btn">リンクを保存</string>
+    <string name="about_github_reset_btn">標準に戻す</string>
+    <string name="about_update_title">更新チェックと自動インストール</string>
+    <string name="about_auto_update_title">バックグラウンドで自動確認＆ダウンロード</string>
+    <string name="about_auto_update_sub">12時間ごとに GitHub 最新 Release を確認し、新版があれば通知します</string>
+    <string name="about_allow_install">「不明なアプリのインストール」を許可</string>
+    <string name="about_checking_msg">GitHub の最新版を確認中…</string>
+    <string name="about_checking_btn">確認中…</string>
+    <string name="about_check_btn">今すぐ更新を確認</string>
+    <string name="about_downloading_btn">ダウンロード中…</string>
+    <string name="about_download_btn">ダウンロードしてインストール</string>
+    <string name="about_dl_new">新バージョン %1$s を検出、APK をダウンロード中…</string>
+    <string name="about_dl_generic">新版 APK をダウンロード中…</string>
+    <string name="about_dl_done">ダウンロード完了、インストーラーを起動しました</string>
+    <string name="about_dl_fail">ダウンロードまたはインストール失敗：%1$s</string>
+    <string name="about_no_apk">新バージョン %1$s が見つかりましたが APK が添付されていません</string>
+    <string name="about_up_to_date">最新バージョンです（リモート：%1$s）</string>
+    <string name="about_check_fail">確認失敗：%1$s</string>
+    <string name="about_release_notes">更新内容 (%1$s)：</string>
+    <string name="credits_title">オープンソースモデル・ライブラリ・謝辞</string>
+    <string name="credits_intro">DxVoice-IME は以下の優れたオープンソース AI モデルおよびソフトウェアプロジェクトによって支えられています：</string>
+    <string name="credits_body">【オープンソース音声・言語モデル】\n• SenseVoice (FunAudioLLM / Alibaba)：中／広東／英／日／韓 多言語オフライン音声認識モデル (Apache-2.0)\n• OpenAI Whisper (Tiny / Base)：多言語オフライン音声認識モデル (MIT)\n• CT-Transformer (FunASR / Alibaba)：オフライン自動句読点モデル (MIT)\n• Qwen2.5-0.5B-Instruct (Alibaba Qwen / LiteRT Community)：端末内高速テキスト推敲モデル (Apache-2.0)\n\n【オープンソース推論エンジン・ライブラリ】\n• Sherpa-ONNX (k2-fsa / Next-gen Kaldi)：端末内音声認識・句読点推論フレームワーク (Apache-2.0)\n• Google MediaPipe Tasks GenAI (Google AI Edge)：端末内 LLM 推論エンジン (Apache-2.0)\n• AndroidX / Jetpack Compose / Material 3 (Google)：モダン UI ＆ 2画面アダプティブ構成 (Apache-2.0)\n• OkHttp (Square) &amp; Apache Commons Compress：通信およびオフラインモデル展開 (Apache-2.0)\n• Android ICU (Unicode) &amp; Google ML Kit：繁簡字変換およびオンデバイス翻訳</string>
+    <string name="credits_special_thanks">特別謝辞：開発協力・テスト参加メンバー — 曉東、Kimi に心より感謝します！</string>
+    <string name="credits_privacy_btn">プライバシーポリシーを見る ↗</string>
+
+    <!-- IME Keyboard Panel -->
+    <string name="ime_switch_lang">言語切替</string>
+    <string name="ime_offline_ready">オフライン可</string>
+    <string name="ime_trans_prefix">訳:%1$s</string>
+    <string name="ime_settings_cd">入力設定</string>
+    <string name="ime_listening_detected">音声認識中…</string>
+    <string name="ime_listening_prompt">お話しください（話し終えると自動補正して入力）</string>
+    <string name="ime_committed_returning">入力完了、元のキーボードへ戻ります…</string>
+    <string name="ime_committed_done">自動補正して入力しました</string>
+    <string name="ime_undo_raw">原文</string>
+    <string name="ime_need_mic">音声入力にはマイク権限が必要です</string>
+    <string name="ime_grant_now">今すぐ許可</string>
+    <string name="ime_password_disabled">パスワード欄では自動録音しません。元のキーボードへ戻ってください。</string>
+    <string name="ime_error_retry">%1$s（下のマイクをタップして再試行）</string>
+    <string name="ime_idle_prompt">待機中・マイクをタップして音声入力を開始</string>
+    <string name="ime_return_cd">元のキーボードへ戻る</string>
+    <string name="ime_return_default">キーボード</string>
+    <string name="ime_stop_cd">録音終了</string>
+    <string name="ime_start_cd">音声入力を開始</string>
+    <string name="ime_backspace_cd">削除</string>
+    <string name="ime_enter_cd">改行・送信</string>
+</resources>

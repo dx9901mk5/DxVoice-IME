@@ -43,10 +43,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.dx9901mk5.pixelvoiceime.R
 import com.dx9901mk5.pixelvoiceime.ai.LocalTranslator
 import com.dx9901mk5.pixelvoiceime.asr.VoiceSessionState
 import com.dx9901mk5.pixelvoiceime.data.AppThemeMode
@@ -89,340 +91,346 @@ fun ImeKeyboardPanel(
                         .padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                // Top utility bar: Language pill + AI indicator + Settings gear
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .clickable(onClick = onCycleLanguage),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(50)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Language,
-                                contentDescription = "切換語系",
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = activeLanguage.displayName,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            if (isOfflinePackReady) {
-                                Spacer(Modifier.width(6.dp))
-                                Text(
-                                    text = "離線就緒",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        val transOption = LocalTranslator.findTarget(targetTranslationCode)
-                        val transActive = targetTranslationCode.isNotBlank()
                         Surface(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .clickable(onClick = onCycleTranslation),
-                            color = if (transActive) {
-                                MaterialTheme.colorScheme.secondaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.surfaceVariant
-                            },
+                                .clickable(onClick = onCycleLanguage),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
                             shape = RoundedCornerShape(50)
                         ) {
-                            Text(
-                                text = "譯:${transOption.shortLabel}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (transActive) {
-                                    MaterialTheme.colorScheme.onSecondaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-
-                        if (isGeminiReady) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(50)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.AutoAwesome,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(13.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Spacer(Modifier.width(4.dp))
-                                    Text(
-                                        text = "Gemini",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
-                            }
-                        }
-                        IconButton(onClick = onOpenSettings) {
-                            Icon(
-                                imageVector = Icons.Rounded.Settings,
-                                contentDescription = "輸入法設定",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(6.dp))
-
-                // Status & Live Preview area
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(74.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when (state) {
-                        is VoiceSessionState.Listening -> {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                VoiceWaveformBars(amplitude = state.amplitude)
-                                Spacer(Modifier.height(6.dp))
+                                Icon(
+                                    imageVector = Icons.Rounded.Language,
+                                    contentDescription = stringResource(R.string.ime_switch_lang),
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(Modifier.width(6.dp))
                                 Text(
-                                    text = state.partialText.ifBlank {
-                                        if (state.speechDetected) "正在聆聽辨識中…" else "請開始說話（說完自動修潤貼回）"
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    textAlign = TextAlign.Center
+                                    text = activeLanguage.displayName,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                            }
-                        }
-
-                        is VoiceSessionState.Polishing -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.5.dp
-                                )
-                                Spacer(Modifier.width(10.dp))
-                                Column {
+                                if (isOfflinePackReady) {
+                                    Spacer(Modifier.width(6.dp))
                                     Text(
-                                        text = state.statusText,
-                                        style = MaterialTheme.typography.labelLarge,
+                                        text = stringResource(R.string.ime_offline_ready),
+                                        style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary
                                     )
-                                    if (state.rawText.isNotBlank()) {
-                                        Text(
-                                            text = state.rawText,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
                                 }
                             }
                         }
 
-                        is VoiceSessionState.Committed -> {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            val transOption = LocalTranslator.findTarget(targetTranslationCode)
+                            val transActive = targetTranslationCode.isNotBlank()
+                            Surface(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .clickable(onClick = onCycleTranslation),
+                                color = if (transActive) {
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                },
+                                shape = RoundedCornerShape(50)
                             ) {
-                                Row(
-                                    modifier = Modifier.weight(1f),
-                                    verticalAlignment = Alignment.CenterVertically
+                                Text(
+                                    text = stringResource(R.string.ime_trans_prefix, transOption.shortLabel),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (transActive) {
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+
+                            if (isGeminiReady) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(50)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Column {
-                                        Text(
-                                            text = if (state.returningSoon) "已貼回，即將切回原輸入法…" else "已自動修正並貼回",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Text(
-                                            text = state.finalText,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
-                                if (state.wasAiPolished && state.rawText.isNotBlank() && state.rawText != state.finalText) {
-                                    TextButton(onClick = onUndoAiPolish) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Undo,
+                                            imageVector = Icons.Rounded.AutoAwesome,
                                             contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
+                                            modifier = Modifier.size(13.dp),
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                         Spacer(Modifier.width(4.dp))
-                                        Text("原文", style = MaterialTheme.typography.labelMedium)
+                                        Text(
+                                            text = "Gemini",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
                                     }
                                 }
                             }
-                        }
-
-                        is VoiceSessionState.PermissionRequired -> {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Text(
-                                    text = "需要麥克風權限才能語音輸入",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                FilledTonalButton(onClick = onOpenPermissionSetup) {
-                                    Text("立即授權")
-                                }
-                            }
-                        }
-
-                        is VoiceSessionState.PasswordProtected -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = onOpenSettings) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Lock,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                                    imageVector = Icons.Rounded.Settings,
+                                    contentDescription = stringResource(R.string.ime_settings_cd),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(Modifier.width(8.dp))
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(74.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when (state) {
+                            is VoiceSessionState.Listening -> {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    VoiceWaveformBars(amplitude = state.amplitude)
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        text = state.partialText.ifBlank {
+                                            if (state.speechDetected) {
+                                                stringResource(R.string.ime_listening_detected)
+                                            } else {
+                                                stringResource(R.string.ime_listening_prompt)
+                                            }
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+
+                            is VoiceSessionState.Polishing -> {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.5.dp
+                                    )
+                                    Spacer(Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = state.statusText,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        if (state.rawText.isNotBlank()) {
+                                            Text(
+                                                text = state.rawText,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            is VoiceSessionState.Committed -> {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Check,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = if (state.returningSoon) {
+                                                    stringResource(R.string.ime_committed_returning)
+                                                } else {
+                                                    stringResource(R.string.ime_committed_done)
+                                                },
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Text(
+                                                text = state.finalText,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                    if (state.wasAiPolished && state.rawText.isNotBlank() && state.rawText != state.finalText) {
+                                        TextButton(onClick = onUndoAiPolish) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Undo,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(Modifier.width(4.dp))
+                                            Text(stringResource(R.string.ime_undo_raw), style = MaterialTheme.typography.labelMedium)
+                                        }
+                                    }
+                                }
+                            }
+
+                            is VoiceSessionState.PermissionRequired -> {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.ime_need_mic),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    FilledTonalButton(onClick = onOpenPermissionSetup) {
+                                        Text(stringResource(R.string.ime_grant_now))
+                                    }
+                                }
+                            }
+
+                            is VoiceSessionState.PasswordProtected -> {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Lock,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.ime_password_disabled),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            is VoiceSessionState.Error -> {
                                 Text(
-                                    text = "密碼輸入框已停用自動收音，請切回原本鍵盤輸入",
+                                    text = stringResource(R.string.ime_error_retry, state.message),
                                     style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2
+                                )
+                            }
+
+                            VoiceSessionState.Idle -> {
+                                Text(
+                                    text = stringResource(R.string.ime_idle_prompt),
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
+                    }
 
-                        is VoiceSessionState.Error -> {
+                    Spacer(Modifier.height(12.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                    ) {
+                        FilledTonalButton(
+                            onClick = onSwitchToPreviousIme,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .widthIn(max = 112.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Keyboard,
+                                contentDescription = stringResource(R.string.ime_return_cd),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
                             Text(
-                                text = "${state.message}（點擊下方麥克風重試）",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center,
-                                maxLines = 2
+                                text = previousImeLabel.ifBlank { stringResource(R.string.ime_return_default) },
+                                style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
-                        VoiceSessionState.Idle -> {
-                            Text(
-                                text = "待機中，點擊麥克風開始語音輸入",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        val isListening = state is VoiceSessionState.Listening
+                        val orbColor = if (isListening) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        }
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(84.dp)
+                                .clip(CircleShape)
+                                .clickable(onClick = onMicPrimaryAction),
+                            color = orbColor,
+                            shape = CircleShape,
+                            shadowElevation = 6.dp
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = if (isListening) Icons.Rounded.Stop else Icons.Rounded.Mic,
+                                    contentDescription = if (isListening) {
+                                        stringResource(R.string.ime_stop_cd)
+                                    } else {
+                                        stringResource(R.string.ime_start_cd)
+                                    },
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterEnd),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            FilledTonalIconButton(onClick = onBackspace) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.Backspace,
+                                    contentDescription = stringResource(R.string.ime_backspace_cd)
+                                )
+                            }
+                            FilledTonalIconButton(onClick = onEnter) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.KeyboardReturn,
+                                    contentDescription = stringResource(R.string.ime_enter_cd)
+                                )
+                            }
                         }
                     }
                 }
-
-                Spacer(Modifier.height(12.dp))
-
-                // Bottom controls: Return to previous IME (Left) | Large Centered Primary Mic Orb | Backspace (Right)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp)
-                ) {
-                    // Return to previous IME button (left)
-                    FilledTonalButton(
-                        onClick = onSwitchToPreviousIme,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .widthIn(max = 112.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Keyboard,
-                            contentDescription = "切回原輸入法",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = previousImeLabel.ifBlank { "切回鍵盤" },
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    // Large Centered Primary Mic / Stop button
-                    val isListening = state is VoiceSessionState.Listening
-                    val orbColor = if (isListening) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    }
-                    Surface(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(84.dp)
-                            .clip(CircleShape)
-                            .clickable(onClick = onMicPrimaryAction),
-                        color = orbColor,
-                        shape = CircleShape,
-                        shadowElevation = 6.dp
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = if (isListening) Icons.Rounded.Stop else Icons.Rounded.Mic,
-                                contentDescription = if (isListening) "完成收音" else "開始語音輸入",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(40.dp)
-                            )
-                        }
-                    }
-
-                    // Quick Backspace + Enter (right)
-                    Row(
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        FilledTonalIconButton(onClick = onBackspace) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.Backspace,
-                                contentDescription = "刪除"
-                            )
-                        }
-                        FilledTonalIconButton(onClick = onEnter) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.KeyboardReturn,
-                                contentDescription = "換行或送出"
-                            )
-                        }
-                    }
-                }
-            }
             }
         }
     }

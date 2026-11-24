@@ -32,6 +32,7 @@ import com.dx9901mk5.pixelvoiceime.asr.VoiceSessionState
 import com.dx9901mk5.pixelvoiceime.data.PolishMode
 import com.dx9901mk5.pixelvoiceime.models.PackDownloadState
 import com.dx9901mk5.pixelvoiceime.models.VoiceLanguageCatalog
+import com.dx9901mk5.pixelvoiceime.ui.ProvideUiLanguage
 import com.dx9901mk5.pixelvoiceime.ui.SettingsActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -119,24 +120,26 @@ class PixelVoiceImeService : InputMethodService() {
                 val activeLang = VoiceLanguageCatalog.findByTag(config.activeLanguageTag)
                 val offlineReady = packStates[activeLang.packId] is PackDownloadState.Installed
 
-                ImeKeyboardPanel(
-                    state = state,
-                    activeLanguage = activeLang,
-                    isOfflinePackReady = offlineReady,
-                    isGeminiReady = hasApiKey && config.geminiPolishEnabled,
-                    targetTranslationCode = config.targetTranslationLang,
-                    themeMode = config.appThemeMode,
-                    previousImeLabel = config.previousImeLabel.ifBlank { "切回鍵盤" },
-                    onCycleLanguage = ::cycleActiveLanguage,
-                    onCycleTranslation = ::cycleTargetTranslation,
-                    onOpenSettings = ::openSettingsActivity,
-                    onMicPrimaryAction = ::handleMicButtonClick,
-                    onSwitchToPreviousIme = ::returnToPreviousInputMethod,
-                    onUndoAiPolish = ::undoLastAiPolish,
-                    onBackspace = ::performBackspace,
-                    onEnter = ::performEnterOrAction,
-                    onOpenPermissionSetup = ::openSettingsActivity
-                )
+                ProvideUiLanguage(uiLanguage = config.uiLanguage) {
+                    ImeKeyboardPanel(
+                        state = state,
+                        activeLanguage = activeLang,
+                        isOfflinePackReady = offlineReady,
+                        isGeminiReady = hasApiKey && config.geminiPolishEnabled,
+                        targetTranslationCode = config.targetTranslationLang,
+                        themeMode = config.appThemeMode,
+                        previousImeLabel = config.previousImeLabel,
+                        onCycleLanguage = ::cycleActiveLanguage,
+                        onCycleTranslation = ::cycleTargetTranslation,
+                        onOpenSettings = ::openSettingsActivity,
+                        onMicPrimaryAction = ::handleMicButtonClick,
+                        onSwitchToPreviousIme = ::returnToPreviousInputMethod,
+                        onUndoAiPolish = ::undoLastAiPolish,
+                        onBackspace = ::performBackspace,
+                        onEnter = ::performEnterOrAction,
+                        onOpenPermissionSetup = ::openSettingsActivity
+                    )
+                }
             }
         }
     }

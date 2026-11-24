@@ -39,8 +39,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dx9901mk5.pixelvoiceime.R
 import com.dx9901mk5.pixelvoiceime.data.VoiceImePrefs
 import com.dx9901mk5.pixelvoiceime.models.OfflineModelManager
 import com.dx9901mk5.pixelvoiceime.models.PackDownloadState
@@ -91,21 +93,21 @@ fun OfflineLanguagesScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "離線語音檔案庫（仿 Google 語音輸入法）",
+                        text = stringResource(R.string.offline_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "支援 ${VoiceLanguageCatalog.languages.size} 種語系與地區變體。多語共用底層權重，下載一次即可離線辨識同組語系。",
+                        text = stringResource(R.string.offline_desc, VoiceLanguageCatalog.languages.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = String.format(
-                            "已安裝離線包：%d 組 • 已用空間：%.1f MB • 目前語系：%s",
+                        text = stringResource(
+                            R.string.offline_stats,
                             installedPacksCount,
                             installedMb,
                             VoiceLanguageCatalog.findByTag(config.activeLanguageTag).displayName
@@ -124,7 +126,7 @@ fun OfflineLanguagesScreen(
                 onValueChange = { query = it },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = { Text("搜尋語系（例如：繁體中文、日文、English、粵語）") },
+                placeholder = { Text(stringResource(R.string.offline_search_placeholder)) },
                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 shape = RoundedCornerShape(16.dp)
             )
@@ -199,7 +201,7 @@ private fun LanguageRowCard(
                         } else {
                             Icons.Rounded.RadioButtonUnchecked
                         },
-                        contentDescription = "設為目前語系",
+                        contentDescription = stringResource(R.string.offline_set_active),
                         tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -222,20 +224,20 @@ private fun LanguageRowCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Rounded.CheckCircle,
-                                contentDescription = "已下載",
+                                contentDescription = stringResource(R.string.offline_installed),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                text = "已下載",
+                                text = stringResource(R.string.offline_installed),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             IconButton(onClick = onDeletePack) {
                                 Icon(
                                     imageVector = Icons.Rounded.DeleteOutline,
-                                    contentDescription = "刪除離線包",
+                                    contentDescription = stringResource(R.string.offline_delete_pack),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -255,7 +257,7 @@ private fun LanguageRowCard(
                         FilledTonalIconButton(onClick = onDownload) {
                             Icon(
                                 imageVector = Icons.Rounded.Download,
-                                contentDescription = "下載離線語音檔 (~${packSizeMb}MB)"
+                                contentDescription = stringResource(R.string.offline_download_pack, packSizeMb)
                             )
                         }
                     }
@@ -277,7 +279,7 @@ private fun LanguageRowCard(
             } else if (state is PackDownloadState.Error) {
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "下載失敗：${state.message}",
+                    text = stringResource(R.string.offline_download_failed, state.message),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error
                 )

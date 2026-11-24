@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DxVoice-IME</string>
+    <string name="ime_name">DxVoice-IME</string>
+    <string name="subtype_voice_zh_tw">Voice Typing (Traditional Chinese / AI Polish)</string>
+    <string name="subtype_voice_en_us">Voice Typing (English / AI Polish)</string>
+    <string name="accessibility_service_description">Detects when the system soft keyboard opens or closes to show/hide the floating voice shortcut ball, and switches directly to DxVoice-IME when tapped (never records or uploads any personal text).</string>
+
+    <!-- Top Bar & Navigation -->
+    <string name="app_subtitle">On-Device Fast Voice / Dictionary &amp; Local LLM / Custom Endpoint IME</string>
+    <string name="nav_setup">Setup</string>
+    <string name="nav_languages">Languages</string>
+    <string name="nav_models">Dict &amp; Models</string>
+    <string name="nav_backup">Backup</string>
+    <string name="nav_about">About</string>
+    <string name="layout_single_pane"> Single</string>
+    <string name="layout_side_by_side"> Split</string>
+    <string name="ui_language_title">App Language</string>
+    <string name="ui_language_system">System Default</string>
+    <string name="ui_language_zh">繁體中文</string>
+    <string name="ui_language_en">English</string>
+    <string name="ui_language_ja">日本語</string>
+
+    <!-- Accessibility Disclosure -->
+    <string name="a11y_disclosure_title">Accessibility Service Permission Notice</string>
+    <string name="a11y_disclosure_body">DxVoice-IME uses Android AccessibilityService solely for two convenience features:\n\n1. Detecting when your soft keyboard opens or closes so the floating voice ball only appears while using another keyboard.\n2. Switching directly to DxVoice-IME and starting voice capture when you tap the floating ball.\n\nPrivacy Commitment: This service never reads, logs, stores, or uploads any screen text, messages, passwords, or personal data.</string>
+    <string name="a11y_disclosure_confirm">I Understand &amp; Continue</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_close">Close</string>
+    <string name="common_apply">Apply</string>
+    <string name="common_delete">Delete</string>
+
+    <!-- Pro Status & Upgrade Dialog -->
+    <string name="pro_status_beta">Beta Testing · All Pro Features Free</string>
+    <string name="pro_status_purchased">DxVoice-IME Pro Unlocked ✓</string>
+    <string name="pro_status_trial">Pro 3-Day Free Trial (%1$d hrs left)</string>
+    <string name="pro_status_free">Free Version (Upgrade to Pro for 5 features)</string>
+    <string name="pro_card_subtitle">Floating ball, auto-return IME, local LLM, custom dictionary &amp; cloud backup</string>
+    <string name="pro_btn_plan">Plan</string>
+    <string name="pro_btn_view">View Pro</string>
+    <string name="pro_dialog_title">DxVoice-IME Pro License</string>
+    <string name="pro_dialog_sub_beta">All features are free during beta (production includes a 3-day free trial)</string>
+    <string name="pro_dialog_sub_purchased">You have unlocked DxVoice-IME Pro ✓</string>
+    <string name="pro_dialog_sub_trial">3-Day Free Trial active (~%1$d hours remaining)</string>
+    <string name="pro_dialog_sub_free">3-Day Free Trial ended. Upgrade to Pro to unlock all 5 productivity features.</string>
+    <string name="pro_dialog_feature_highlight">\"%1$s\" is a Pro feature.</string>
+    <string name="pro_dialog_free_desc">Always free: core voice typing, offline speech recognition, auto-punctuation, Traditional Chinese conversion, and manual keyboard switch.</string>
+    <string name="pro_dialog_features_header">5 Exclusive Pro Productivity Features:</string>
+    <string name="pro_dialog_unlocked">Unlocked</string>
+    <string name="pro_dialog_select_plan">Select Plan · %1$s</string>
+    <string name="pro_promo_title">Friends &amp; Family / Google Play Promo Code</string>
+    <string name="pro_promo_label">Enter promo code</string>
+    <string name="pro_promo_redeem">Redeem</string>
+    <string name="pro_restore_btn">Restore Google Play Purchases</string>
+    <string name="pro_plan_lifetime_title">DxVoice-IME Pro Lifetime</string>
+    <string name="pro_plan_lifetime_sub">Includes 3-day free trial on release; one-time purchase unlocks all 5 Pro features forever with no subscription.</string>
+    <string name="pro_plan_lifetime_price">NT$300 One-Time</string>
+    <string name="pro_plan_lifetime_badge">One-Time · No Subscription</string>
+    <string name="pro_feat_floating_name">Floating Voice Shortcut Ball</string>
+    <string name="pro_feat_floating_desc">Follows other keyboards automatically, one-tap voice launch, and dual-screen foldable memory</string>
+    <string name="pro_feat_autoreturn_name">Auto-Return to Previous Keyboard</string>
+    <string name="pro_feat_autoreturn_desc">Automatically switches back to your previous keyboard after committing text</string>
+    <string name="pro_feat_llm_name">On-Device Fast LLM Polishing</string>
+    <string name="pro_feat_llm_desc">Offline Qwen2.5 0.5B local AI polishing for natural phrasing and typo fixes</string>
+    <string name="pro_feat_dict_name">Custom Dictionary &amp; Habit Learning</string>
+    <string name="pro_feat_dict_desc">Custom terms, 0ms instant text replacement, and automatic phrase learning</string>
+    <string name="pro_feat_backup_name">Cloud &amp; Folder Backup/Restore</string>
+    <string name="pro_feat_backup_desc">One-tap backup of all settings, floating ball positions, and custom dictionary to Google Drive or local folder</string>
+
+    <!-- Billing Messages -->
+    <string name="billing_not_ready">Google Play Billing service is not ready yet</string>
+    <string name="billing_checking">Checking Google Play purchase history…</string>
+    <string name="billing_enter_promo">Please enter a friends &amp; family code or Google Play promo code</string>
+    <string name="billing_promo_success">Promo code verified! DxVoice-IME Pro permanently unlocked ✓</string>
+    <string name="billing_promo_play_opened">Opened Google Play redeem page. After redeeming, tap \"Restore Google Play Purchases\".</string>
+    <string name="billing_promo_invalid">Invalid promo code. Please check and try again.</string>
+    <string name="billing_beta_free">Currently in beta testing — all features are free to use (in-app purchase activates on production release).</string>
+    <string name="billing_connect_failed">Unable to connect to Google Play. Please sign in to your Google account and retry.</string>
+    <string name="billing_no_product">Product details not loaded from Google Play yet. Please try again later.</string>
+    <string name="billing_launch_failed">Could not open checkout window (code %1$d)</string>
+    <string name="billing_verified">DxVoice-IME Pro license verified ✓</string>
+    <string name="billing_not_found">No previous Pro purchase found</string>
+    <string name="billing_purchase_success">Thank you! DxVoice-IME Pro is now unlocked ✓</string>
+    <string name="billing_purchase_canceled">Purchase canceled</string>
+    <string name="billing_purchase_failed">Purchase incomplete (code %1$d)</string>
+
+    <!-- Setup & Behavior Tab -->
+    <string name="setup_quick_title">Quick Setup</string>
+    <string name="setup_ime_enabled"> IME Enabled</string>
+    <string name="setup_enable_ime">1. Enable DxVoice-IME</string>
+    <string name="setup_switch_ime">2. Switch Keyboard</string>
+    <string name="setup_mic_granted">Microphone Granted ✓</string>
+    <string name="setup_mic_grant">3. Grant Microphone</string>
+    <string name="setup_allow_notif">Allow Update Notifications</string>
+    <string name="behavior_title">Auto-Listen &amp; Auto-Return Behavior</string>
+    <string name="behavior_auto_listen_title">Auto-start listening on switch</string>
+    <string name="behavior_auto_listen_sub">Immediately start capturing voice when switching to DxVoice-IME (auto-skipped on password fields)</string>
+    <string name="behavior_auto_return_title">Auto-return to previous keyboard (Pro)</string>
+    <string name="behavior_auto_return_sub">Remembers your previous keyboard and switches back right after committing text</string>
+    <string name="behavior_delay_label">Auto-return delay</string>
+    <string name="delay_0">Instant (0s)</string>
+    <string name="delay_450">Fast (0.45s)</string>
+    <string name="delay_1000">Preview (1s)</string>
+    <string name="delay_1800">Relaxed (1.8s)</string>
+    <string name="delay_2500">Relaxed (2.5s / Default)</string>
+    <string name="delay_manual">Manual switch</string>
+    <string name="behavior_silence_label">Pause timeout to finish speaking (brief pauses under 2s continue seamlessly)</string>
+    <string name="silence_2500">2.5s</string>
+    <string name="silence_2700">2.7s</string>
+    <string name="silence_3000">3.0s (Default)</string>
+    <string name="silence_4000">4.0s</string>
+
+    <!-- Floating Ball -->
+    <string name="floating_title">Floating Voice Shortcut Ball</string>
+    <string name="floating_desc">Shows a draggable floating mic button over other keyboards; tap to launch voice typing immediately. Remembers outer and inner screen coordinates separately on foldables.</string>
+    <string name="floating_grant_overlay">Grant \"Display over other apps\" Permission</string>
+    <string name="floating_a11y_active">Keyboard-aware + One-Tap Launch: Active ✓ (Appears only with other keyboards; tap to start voice)</string>
+    <string name="floating_a11y_disconnected">Notice: Accessibility is enabled in settings, but the service is disconnected (often after an app update or battery optimization). Toggle \"DxVoice-IME\" OFF and ON again in Accessibility settings to restore one-tap launch.</string>
+    <string name="floating_a11y_disabled">Important: Enable \"DxVoice-IME\" Accessibility so the floating ball follows your keyboard and switches directly to voice input without showing the system IME picker.</string>
+    <string name="floating_a11y_btn_restart">Re-toggle \"DxVoice-IME\" in Accessibility</string>
+    <string name="floating_a11y_btn_enable">Enable \"DxVoice-IME\" Accessibility (Required for 1-tap)</string>
+    <string name="floating_enable_title">Enable Floating Voice Ball (Pro)</string>
+    <string name="floating_enable_sub_ok">Auto-shows over other keyboards; tap to launch voice input</string>
+    <string name="floating_enable_sub_need_perm">Please grant overlay permission first</string>
+    <string name="floating_alpha">Floating ball opacity: %1$d%%</string>
+    <string name="floating_coords">Saved pos | Phone/Outer: (%1$d, %2$d) | Tablet/Inner: (%3$d, %4$d)</string>
+    <string name="floating_reset_pos">Reset Outer/Inner Ball Positions</string>
+
+    <!-- Sandbox -->
+    <string name="sandbox_title">Live Voice Typing Sandbox</string>
+    <string name="sandbox_desc">Tap the box below and switch to \"DxVoice-IME\" to test auto-listen → AI punctuation &amp; polish → auto-commit &amp; return!</string>
+    <string name="sandbox_placeholder">Tap here to test voice typing…</string>
+
+    <!-- Offline Languages Screen -->
+    <string name="offline_title">Offline Speech Packs</string>
+    <string name="offline_desc">Supports %1$d languages and regional variants. Multi-lingual packs share weights so one download covers the entire group offline.</string>
+    <string name="offline_stats">Installed packs: %1$d • Storage: %2$.1f MB • Active: %3$s</string>
+    <string name="offline_search_placeholder">Search language (e.g., English, 日本語, Chinese, Cantonese)</string>
+    <string name="offline_set_active">Set as active language</string>
+    <string name="offline_installed">Installed</string>
+    <string name="offline_delete_pack">Delete offline pack</string>
+    <string name="offline_download_pack">Download offline pack (~%1$dMB)</string>
+    <string name="offline_download_failed">Download failed: %1$s</string>
+
+    <!-- Models & Cloud Screen -->
+    <string name="models_subtab_local">Dictionary &amp; Local LLM</string>
+    <string name="models_subtab_cloud">Cloud Gemini / Custom API</string>
+    <string name="local_polish_title">On-Device Polishing (Optional)</string>
+    <string name="local_typo_title">Local Homophone &amp; Typo Correction Table</string>
+    <string name="local_typo_sub">Fixes common Traditional Chinese homophone typos offline in &lt;0.01s</string>
+    <string name="local_llm_title">On-Device Fast Small LLM (Qwen2.5 0.5B · Pro)</string>
+    <string name="local_llm_sub">Offline XNNPACK fast inference for accurate Chinese typo &amp; phrasing polish (~521 MB; auto-cleans legacy Gemma 3 model; falls back to 0ms dictionary when off)</string>
+    <string name="local_llm_accel_note">⚡ Performance note: Qwen2.5 0.5B uses multi-threaded XNNPACK CPU inference (avoids GPU shader stalls, with built-in 4.5s timeout fallback). Recommended for devices with 8GB+ RAM.</string>
+    <string name="local_llm_download_btn">Download Qwen2.5 0.5B Model (~521 MB)</string>
+    <string name="local_llm_ready">Qwen2.5 0.5B Ready (%1$d MB · %2$s)</string>
+    <string name="local_llm_remove">Remove Model</string>
+    <string name="local_llm_retry">Retry Download Qwen2.5 0.5B</string>
+    <string name="dict_pro_locked_title">Custom Dictionary, 0ms Replace &amp; Learning (Pro)</string>
+    <string name="dict_pro_locked_desc">Upgrade to DxVoice-IME Pro to unlock custom vocabulary, instant text replacements, and automatic habit learning.</string>
+    <string name="dict_pro_unlock_btn">Unlock Pro Dictionary</string>
+
+    <!-- Cloud Gemini & Custom Endpoint -->
+    <string name="gemini_key_title">Gemini API Key (BYOK Encrypted)</string>
+    <string name="gemini_key_label">Enter Google AI Studio API Key</string>
+    <string name="gemini_key_saved">API Key saved securely</string>
+    <string name="gemini_key_save_btn">Save Key</string>
+    <string name="gemini_key_testing">Testing connection…</string>
+    <string name="gemini_key_test_ok">Connected: %1$s</string>
+    <string name="gemini_key_test_fail">Connection failed: %1$s</string>
+    <string name="gemini_key_test_btn">Test Connection</string>
+    <string name="gemini_howto_title">How to get a free Gemini API Key?</string>
+    <string name="gemini_howto_body">1. Tap the button below to open Google AI Studio and sign in.\n2. Click \"Create API key\" to generate a new key.\n3. Copy the \"AIza...\" key, paste it above, and tap \"Save Key\" and \"Test Connection\".</string>
+    <string name="gemini_howto_btn">Open Google AI Studio ↗</string>
+    <string name="gemini_model_title">Gemini Model &amp; Processing Mode</string>
+    <string name="gemini_custom_model_label">Or custom model ID</string>
+    <string name="gemini_mode_label">Speech &amp; Polish Mode (Local or API)</string>
+    <string name="mode_local_only">Local Speech Only (No API)</string>
+    <string name="mode_fast_text">Local Speech + Gemini Polish (Recommended)</string>
+    <string name="mode_audio_multimodal">Direct Gemini Audio API</string>
+    <string name="mode_openai_compat">Self-Hosted / OpenAI Endpoint</string>
+    <string name="mode_desc_local">100% on-device recognition (uses Sherpa-ONNX offline engine when pack is installed). No API calls.</string>
+    <string name="mode_desc_fast">Fast local/system transcription followed by Gemini punctuation &amp; polishing for lowest latency.</string>
+    <string name="mode_desc_audio">Captures 16kHz WAV audio and sends directly to Gemini API for multimodal transcription.</string>
+    <string name="mode_desc_openai">Connects to your self-hosted Mac/LAN Whisper server or Groq / OpenAI / DeepSeek compatible endpoints.</string>
+    <string name="custom_endpoint_title">Self-Hosted / OpenAI-Compatible Endpoint</string>
+    <string name="preset_mac_lan">Mac LAN Preset</string>
+    <string name="preset_groq">Groq Preset</string>
+    <string name="preset_openai">OpenAI Preset</string>
+    <string name="custom_asr_url">ASR Endpoint URL (auto-appends /audio/transcriptions)</string>
+    <string name="custom_asr_model">ASR Model (e.g. whisper-1 / whisper-large-v3-turbo)</string>
+    <string name="custom_asr_key">ASR API Key (optional for LAN server)</string>
+    <string name="custom_llm_switch_title">Add Custom LLM Polish (DeepSeek / Ollama)</string>
+    <string name="custom_llm_switch_sub">When off, outputs directly with local punctuation and dictionary</string>
+    <string name="custom_llm_url">LLM Endpoint URL (auto-appends /chat/completions)</string>
+    <string name="custom_llm_model">LLM Model (e.g. deepseek-chat / gpt-4o-mini)</string>
+    <string name="custom_llm_key">LLM API Key (optional for local Ollama)</string>
+    <string name="polish_rules_title">Polishing &amp; Punctuation Rules</string>
+    <string name="rule_gemini_title">Enable Gemini Auto-Polish</string>
+    <string name="rule_gemini_sub">When off, outputs purely on-device offline text</string>
+    <string name="rule_punct_title">Auto-Punctuation</string>
+    <string name="rule_punct_sub">Automatically inserts commas, periods, question &amp; exclamation marks</string>
+    <string name="rule_filler_title">Remove Filler Words</string>
+    <string name="rule_filler_sub">Filters out vocal fillers like um, uh, like</string>
+    <string name="rule_context_title">Use Surrounding Text Context</string>
+    <string name="rule_context_sub">Shares a snippet around the cursor so Gemini matches tone accurately</string>
+
+    <!-- Dictionary Section -->
+    <string name="dict_learning_title">AI Hints &amp; Habit Learning</string>
+    <string name="dict_hints_title">Use dictionary &amp; learned phrases as AI hints</string>
+    <string name="dict_hints_sub">Feeds custom terms into Whisper prompt and DeepSeek / Gemini / local LLM for accurate spelling</string>
+    <string name="dict_autolearn_title">Auto-learn frequent phrases &amp; manual edits</string>
+    <string name="dict_autolearn_sub">Automatically learns on-device when you manually edit voice output or frequently use proper nouns</string>
+    <string name="dict_words_title">Custom Vocabulary (%1$d)</string>
+    <string name="dict_words_desc">Add multiple words separated by commas or new lines (e.g. DxVoice, TSMC, Antigravity). Tap a tag to remove.</string>
+    <string name="dict_words_label">Enter custom words</string>
+    <string name="dict_words_placeholder">e.g. DxVoice, Jack, Whisper</string>
+    <string name="dict_words_add_btn">Add Words</string>
+    <string name="dict_rep_title">Forced Text Replacements (%1$d)</string>
+    <string name="dict_rep_desc">0ms local replacement right before committing text (e.g. i phone -> iPhone).</string>
+    <string name="dict_rep_from">Mistaken word</string>
+    <string name="dict_rep_to">Replace with</string>
+    <string name="dict_rep_add_btn">Add Replacement</string>
+    <string name="dict_learned_title">Auto-Learned Phrases (%1$d)</string>
+    <string name="dict_learned_clear">Clear All</string>
+    <string name="dict_learned_desc">≥ 2 uses become AI hints; ≥ 3 manual edits auto-apply. Pin or block anytime.</string>
+    <string name="dict_learned_empty">No learned phrases yet. They appear automatically as you dictate or make manual corrections.</string>
+    <string name="dict_learned_count">Learned count: %1$d</string>
+    <string name="dict_learned_pin">Pin</string>
+    <string name="dict_learned_block">Block</string>
+
+    <!-- Backup & Appearance Screen -->
+    <string name="backup_title">Backup &amp; Restore (Dictionary · Local / Google Drive)</string>
+    <string name="backup_desc">Includes all IME settings, floating ball screen positions, and custom dictionary (%1$d words, %2$d replacements, %3$d learned phrases).</string>
+    <string name="backup_device_label">Device Name (backup filename prefix)</string>
+    <string name="backup_preview">Filename preview: %1$s</string>
+    <string name="backup_saved_path">Saved folder: %1$s</string>
+    <string name="backup_one_click_btn">One-Tap Backup to Saved Folder</string>
+    <string name="backup_pick_folder">Choose Google Drive / Local Folder</string>
+    <string name="backup_change_folder">Change Backup Folder</string>
+    <string name="backup_save_once">Export Single Backup File</string>
+    <string name="backup_restore_btn">Restore from Backup File</string>
+    <string name="backup_status_folder_ok">Folder saved &amp; backup completed (with dictionary): %1$s</string>
+    <string name="backup_status_folder_fail">Failed to write to folder: %1$s</string>
+    <string name="backup_status_export_ok">Backup file exported (settings &amp; dictionary)</string>
+    <string name="backup_status_export_fail">Export failed: %1$s</string>
+    <string name="backup_status_restore_ok">Restored settings &amp; dictionary from \"%1$s\"</string>
+    <string name="backup_status_restore_fail">Restore failed: %1$s</string>
+    <string name="backup_status_one_click_ok">Backed up to saved folder (with dictionary): %1$s</string>
+    <string name="backup_status_one_click_fail">Write failed (please re-select folder): %1$s</string>
+    <string name="theme_title">App Theme</string>
+    <string name="theme_dynamic">Dynamic Color (Pixel)</string>
+    <string name="theme_orange">Orange Charcoal</string>
+
+    <!-- Update & About Screen -->
+    <string name="about_play_title">Version &amp; Google Play Updates</string>
+    <string name="about_current_version">Installed version: v%1$s (Code %2$d)</string>
+    <string name="about_play_desc">This is the Google Play release. All updates are delivered securely through Google Play.</string>
+    <string name="about_play_btn">Check Updates on Google Play ↗</string>
+    <string name="about_github_title">GitHub Repository Settings</string>
+    <string name="about_github_desc">Keep the default repository or enter your own Fork / custom GitHub Releases URL.</string>
+    <string name="about_github_invalid">Invalid format. Please enter https://github.com/owner/repo</string>
+    <string name="about_github_saved">Update source saved: %1$s</string>
+    <string name="about_github_reset_msg">Reset to default repository</string>
+    <string name="about_github_save_btn">Save URL</string>
+    <string name="about_github_reset_btn">Reset Default</string>
+    <string name="about_update_title">Update Check &amp; Auto-Install</string>
+    <string name="about_auto_update_title">Auto-check &amp; download in background</string>
+    <string name="about_auto_update_sub">Checks GitHub Releases every 12 hours and notifies when a new version is ready</string>
+    <string name="about_allow_install">Grant \"Install unknown apps\" Permission</string>
+    <string name="about_checking_msg">Checking latest GitHub release…</string>
+    <string name="about_checking_btn">Checking…</string>
+    <string name="about_check_btn">Check for Updates</string>
+    <string name="about_downloading_btn">Downloading…</string>
+    <string name="about_download_btn">Download &amp; Install</string>
+    <string name="about_dl_new">New version %1$s found, downloading APK…</string>
+    <string name="about_dl_generic">Downloading new APK…</string>
+    <string name="about_dl_done">Download complete. Launching system installer…</string>
+    <string name="about_dl_fail">Download or install failed: %1$s</string>
+    <string name="about_no_apk">New version %1$s found, but no downloadable APK asset was attached</string>
+    <string name="about_up_to_date">Already up to date (remote: %1$s)</string>
+    <string name="about_check_fail">Check failed: %1$s</string>
+    <string name="about_release_notes">Release notes (%1$s):</string>
+    <string name="credits_title">Open-Source Models, Libraries &amp; Credits</string>
+    <string name="credits_intro">DxVoice-IME is built upon these outstanding open-source AI models and software projects:</string>
+    <string name="credits_body">[Open-Source Speech &amp; Language Models]\n• SenseVoice (FunAudioLLM / Alibaba): Multi-lingual offline ASR for ZH/YUE/EN/JA/KO (Apache-2.0)\n• OpenAI Whisper (Tiny / Base): Multi-lingual offline speech recognition (MIT)\n• CT-Transformer (FunASR / Alibaba): Offline punctuation restoration (MIT)\n• Qwen2.5-0.5B-Instruct (Alibaba Qwen / LiteRT Community): On-device fast small LLM for text polishing (Apache-2.0)\n\n[Open-Source Inference Engines &amp; Libraries]\n• Sherpa-ONNX (k2-fsa / Next-gen Kaldi): On-device ASR &amp; punctuation runtime (Apache-2.0)\n• Google MediaPipe Tasks GenAI (Google AI Edge): On-device LLM inference engine (Apache-2.0)\n• AndroidX / Jetpack Compose / Material 3 (Google): Modern adaptive UI toolkit (Apache-2.0)\n• OkHttp (Square) &amp; Apache Commons Compress: Networking &amp; model archive extraction (Apache-2.0)\n• Android ICU (Unicode) &amp; Google ML Kit: Full Chinese script conversion &amp; on-device translation</string>
+    <string name="credits_special_thanks">Special Thanks: Co-development &amp; testing contributors — 曉東 (XiaoDong), Kimi!</string>
+    <string name="credits_privacy_btn">View Privacy Policy ↗</string>
+
+    <!-- IME Keyboard Panel -->
+    <string name="ime_switch_lang">Switch Language</string>
+    <string name="ime_offline_ready">Offline Ready</string>
+    <string name="ime_trans_prefix">Tr:%1$s</string>
+    <string name="ime_settings_cd">IME Settings</string>
+    <string name="ime_listening_detected">Listening &amp; transcribing…</string>
+    <string name="ime_listening_prompt">Speak now (auto-polishes &amp; commits when done)</string>
+    <string name="ime_committed_returning">Committed. Returning to previous keyboard…</string>
+    <string name="ime_committed_done">Polished &amp; committed</string>
+    <string name="ime_undo_raw">Raw</string>
+    <string name="ime_need_mic">Microphone permission required for voice input</string>
+    <string name="ime_grant_now">Grant Now</string>
+    <string name="ime_password_disabled">Auto-listening disabled on password fields. Switch back to your keyboard.</string>
+    <string name="ime_error_retry">%1$s (Tap mic below to retry)</string>
+    <string name="ime_idle_prompt">Idle — tap the mic to start voice typing</string>
+    <string name="ime_return_cd">Return to previous keyboard</string>
+    <string name="ime_return_default">Keyboard</string>
+    <string name="ime_stop_cd">Finish listening</string>
+    <string name="ime_start_cd">Start voice input</string>
+    <string name="ime_backspace_cd">Backspace</string>
+    <string name="ime_enter_cd">Enter / Send</string>
+</resources>

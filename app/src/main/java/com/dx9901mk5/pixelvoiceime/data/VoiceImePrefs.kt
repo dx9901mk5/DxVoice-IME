@@ -18,6 +18,13 @@ enum class AppThemeMode {
     ORANGE_CHARCOAL
 }
 
+enum class AppUiLanguage(val code: String) {
+    SYSTEM("system"),
+    ZH_TW("zh-TW"),
+    EN("en"),
+    JA("ja")
+}
+
 data class VoiceImeConfig(
     val autoListenOnStart: Boolean = true,
     val autoReturnToPreviousIme: Boolean = true,
@@ -52,7 +59,8 @@ data class VoiceImeConfig(
     val floatingBallInnerX: Int = 60,
     val floatingBallInnerY: Int = 520,
     val backupDeviceName: String = Build.MODEL ?: "DxVoice-IME",
-    val backupTreeUri: String = ""
+    val backupTreeUri: String = "",
+    val uiLanguage: AppUiLanguage = AppUiLanguage.SYSTEM
 ) {
     companion object {
         const val DEFAULT_GITHUB_REPO = "https://github.com/dx9901mk5/DxVoice-IME"
@@ -83,6 +91,9 @@ class VoiceImePrefs(context: Context) {
         val themeName = prefs.getString(KEY_THEME_MODE, AppThemeMode.DYNAMIC_PIXEL.name)
         val themeMode = runCatching { AppThemeMode.valueOf(themeName ?: "") }
             .getOrDefault(AppThemeMode.DYNAMIC_PIXEL)
+        val uiLangName = prefs.getString(KEY_UI_LANGUAGE, AppUiLanguage.SYSTEM.name)
+        val uiLanguage = runCatching { AppUiLanguage.valueOf(uiLangName ?: "") }
+            .getOrDefault(AppUiLanguage.SYSTEM)
         val rawSilence = prefs.getLong(KEY_SILENCE_TIMEOUT, 3000L)
         val silenceTimeoutMs = if (rawSilence < 2500L) 3000L else rawSilence
         val rawDelay = prefs.getLong(KEY_AUTO_RETURN_DELAY, 2500L)
@@ -135,7 +146,8 @@ class VoiceImePrefs(context: Context) {
             floatingBallInnerY = prefs.getInt(KEY_FLOATING_INNER_Y, 520),
             backupDeviceName = prefs.getString(KEY_BACKUP_DEVICE_NAME, Build.MODEL ?: "DxVoice-IME")
                 ?.ifBlank { Build.MODEL ?: "DxVoice-IME" } ?: "DxVoice-IME",
-            backupTreeUri = prefs.getString(KEY_BACKUP_TREE_URI, "") ?: ""
+            backupTreeUri = prefs.getString(KEY_BACKUP_TREE_URI, "") ?: "",
+            uiLanguage = uiLanguage
         )
     }
 
@@ -176,6 +188,7 @@ class VoiceImePrefs(context: Context) {
             .putInt(KEY_FLOATING_INNER_Y, updated.floatingBallInnerY)
             .putString(KEY_BACKUP_DEVICE_NAME, updated.backupDeviceName)
             .putString(KEY_BACKUP_TREE_URI, updated.backupTreeUri)
+            .putString(KEY_UI_LANGUAGE, updated.uiLanguage.name)
             .apply()
         _config.value = updated
     }
@@ -222,5 +235,6 @@ class VoiceImePrefs(context: Context) {
         private const val KEY_FLOATING_INNER_Y = "floating_ball_inner_y"
         private const val KEY_BACKUP_DEVICE_NAME = "backup_device_name"
         private const val KEY_BACKUP_TREE_URI = "backup_tree_uri"
+        private const val KEY_UI_LANGUAGE = "app_ui_language"
     }
 }
