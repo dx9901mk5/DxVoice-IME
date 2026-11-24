@@ -85,16 +85,117 @@ fun GeminiSettingsScreen(
             FilterChip(
                 selected = subTab == 0,
                 onClick = { subTab = 0 },
-                label = { Text("AI 模型與 Whisper/DeepSeek 端點") }
+                label = { Text("詞庫與本地模型") }
             )
             FilterChip(
                 selected = subTab == 1,
                 onClick = { subTab = 1 },
-                label = { Text("詞庫、替換與學習慣用語") }
+                label = { Text("雲端 Gemini / 自架端點") }
             )
         }
 
-        if (subTab == 1) {
+        if (subTab == 0) {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "本地端台灣口語修潤（可選）",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    SettingSwitchRow(
+                        title = "台灣口語／同音錯字本地校正表",
+                        subtitle = "參照教育部與台灣常見錯別字範本（如：因該→應該、以經→已經），0.01 秒內離線完成",
+                        checked = config.localTaiwanTypoFixEnabled,
+                        onCheckedChange = { v -> prefs.update { it.copy(localTaiwanTypoFixEnabled = v) } }
+                    )
+                    SettingSwitchRow(
+                        title = "旗艦機本地極速小模型修潤 (Qwen2.5 0.5B)",
+                        subtitle = "無須網路、XNNPACK 極速推論，中文錯字修潤更快更精準（約 521 MB，自動清理舊 Gemma 3 模型；關閉時改走 0ms 詞庫直出）",
+                        checked = config.localLlmEnabled,
+                        onCheckedChange = { v ->
+                            prefs.update { it.copy(localLlmEnabled = v) }
+                            if (v) {
+                                app.localLlmPolisher.clearCrashGuard()
+                            } else {
+                                app.localLlmPolisher.release()
+                            }
+                        }
+                    )
+                    Text(
+                        text = "⚡ 加速說明：Qwen2.5 0.5B 採 XNNPACK 多執行緒極速 CPU 推論（避免 GPU 編譯卡頓，內建 4.5 秒超時自動降級保護），建議具備 8GB+ RAM 之手機使用。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    when (val s = localLlmState) {
+                        is PackDownloadState.NotInstalled -> {
+                            OutlinedButton(
+                                onClick = {
+                                    scope.launch {
+                                        app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
+                                    }
+                                }
+                            ) {
+                                Text("下載 Qwen2.5 0.5B 極速中文模型 (約 521 MB)")
+                            }
+                        }
+                        is PackDownloadState.Downloading -> {
+                            LinearProgressIndicator(
+                                progress = { s.progress },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Text(
+                                text = s.statusLabel,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        is PackDownloadState.Installed -> {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Qwen2.5 0.5B 已就緒 (${s.sizeBytes / (1024 * 1024)} MB · ${app.localLlmPolisher.activeBackendLabel()})",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedButton(
+                                    onClick = {
+                                        scope.launch {
+                                            app.localLlmPolisher.release()
+                                            app.modelManager.deletePack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
+                                        }
+                                    }
+                                ) {
+                                    Text("移除模型")
+                                }
+                            }
+                        }
+                        is PackDownloadState.Error -> {
+                            Text(
+                                text = "下載失敗：${s.message}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            OutlinedButton(
+                                onClick = {
+                                    scope.launch {
+                                        app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
+                                    }
+                                }
+                            ) {
+                                Text("重試下載 Qwen2.5 0.5B")
+                            }
+                        }
+                    }
+                }
+            }
+
             DictionarySettingsSection(dictionaryStore = app.customDictionaryStore)
         } else {
         Card(
@@ -411,107 +512,6 @@ fun GeminiSettingsScreen(
                     checked = config.includeSurroundingContext,
                     onCheckedChange = { v -> prefs.update { it.copy(includeSurroundingContext = v) } }
                 )
-            }
-        }
-
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "本地端台灣口語修潤（可選）",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                SettingSwitchRow(
-                    title = "台灣口語／同音錯字本地校正表",
-                    subtitle = "參照教育部與台灣常見錯別字範本（如：因該→應該、以經→已經），0.01 秒內離線完成",
-                    checked = config.localTaiwanTypoFixEnabled,
-                    onCheckedChange = { v -> prefs.update { it.copy(localTaiwanTypoFixEnabled = v) } }
-                )
-                SettingSwitchRow(
-                    title = "旗艦機本地極速小模型修潤 (Qwen2.5 0.5B)",
-                    subtitle = "無須網路、GPU 優先加速，中文錯字修潤更快更精準（約 521 MB，自動清理舊 Gemma 3 模型；關閉時改走 0ms 詞庫直出）",
-                    checked = config.localLlmEnabled,
-                    onCheckedChange = { v ->
-                        prefs.update { it.copy(localLlmEnabled = v) }
-                        if (v) {
-                            app.localLlmPolisher.clearCrashGuard()
-                        } else {
-                            app.localLlmPolisher.release()
-                        }
-                    }
-                )
-                Text(
-                    text = "⚡ 加速說明：Qwen2.5 0.5B 採 XNNPACK 多執行緒極速 CPU 推論（避免 GPU 編譯卡頓，內建 4.5 秒超時自動降級保護），建議具備 8GB+ RAM 之手機使用。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                when (val s = localLlmState) {
-                    is PackDownloadState.NotInstalled -> {
-                        OutlinedButton(
-                            onClick = {
-                                scope.launch {
-                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
-                                }
-                            }
-                        ) {
-                            Text("下載 Qwen2.5 0.5B 極速中文模型 (約 521 MB)")
-                        }
-                    }
-                    is PackDownloadState.Downloading -> {
-                        LinearProgressIndicator(
-                            progress = { s.progress },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Text(
-                            text = s.statusLabel,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    is PackDownloadState.Installed -> {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Qwen2.5 0.5B 已就緒 (${s.sizeBytes / (1024 * 1024)} MB · ${app.localLlmPolisher.activeBackendLabel()})",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedButton(
-                                onClick = {
-                                    scope.launch {
-                                        app.localLlmPolisher.release()
-                                        app.modelManager.deletePack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
-                                    }
-                                }
-                            ) {
-                                Text("移除模型")
-                            }
-                        }
-                    }
-                    is PackDownloadState.Error -> {
-                        Text(
-                            text = "下載失敗：${s.message}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        OutlinedButton(
-                            onClick = {
-                                scope.launch {
-                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B)
-                                }
-                            }
-                        ) {
-                            Text("重試下載 Qwen2.5 0.5B")
-                        }
-                    }
-                }
             }
         }
         }

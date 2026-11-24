@@ -67,6 +67,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -114,9 +115,9 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
         listOf(
             SettingsNavItem(0, "啟用行為", Icons.Rounded.KeyboardVoice),
             SettingsNavItem(1, "離線語系", Icons.Rounded.Language),
-            SettingsNavItem(2, "AI 與端點", Icons.Rounded.AutoAwesome),
-            SettingsNavItem(3, "外觀備份", Icons.Rounded.Backup),
-            SettingsNavItem(4, "更新關於", Icons.Rounded.SystemUpdate)
+            SettingsNavItem(2, "詞庫與本地模型", Icons.Rounded.AutoAwesome),
+            SettingsNavItem(3, "備份", Icons.Rounded.Backup),
+            SettingsNavItem(4, "更新說明", Icons.Rounded.SystemUpdate)
         )
     }
 
@@ -147,7 +148,13 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                 selected = selectedTab == item.index,
                                 onClick = { selectedTab = item.index },
                                 icon = { Icon(item.icon, contentDescription = null) },
-                                label = { Text(item.label) }
+                                label = {
+                                    Text(
+                                        text = item.label,
+                                        maxLines = 2,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             )
                         }
                     }
@@ -171,7 +178,13 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                     }
                                 },
                                 icon = { Icon(item.icon, contentDescription = null) },
-                                label = { Text(item.label) }
+                                label = {
+                                    Text(
+                                        text = item.label,
+                                        maxLines = 2,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             )
                         }
                     }

@@ -2,14 +2,12 @@ package com.dx9901mk5.pixelvoiceime.ui
 
 import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +43,7 @@ import com.dx9901mk5.pixelvoiceime.data.BackupManager
 fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
     val context = LocalContext.current
     val config by app.prefs.config.collectAsState()
+    val dictState by app.customDictionaryStore.state.collectAsState()
     var backupStatus by remember { mutableStateOf<String?>(null) }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -60,7 +59,7 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
             val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager, app.customDictionaryStore)
             val res = BackupManager.writeBackupToTreeUri(context, uri, fileName, json)
             backupStatus = res.fold(
-                onSuccess = { savedName -> "已記住備份路徑並完成備份：$savedName" },
+                onSuccess = { savedName -> "已記住備份路徑並完成備份（含自定義詞庫）：$savedName" },
                 onFailure = { e -> "寫入資料夾失敗：${e.localizedMessage}" }
             )
         }
@@ -73,7 +72,7 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
             val json = BackupManager.exportJson(app.prefs, app.apiKeyStore, app.modelManager, app.customDictionaryStore)
             val res = BackupManager.writeBackupToDocumentUri(context, uri, json)
             backupStatus = res.fold(
-                onSuccess = { "已成功匯出備份檔案" },
+                onSuccess = { "已成功匯出備份檔案（含自定義詞庫與設定）" },
                 onFailure = { e -> "匯出失敗：${e.localizedMessage}" }
             )
         }
@@ -92,7 +91,7 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                 dictionaryStore = app.customDictionaryStore
             )
             backupStatus = res.fold(
-                onSuccess = { dev -> "已從「$dev」的備份檔還原設定" },
+                onSuccess = { dev -> "已從「$dev」的備份檔還原設定與自定義詞庫" },
                 onFailure = { e -> "還原失敗：${e.localizedMessage}" }
             )
         }
@@ -105,42 +104,21 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Theme Card
+        // Backup & Restore Card (Primary)
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "外觀主題",
+                    text = "備份與還原（含自定義詞庫・本地 / Google 雲端硬碟）",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = config.appThemeMode == AppThemeMode.DYNAMIC_PIXEL,
-                        onClick = { app.prefs.update { it.copy(appThemeMode = AppThemeMode.DYNAMIC_PIXEL) } },
-                        label = { Text("預設動態色彩 (Pixel)") }
-                    )
-                    FilterChip(
-                        selected = config.appThemeMode == AppThemeMode.ORANGE_CHARCOAL,
-                        onClick = { app.prefs.update { it.copy(appThemeMode = AppThemeMode.ORANGE_CHARCOAL) } },
-                        label = { Text("橘色灰黑底 (Orange Charcoal)") }
-                    )
-                }
-            }
-        }
-
-        // Backup & Restore Card
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "設定備份與還原（本地 / Google 雲端硬碟）",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    text = "備份內容包含所有輸入法設定、懸浮球內／外螢幕座標，以及自定義詞庫（專有名詞 ${dictState.customWords.size} 筆、替換規則 ${dictState.replacements.size} 筆、習慣用語 ${dictState.learnedPhrases.size} 筆）。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
                     value = config.backupDeviceName,
@@ -173,7 +151,7 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                                 jsonContent = json
                             )
                             backupStatus = res.fold(
-                                onSuccess = { savedName -> "已一鍵備份至記憶路徑：$savedName" },
+                                onSuccess = { savedName -> "已一鍵備份至記憶路徑（含自定義詞庫）：$savedName" },
                                 onFailure = { e -> "寫入失敗（請重新指定資料夾）：${e.localizedMessage}" }
                             )
                         }
@@ -208,6 +186,32 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                         text = backupStatus!!,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+
+        // Theme Card (Secondary)
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "介面主題",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = config.appThemeMode == AppThemeMode.DYNAMIC_PIXEL,
+                        onClick = { app.prefs.update { it.copy(appThemeMode = AppThemeMode.DYNAMIC_PIXEL) } },
+                        label = { Text("預設動態色彩 (Pixel)") }
+                    )
+                    FilterChip(
+                        selected = config.appThemeMode == AppThemeMode.ORANGE_CHARCOAL,
+                        onClick = { app.prefs.update { it.copy(appThemeMode = AppThemeMode.ORANGE_CHARCOAL) } },
+                        label = { Text("橘色灰黑底 (Orange Charcoal)") }
                     )
                 }
             }
