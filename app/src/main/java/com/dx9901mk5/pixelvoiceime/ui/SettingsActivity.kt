@@ -177,6 +177,7 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                 listOf(
                                     AppUiLanguage.SYSTEM to R.string.ui_language_system,
                                     AppUiLanguage.ZH_TW to R.string.ui_language_zh,
+                                    AppUiLanguage.ZH_CN to R.string.ui_language_zh_cn,
                                     AppUiLanguage.EN to R.string.ui_language_en,
                                     AppUiLanguage.JA to R.string.ui_language_ja
                                 ).forEach { (lang, labelRes) ->

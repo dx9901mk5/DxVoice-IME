@@ -251,6 +251,11 @@ fun BackupAndAppearanceScreen(app: PixelVoiceApp) {
                         label = { Text(stringResource(R.string.ui_language_zh)) }
                     )
                     FilterChip(
+                        selected = config.uiLanguage == AppUiLanguage.ZH_CN,
+                        onClick = { app.prefs.update { it.copy(uiLanguage = AppUiLanguage.ZH_CN) } },
+                        label = { Text(stringResource(R.string.ui_language_zh_cn)) }
+                    )
+                    FilterChip(
                         selected = config.uiLanguage == AppUiLanguage.EN,
                         onClick = { app.prefs.update { it.copy(uiLanguage = AppUiLanguage.EN) } },
                         label = { Text(stringResource(R.string.ui_language_en)) }

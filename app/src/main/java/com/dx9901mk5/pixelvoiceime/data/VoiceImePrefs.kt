@@ -21,6 +21,7 @@ enum class AppThemeMode {
 enum class AppUiLanguage(val code: String) {
     SYSTEM("system"),
     ZH_TW("zh-TW"),
+    ZH_CN("zh-CN"),
     EN("en"),
     JA("ja")
 }

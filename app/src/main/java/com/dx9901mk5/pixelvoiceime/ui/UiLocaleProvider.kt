@@ -19,6 +19,7 @@ object UiLocaleHelper {
     fun resolveLocale(uiLanguage: AppUiLanguage): Locale? = when (uiLanguage) {
         AppUiLanguage.SYSTEM -> null
         AppUiLanguage.ZH_TW -> Locale.TRADITIONAL_CHINESE
+        AppUiLanguage.ZH_CN -> Locale.SIMPLIFIED_CHINESE
         AppUiLanguage.EN -> Locale.ENGLISH
         AppUiLanguage.JA -> Locale.JAPANESE
     }

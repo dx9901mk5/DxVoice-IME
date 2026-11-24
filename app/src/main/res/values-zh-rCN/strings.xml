@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DxVoice-IME</string>
+    <string name="ime_name">DxVoice-IME</string>
+    <string name="subtype_voice_zh_tw">语音输入 (中文 / AI 自动润色)</string>
+    <string name="subtype_voice_en_us">语音输入 (English / AI 润色)</string>
+    <string name="accessibility_service_description">用于检测系统键盘显示/隐藏状态以自动显示或隐藏悬浮语音球，并在点击悬浮球时直接切换启动 DxVoice-IME（绝不记录或上传任何个人输入内容）。</string>
+
+    <!-- Top Bar & Navigation -->
+    <string name="app_subtitle">本地极速 / 词库与本地模型 / 自建端点语音输入法</string>
+    <string name="nav_setup">启用行为</string>
+    <string name="nav_languages">离线语系</string>
+    <string name="nav_models">词库与本地模型</string>
+    <string name="nav_backup">备份</string>
+    <string name="nav_about">更新说明</string>
+    <string name="layout_single_pane"> 单栏</string>
+    <string name="layout_side_by_side"> 并排</string>
+    <string name="ui_language_title">界面语言</string>
+    <string name="ui_language_system">跟随系统</string>
+    <string name="ui_language_zh">繁體中文</string>
+    <string name="ui_language_zh_cn">简体中文</string>
+    <string name="ui_language_en">English</string>
+    <string name="ui_language_ja">日本語</string>
+
+    <!-- Accessibility Disclosure -->
+    <string name="a11y_disclosure_title">无障碍服务权限使用说明</string>
+    <string name="a11y_disclosure_body">DxVoice-IME 使用 Android 无障碍服务（AccessibilityService）仅为提供以下两项核心便利功能：\n\n1. 检测系统软键盘开启或关闭，让悬浮语音快捷球仅在使用其他键盘时显示。\n2. 当您点击悬浮球时，直接将系统输入法切换为 DxVoice-IME 开始语音收音。\n\n隐私承诺：本服务绝不读取、记录、存储或上传任何屏幕文字、聊天内容、密码或个人数据。</string>
+    <string name="a11y_disclosure_confirm">我了解并前往开启</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_close">关闭</string>
+    <string name="common_apply">应用</string>
+    <string name="common_delete">删除</string>
+
+    <!-- Pro Status & Upgrade Dialog -->
+    <string name="pro_status_beta">测试期间・全功能免费开放</string>
+    <string name="pro_status_purchased">DxVoice-IME Pro 已解锁 ✓</string>
+    <string name="pro_status_trial">Pro 3 天免费试用中（剩余 %1$d 小时）</string>
+    <string name="pro_status_free">免费版（升级 Pro 解锁 5 大进阶功能）</string>
+    <string name="pro_card_subtitle">含悬浮球、自动切回键盘、本地小模型、自定义词库与云端备份</string>
+    <string name="pro_btn_plan">方案</string>
+    <string name="pro_btn_view">查看 Pro</string>
+    <string name="pro_dialog_title">DxVoice-IME Pro 进阶授权</string>
+    <string name="pro_dialog_sub_beta">测试期间全功能免费开放（正式版提供 3 天免费试用）</string>
+    <string name="pro_dialog_sub_purchased">您已解锁 Pro 永久／订阅授权 ✓</string>
+    <string name="pro_dialog_sub_trial">3 天免费试用中（剩余约 %1$d 小时）</string>
+    <string name="pro_dialog_sub_free">3 天免费试用已结束，升级 Pro 即可继续使用以下 5 大功能</string>
+    <string name="pro_dialog_feature_highlight">“%1$s”属于 Pro 进阶功能。</string>
+    <string name="pro_dialog_free_desc">免费版永久提供：核心语音输入、离线语音识别、自动标点、中文繁简转换与手动切回键盘。</string>
+    <string name="pro_dialog_features_header">Pro 专属 5 大效率功能：</string>
+    <string name="pro_dialog_unlocked">已解锁</string>
+    <string name="pro_dialog_select_plan">选择方案 · %1$s</string>
+    <string name="pro_promo_title">亲友兑换码 / Google Play 促销代码</string>
+    <string name="pro_promo_label">输入兑换码</string>
+    <string name="pro_promo_redeem">兑换</string>
+    <string name="pro_restore_btn">恢复 Google Play 已购买项目</string>
+    <string name="pro_plan_lifetime_title">DxVoice-IME Pro 终身买断版</string>
+    <string name="pro_plan_lifetime_sub">正式版含首次 3 天免费试用；一次买断永久解锁 5 大进阶功能，无任何月费或年费</string>
+    <string name="pro_plan_lifetime_price">NT$300 终身买断</string>
+    <string name="pro_plan_lifetime_badge">一次买断・无月费</string>
+    <string name="pro_feat_floating_name">悬浮语音快捷球</string>
+    <string name="pro_feat_floating_desc">跟随其他键盘自动显示、点击直切本输入法与折叠屏双屏记忆</string>
+    <string name="pro_feat_autoreturn_name">自动切回原本输入法</string>
+    <string name="pro_feat_autoreturn_desc">语音说完上屏后自动切回原先使用的键盘</string>
+    <string name="pro_feat_llm_name">本地极速小模型润色</string>
+    <string name="pro_feat_llm_desc">离线使用 Qwen2.5 0.5B 本地 AI 进行口语与错字润色</string>
+    <string name="pro_feat_dict_name">自定义词库与习惯用语学习</string>
+    <string name="pro_feat_dict_desc">专有名词、0ms 即时词汇替换与个人常用词自动学习</string>
+    <string name="pro_feat_backup_name">云端与文件夹备份还原</string>
+    <string name="pro_feat_backup_desc">将所有设置、悬浮球坐标与自定义词库一键备份至 Google 云端硬盘或本地文件夹</string>
+
+    <!-- Billing Messages -->
+    <string name="billing_not_ready">Google Play 账单服务尚未就绪</string>
+    <string name="billing_checking">正在检查 Google Play 购买记录…</string>
+    <string name="billing_enter_promo">请输入亲友兑换码或 Google Play 促销代码</string>
+    <string name="billing_promo_success">亲友兑换码验证成功！已永久解锁 DxVoice-IME Pro 全功能 ✓</string>
+    <string name="billing_promo_play_opened">已打开 Google Play 促销代码兑换页，兑换完成后请点“恢复已购买项目”</string>
+    <string name="billing_promo_invalid">兑换码无效，请确认输入是否正确</string>
+    <string name="billing_beta_free">当前为测试期间，全功能已免费开放使用（正式版上架后开放内购结账）。</string>
+    <string name="billing_connect_failed">无法连接至 Google Play 商店，请确认已登录 Google 账号并重试。</string>
+    <string name="billing_no_product">尚未从 Google Play 获取商品信息，请稍后再试。</string>
+    <string name="billing_launch_failed">无法打开结账窗口（代码 %1$d）</string>
+    <string name="billing_verified">已验证 DxVoice-IME Pro 授权 ✓</string>
+    <string name="billing_not_found">未查到先前的 Pro 购买记录</string>
+    <string name="billing_purchase_success">感谢支持！已成功解锁 DxVoice-IME Pro 全功能 ✓</string>
+    <string name="billing_purchase_canceled">已取消购买</string>
+    <string name="billing_purchase_failed">购买未完成（代码 %1$d）</string>
+
+    <!-- Setup & Behavior Tab -->
+    <string name="setup_quick_title">快速启用步骤</string>
+    <string name="setup_ime_enabled"> 已启用输入法</string>
+    <string name="setup_enable_ime">1. 启用 DxVoice-IME</string>
+    <string name="setup_switch_ime">2. 切换输入法</string>
+    <string name="setup_mic_granted">麦克风已授权 ✓</string>
+    <string name="setup_mic_grant">3. 授予麦克风权限</string>
+    <string name="setup_allow_notif">允许更新通知</string>
+    <string name="behavior_title">自动收音与切回原输入法行为</string>
+    <string name="behavior_auto_listen_title">切换输入法时自动启动收音</string>
+    <string name="behavior_auto_listen_sub">一旦切到 DxVoice-IME 立即开始语音接收与判定（密码框自动跳过）</string>
+    <string name="behavior_auto_return_title">结束后立刻切回原输入法（Pro）</string>
+    <string name="behavior_auto_return_sub">记忆先前键盘，修正上屏完成后自动切回原本使用的输入法</string>
+    <string name="behavior_delay_label">切回原输入法延迟时间</string>
+    <string name="delay_0">立刻 (0秒)</string>
+    <string name="delay_450">极快 (0.45秒)</string>
+    <string name="delay_1000">预览 (1秒)</string>
+    <string name="delay_1800">宽裕 (1.8秒)</string>
+    <string name="delay_2500">宽裕 (2.5秒 / 默认)</string>
+    <string name="delay_manual">手动点击切回</string>
+    <string name="behavior_silence_label">说话停顿自动结束时间 (2秒内停顿续讲，停满此秒数才结束收话)</string>
+    <string name="silence_2500">2.5秒</string>
+    <string name="silence_2700">2.7秒</string>
+    <string name="silence_3000">3.0秒 (默认)</string>
+    <string name="silence_4000">4.0秒</string>
+
+    <!-- Floating Ball -->
+    <string name="floating_title">悬浮语音快捷球（跟随其他输入法）</string>
+    <string name="floating_desc">使用其他输入法时显示可拖动悬浮麦克风球，点击直接切换至本输入法开始收音；折叠屏将自动分开记忆外屏与内屏位置。</string>
+    <string name="floating_grant_overlay">授权“显示在其他应用上层”权限</string>
+    <string name="floating_a11y_active">跟随键盘显示＋一键直接启动输入法：运行中 ✓（仅在其他键盘出现时显示，点击直接启动收音）</string>
+    <string name="floating_a11y_disconnected">注意：系统已勾选无障碍，但服务尚未连接（常见于刚更新安装或省电限制）。请点击下方按钮进入无障碍将开关“关闭再重开一次”，即可恢复点击直接启动本输入法。</string>
+    <string name="floating_a11y_disabled">重要：启用“DxVoice-IME”无障碍辅助后，悬浮球会在键盘出现时才显示，且点击悬浮球会直接启动本输入法开始收音（不再弹出系统输入法菜单）。</string>
+    <string name="floating_a11y_btn_restart">前往无障碍重新开关“DxVoice-IME”</string>
+    <string name="floating_a11y_btn_enable">开启“DxVoice-IME”无障碍（点击直接切换必备）</string>
+    <string name="floating_enable_title">启用悬浮语音快捷球（Pro）</string>
+    <string name="floating_enable_sub_ok">切换到其他键盘时自动显示，点击直接启动语音输入法</string>
+    <string name="floating_enable_sub_need_perm">请先授予上层显示权限</string>
+    <string name="floating_alpha">悬浮球透明度：%1$d%%</string>
+    <string name="floating_coords">记忆坐标｜外屏/手机：(%1$d, %2$d) ｜ 折叠内屏/平板：(%3$d, %4$d)</string>
+    <string name="floating_reset_pos">重置内/外屏悬浮球位置</string>
+
+    <!-- Sandbox -->
+    <string name="sandbox_title">实时语音输入测试框</string>
+    <string name="sandbox_desc">点击下方输入框并切换成“DxVoice-IME”，即可立即体验自动收音 → AI 修正标点 → 自动上屏并切回原输入法！</string>
+    <string name="sandbox_placeholder">点此开始测试语音输入…</string>
+
+    <!-- Offline Languages Screen -->
+    <string name="offline_title">离线语音文件库（仿 Google 语音输入法）</string>
+    <string name="offline_desc">支持 %1$d 种语系与地区变体。多语共用底层权重，下载一次即可离线识别同组语系。</string>
+    <string name="offline_stats">已安装离线包：%1$d 组 • 已用空间：%2$.1f MB • 当前语系：%3$s</string>
+    <string name="offline_search_placeholder">搜索语系（例如：简体中文、繁體中文、日文、English、粤语）</string>
+    <string name="offline_set_active">设为当前语系</string>
+    <string name="offline_installed">已下载</string>
+    <string name="offline_delete_pack">删除离线包</string>
+    <string name="offline_download_pack">下载离线语音包 (~%1$dMB)</string>
+    <string name="offline_download_failed">下载失败：%1$s</string>
+
+    <!-- Models & Cloud Screen -->
+    <string name="models_subtab_local">词库与本地模型</string>
+    <string name="models_subtab_cloud">云端 Gemini / 自建端点</string>
+    <string name="local_polish_title">本地端中文口语润色（可选）</string>
+    <string name="local_typo_title">中文口语／同音错字本地校正表</string>
+    <string name="local_typo_sub">内置常见同音错别字校正（如：因该→应该、以经→已经），0.01 秒内离线完成</string>
+    <string name="local_llm_title">旗舰机本地极速小模型润色 (Qwen2.5 0.5B · Pro)</string>
+    <string name="local_llm_sub">无需网络、XNNPACK 极速推理，中文错字润色更快更精准（约 521 MB，自动清理旧 Gemma 3 模型；关闭时改走 0ms 词库直出）</string>
+    <string name="local_llm_accel_note">⚡ 加速说明：Qwen2.5 0.5B 采用 XNNPACK 多线程极速 CPU 推理（避免 GPU 编译卡顿，内置 4.5 秒超时自动降级保护），建议具备 8GB+ RAM 的手机使用。</string>
+    <string name="local_llm_download_btn">下载 Qwen2.5 0.5B 极速中文模型 (约 521 MB)</string>
+    <string name="local_llm_ready">Qwen2.5 0.5B 已就绪 (%1$d MB · %2$s)</string>
+    <string name="local_llm_remove">移除模型</string>
+    <string name="local_llm_retry">重试下载 Qwen2.5 0.5B</string>
+    <string name="dict_pro_locked_title">自定义词库、0ms 替换与习惯用语学习（Pro）</string>
+    <string name="dict_pro_locked_desc">升级 DxVoice-IME Pro 即可解锁专属词汇表、即时词汇替换与个人习惯用语自动学习。</string>
+    <string name="dict_pro_unlock_btn">解锁 Pro 自定义词库</string>
+
+    <!-- Cloud Gemini & Custom Endpoint -->
+    <string name="gemini_key_title">Gemini API Key (BYOK 加密存储)</string>
+    <string name="gemini_key_label">输入 Google AI Studio API Key</string>
+    <string name="gemini_key_saved">已加密保存 API Key</string>
+    <string name="gemini_key_save_btn">保存密钥</string>
+    <string name="gemini_key_testing">测试连接中…</string>
+    <string name="gemini_key_test_ok">连接成功：%1$s</string>
+    <string name="gemini_key_test_fail">连接失败：%1$s</string>
+    <string name="gemini_key_test_btn">测试连接</string>
+    <string name="gemini_howto_title">如何免费获取 Gemini API Key？</string>
+    <string name="gemini_howto_body">1. 点击下方按钮前往 Google AI Studio 并登录 Google 账号。\n2. 点击“Create API key”创建新的 API 密钥（可选用默认项目或新建项目）。\n3. 复制“AIza...”开头的密钥，贴回上方字段后点击“保存密钥”与“测试连接”。</string>
+    <string name="gemini_howto_btn">前往 Google AI Studio 申请 API Key ↗</string>
+    <string name="gemini_model_title">Gemini 模型与润色模式</string>
+    <string name="gemini_custom_model_label">或自定义模型代号</string>
+    <string name="gemini_mode_label">语音识别与处理模式（选择本地或走 API）</string>
+    <string name="mode_local_only">纯本地语音 (不走 API)</string>
+    <string name="mode_fast_text">本地语音 + Gemini 润色 (推荐)</string>
+    <string name="mode_audio_multimodal">纯走 Gemini 音频 API</string>
+    <string name="mode_openai_compat">自建 / OpenAI 端点</string>
+    <string name="mode_desc_local">完全使用设备本地语音识别（已下载离线包时即走 Sherpa-ONNX 极速本地引擎），不调用 API。</string>
+    <string name="mode_desc_fast">先以本地/系统语音极速转写，说完再送 Gemini API 润色标点，延迟最低。</string>
+    <string name="mode_desc_audio">直接录制 16kHz WAV 音频送交 Gemini API 聆听转录与标点。</string>
+    <string name="mode_desc_openai">连接至自建 Mac / 局域网 Whisper 服务器，或 Groq / OpenAI / DeepSeek 兼容端点（支持 HTTP 局域网）。</string>
+    <string name="custom_endpoint_title">自建 / OpenAI 兼容端点设置</string>
+    <string name="preset_mac_lan">应用 Mac 局域网示例</string>
+    <string name="preset_groq">应用 Groq</string>
+    <string name="preset_openai">应用 OpenAI</string>
+    <string name="custom_asr_url">ASR 端点 URL（自动补 /audio/transcriptions）</string>
+    <string name="custom_asr_model">ASR 模型名称（如 whisper-1 / whisper-large-v3-turbo）</string>
+    <string name="custom_asr_key">ASR API Key（自建 Mac 端可留空）</string>
+    <string name="custom_llm_switch_title">额外接自定义 LLM 润色（如 DeepSeek / Mac Ollama）</string>
+    <string name="custom_llm_switch_sub">关闭时将使用本地标点与词库直接输出</string>
+    <string name="custom_llm_url">LLM 端点 URL（自动补 /chat/completions）</string>
+    <string name="custom_llm_model">LLM 模型（如 deepseek-chat / gpt-4o-mini）</string>
+    <string name="custom_llm_key">LLM API Key（自建 Ollama 可留空）</string>
+    <string name="polish_rules_title">语义修正与标点规则</string>
+    <string name="rule_gemini_title">启用 Gemini 自动润色</string>
+    <string name="rule_gemini_sub">关闭时将使用纯本地离线输出</string>
+    <string name="rule_punct_title">自动加入标点符号</string>
+    <string name="rule_punct_sub">自动补齐逗号、句号、问号与感叹号</string>
+    <string name="rule_filler_title">自动去除口语赘词</string>
+    <string name="rule_filler_sub">过滤“嗯、啊、那个、呃”等语气词</string>
+    <string name="rule_context_title">参考光标前后上下文</string>
+    <string name="rule_context_sub">提供输入框前后少量文字让 Gemini 衔接语气更精准</string>
+
+    <!-- Dictionary Section -->
+    <string name="dict_learning_title">润色依据与习惯用语学习</string>
+    <string name="dict_hints_title">将词库与习惯用语作为 AI 润色依据</string>
+    <string name="dict_hints_sub">自动提供给 Whisper prompt 与 DeepSeek / Gemini / 本地 LLM 作拼写参考</string>
+    <string name="dict_autolearn_title">自动学习习惯用语与手动改字</string>
+    <string name="dict_autolearn_sub">语音输出后若您在输入框手动改字，或高频使用英文／专有名词，将于本地自动累积学习</string>
+    <string name="dict_words_title">自定义文字词库（%1$d 个）</string>
+    <string name="dict_words_desc">支持逗号、顿号或换行一次新增多个词（例：DxVoice, 台积电, Antigravity）。点击词汇标签可移除。</string>
+    <string name="dict_words_label">输入自定义词汇</string>
+    <string name="dict_words_placeholder">例：DxVoice, 杰克, Whisper</string>
+    <string name="dict_words_add_btn">加入词库</string>
+    <string name="dict_rep_title">强制文字替换规则（%1$d 条）</string>
+    <string name="dict_rep_desc">上屏前于本地 0ms 直接替换，100% 修正固定误判（例：哀凤 -> iPhone）。</string>
+    <string name="dict_rep_from">原错词</string>
+    <string name="dict_rep_to">替换为</string>
+    <string name="dict_rep_add_btn">新增替换规则</string>
+    <string name="dict_learned_title">自动学习的习惯用语（%1$d）</string>
+    <string name="dict_learned_clear">全部清除</string>
+    <string name="dict_learned_desc">累计 ≥ 2 次自动成为润色依据；≥ 3 次的改字规则会自动应用。可随时置顶或屏蔽。</string>
+    <string name="dict_learned_empty">当前尚无自动学习记录，正常语音输入或手动修正错字后会自动出现。</string>
+    <string name="dict_learned_count">学习次数：%1$d</string>
+    <string name="dict_learned_pin">置顶</string>
+    <string name="dict_learned_block">屏蔽</string>
+
+    <!-- Backup & Appearance Screen -->
+    <string name="backup_title">备份与还原（含自定义词库・本地 / Google 云端硬盘）</string>
+    <string name="backup_desc">备份内容包含所有输入法设置、悬浮球内／外屏坐标，以及自定义词库（专有名词 %1$d 条、替换规则 %2$d 条、习惯用语 %3$d 条）。</string>
+    <string name="backup_device_label">设备名称（备份文件名前缀）</string>
+    <string name="backup_preview">输出文件名预览：%1$s</string>
+    <string name="backup_saved_path">已记忆备份路径：%1$s</string>
+    <string name="backup_one_click_btn">一键备份至已记忆路径</string>
+    <string name="backup_pick_folder">指定 Google 云端硬盘 / 本地文件夹</string>
+    <string name="backup_change_folder">更换备份文件夹</string>
+    <string name="backup_save_once">单次另存备份文件</string>
+    <string name="backup_restore_btn">从备份文件还原</string>
+    <string name="backup_status_folder_ok">已记住备份路径并完成备份（含自定义词库）：%1$s</string>
+    <string name="backup_status_folder_fail">写入文件夹失败：%1$s</string>
+    <string name="backup_status_export_ok">已成功导出备份文件（含自定义词库与设置）</string>
+    <string name="backup_status_export_fail">导出失败：%1$s</string>
+    <string name="backup_status_restore_ok">已从“%1$s”的备份文件还原设置与自定义词库</string>
+    <string name="backup_status_restore_fail">还原失败：%1$s</string>
+    <string name="backup_status_one_click_ok">已一键备份至记忆路径（含自定义词库）：%1$s</string>
+    <string name="backup_status_one_click_fail">写入失败（请重新指定文件夹）：%1$s</string>
+    <string name="theme_title">界面主题</string>
+    <string name="theme_dynamic">默认动态色彩 (Pixel)</string>
+    <string name="theme_orange">橘色灰黑底 (Orange Charcoal)</string>
+
+    <!-- Update & About Screen -->
+    <string name="about_play_title">版本信息与 Google Play 更新</string>
+    <string name="about_current_version">当前安装版本：v%1$s (Code %2$d)</string>
+    <string name="about_play_desc">此为 Google Play 商店发行版本，所有版本更新均通过 Google Play 安全推送。</string>
+    <string name="about_play_btn">前往 Google Play 检查更新 ↗</string>
+    <string name="about_github_title">GitHub 项目链接设置</string>
+    <string name="about_github_desc">可保留默认项目链接，或改为你自己的 Fork / 自定义 GitHub Release 仓库。</string>
+    <string name="about_github_invalid">格式错误，请输入 https://github.com/账号/项目名称</string>
+    <string name="about_github_saved">已保存更新源：%1$s</string>
+    <string name="about_github_reset_msg">已重置为默认链接</string>
+    <string name="about_github_save_btn">保存链接</string>
+    <string name="about_github_reset_btn">重置默认</string>
+    <string name="about_update_title">版本检查与自动下载安装</string>
+    <string name="about_auto_update_title">后台自动检测更新并下载</string>
+    <string name="about_auto_update_sub">每 12 小时自动检查 GitHub 最新 Release，发现新版自动下载并通知安装</string>
+    <string name="about_allow_install">授权“安装未知应用”权限</string>
+    <string name="about_checking_msg">正在检查 GitHub 最新版本…</string>
+    <string name="about_checking_btn">检查中…</string>
+    <string name="about_check_btn">立即检查更新</string>
+    <string name="about_downloading_btn">下载中…</string>
+    <string name="about_download_btn">下载并自动安装</string>
+    <string name="about_dl_new">发现新版本 %1$s，正在自动下载 APK…</string>
+    <string name="about_dl_generic">正在下载新版 APK…</string>
+    <string name="about_dl_done">下载完成，已启动系统安装程序</string>
+    <string name="about_dl_fail">下载或安装失败：%1$s</string>
+    <string name="about_no_apk">发现新版本 %1$s，但找不到可下载的 APK 附件</string>
+    <string name="about_up_to_date">当前已是最新版本（远程：%1$s）</string>
+    <string name="about_check_fail">检查失败：%1$s</string>
+    <string name="about_release_notes">更新内容 (%1$s)：</string>
+    <string name="credits_title">开源模型、组件库与特别鸣谢</string>
+    <string name="credits_intro">DxVoice-IME 构建于以下优秀的开源 AI 模型与开源软件项目，特此列出并致以诚挚感谢：</string>
+    <string name="credits_body">【开源语音与语言模型】\n• SenseVoice (FunAudioLLM / Alibaba)：中／粤／英／日／韩多语离线语音识别模型 (Apache-2.0)\n• OpenAI Whisper (Tiny / Base)：全球多语系离线语音识别模型 (MIT)\n• CT-Transformer (FunASR / Alibaba)：中／英离线自动标点模型 (MIT)\n• Qwen2.5-0.5B-Instruct (Alibaba Qwen / LiteRT Community)：设备端极速中文错字与语义润色小模型 (Apache-2.0)\n\n【开源推理引擎与组件库】\n• Sherpa-ONNX (k2-fsa / Next-gen Kaldi)：设备端语音识别与标点推理框架 (Apache-2.0)\n• Google MediaPipe Tasks GenAI (Google AI Edge)：设备端 LLM 推理引擎 (Apache-2.0)\n• AndroidX / Jetpack Compose / Material 3 (Google)：现代化界面与自适应双栏组件 (Apache-2.0)\n• OkHttp (Square) &amp; Apache Commons Compress：网络连接与离线模型压缩包解压 (Apache-2.0)\n• Android ICU (Unicode) &amp; Google ML Kit：完整繁简中文转换与设备端翻译</string>
+    <string name="credits_special_thanks">特别鸣谢：感谢协助开发与参与测试人员 — 晓东、Kimi！</string>
+    <string name="credits_privacy_btn">查看隐私政策 ↗</string>
+
+    <!-- IME Keyboard Panel -->
+    <string name="ime_switch_lang">切换语系</string>
+    <string name="ime_offline_ready">离线就绪</string>
+    <string name="ime_trans_prefix">译:%1$s</string>
+    <string name="ime_settings_cd">输入法设置</string>
+    <string name="ime_listening_detected">正在聆听识别中…</string>
+    <string name="ime_listening_prompt">请开始说话（说完自动润色上屏）</string>
+    <string name="ime_committed_returning">已上屏，即将切回原输入法…</string>
+    <string name="ime_committed_done">已自动修正并上屏</string>
+    <string name="ime_undo_raw">原文</string>
+    <string name="ime_need_mic">需要麦克风权限才能语音输入</string>
+    <string name="ime_grant_now">立即授权</string>
+    <string name="ime_password_disabled">密码输入框已停用自动收音，请切回原本键盘输入</string>
+    <string name="ime_error_retry">%1$s（点击下方麦克风重试）</string>
+    <string name="ime_idle_prompt">待机中，点击麦克风开始语音输入</string>
+    <string name="ime_return_cd">切回原输入法</string>
+    <string name="ime_return_default">切回键盘</string>
+    <string name="ime_stop_cd">完成收音</string>
+    <string name="ime_start_cd">开始语音输入</string>
+    <string name="ime_backspace_cd">删除</string>
+    <string name="ime_enter_cd">换行或发送</string>
+</resources>
