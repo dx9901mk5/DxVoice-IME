@@ -69,13 +69,28 @@ class LocalSherpaAsrEngine(
                 rec.decode(stream)
                 val rawText = rec.getResult(stream).text
                 if (rawText.contains("<|nospeech|>", ignoreCase = true) ||
-                    rawText.contains("<|BGM|>", ignoreCase = true)
+                    rawText.contains("<|BGM|>", ignoreCase = true) ||
+                    rawText.contains("<|Event_UNK|>", ignoreCase = true)
                 ) {
                     continue
                 }
-                val text = rawText
+                val isZh = bcp47.startsWith("zh", ignoreCase = true)
+                var text = rawText
                     .replace(tagRegex, "")
+                    .replace("<unk>", "", ignoreCase = true)
+                    .replace("[UNK]", "", ignoreCase = true)
                     .trim(' ', '\t', '\n', '\r', '，', '。', '？', '！', '、', ',', '.', '?', '!')
+                // Guard against occasional SenseVoice Korean/Kana hallucinations when Mandarin is selected
+                if (isZh && text.isNotBlank()) {
+                    val hasKoreanOrKana = text.any { ch ->
+                        ch in '\uAC00'..'\uD7AF' || ch in '\u3040'..'\u30FF'
+                    }
+                    val hasCjk = text.any { ch -> ch in '\u4E00'..'\u9FFF' }
+                    if (hasKoreanOrKana && !hasCjk) {
+                        continue
+                    }
+                    text = text.filterNot { ch -> ch in '\uAC00'..'\uD7AF' || ch in '\u3040'..'\u30FF' }.trim()
+                }
                 if (text.isNotBlank() && text.any { it.isLetterOrDigit() }) {
                     decodedParts.add(text)
                 }
@@ -200,7 +215,7 @@ class LocalSherpaAsrEngine(
         val lower = bcp47.lowercase()
         return when {
             lower.startsWith("yue") -> "yue"
-            lower.startsWith("zh") -> "auto"
+            lower.startsWith("zh") -> "zh"
             lower.startsWith("en") -> "en"
             lower.startsWith("ja") -> "ja"
             lower.startsWith("ko") -> "ko"
@@ -277,10 +292,22 @@ class LocalSherpaAsrEngine(
         ) {
             segments.add(pcmBytes.copyOfRange(segStart, lastVoiceEnd))
         }
-        // Safe fallback: if recording already passed capture VAD and has audible speech peak,
-        // let SenseVoice decide (pure noise will still be filtered by <|nospeech|> / <|BGM|>).
-        if (segments.isEmpty() && pcmBytes.size > 3200 && (frameRmsList.maxOrNull() ?: 0f) >= 360f) {
-            segments.add(pcmBytes)
+        // Safe fallback: if recording passed capture VAD and has clear speech peak,
+        // trim leading/trailing silence around the active region so SenseVoice doesn't hallucinate on long silence.
+        if (segments.isEmpty() && pcmBytes.size > 3200) {
+            val peakRms = frameRmsList.maxOrNull() ?: 0f
+            if (peakRms >= 420f) {
+                val trimThresh = maxOf(260f, peakRms * 0.35f)
+                val firstActive = frameRmsList.indexOfFirst { it >= trimThresh }
+                val lastActive = frameRmsList.indexOfLast { it >= trimThresh }
+                if (firstActive >= 0 && lastActive >= firstActive) {
+                    val startByte = ((firstActive - 2).coerceAtLeast(0)) * frameBytes
+                    val endByte = (((lastActive + 3) * frameBytes).coerceAtMost(pcmBytes.size))
+                    if (endByte > startByte + 3200) {
+                        segments.add(pcmBytes.copyOfRange(startByte, endByte))
+                    }
+                }
+            }
         }
         return segments
     }

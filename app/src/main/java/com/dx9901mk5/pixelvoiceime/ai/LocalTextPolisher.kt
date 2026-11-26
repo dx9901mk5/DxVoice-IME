@@ -136,6 +136,15 @@ object LocalTextPolisher {
         "非常" to "非常",
         "特别" to "特別",
         "大家" to "大家",
+        "饭" to "飯",
+        "面条" to "麵條",
+        "拉面" to "拉麵",
+        "泡面" to "泡麵",
+        "牛肉面" to "牛肉麵",
+        "阳春面" to "陽春麵",
+        "干面" to "乾麵",
+        "汤面" to "湯麵",
+        "意大利面" to "義大利麵",
         "我们" to "我們",
         "你们" to "你們",
         "他们" to "他們",
@@ -200,8 +209,8 @@ object LocalTextPolisher {
         '辆' to '輛', '家' to '家', '店' to '店', '馆' to '館', '院' to '院',
         '校' to '校', '医' to '醫', '药' to '藥', '饭' to '飯', '菜' to '菜',
         '茶' to '茶', '酒' to '酒', '水' to '水', '果' to '果', '肉' to '肉',
-        '鱼' to '魚', '鸡' to '雞', '蛋' to '蛋', '面' to '麵', '汤' to '湯',
-        '热' to '熱', '冷' to '冷', '凉' to '涼', '暖' to '暖', '干' to '乾',
+        '鱼' to '魚', '鸡' to '雞', '蛋' to '蛋', '汤' to '湯',
+        '热' to '熱', '冷' to '冷', '凉' to '涼', '暖' to '暖',
         '净' to '淨', '脏' to '髒', '乱' to '亂', '整' to '整', '齐' to '齊',
         '满' to '滿', '空' to '空', '轻' to '輕', '松' to '鬆', '紧' to '緊',
         '忙' to '忙', '闲' to '閒', '累' to '累', '饿' to '餓', '渴' to '渴',
@@ -238,14 +247,8 @@ object LocalTextPolisher {
             text = text.replace(fillerRegex, "").replace(midFillerRegex, "，").trim()
         }
 
-        val shouldConvertTraditional = !languageTag.startsWith("zh-CN", ignoreCase = true) &&
-            (languageTag.startsWith("zh", ignoreCase = true) ||
-                languageTag.startsWith("yue", ignoreCase = true) ||
-                languageTag.isBlank())
-        if (shouldConvertTraditional) {
-            text = toTraditionalTaiwan(text, applyTaiwanTypoFix)
-        }
-
+        // Run CT-Transformer punctuation BEFORE Simplified->Traditional conversion
+        // because CT-Transformer's vocabulary is Simplified Chinese (feeding Traditional causes OOV/weird output).
         if (autoPunctuation) {
             if (punctuationModel != null &&
                 (languageTag.startsWith("zh", ignoreCase = true) ||
@@ -253,8 +256,11 @@ object LocalTextPolisher {
                     languageTag.startsWith("yue", ignoreCase = true))
             ) {
                 runCatching {
-                    val punctuated = punctuationModel.addPunctuation(text).trim()
-                    if (punctuated.isNotBlank()) {
+                    val punctuated = punctuationModel.addPunctuation(text)
+                        .replace("<unk>", "", ignoreCase = true)
+                        .replace("[UNK]", "", ignoreCase = true)
+                        .trim()
+                    if (punctuated.isNotBlank() && punctuated.length >= (text.length * 0.7f).toInt()) {
                         text = punctuated
                     }
                 }
@@ -262,6 +268,10 @@ object LocalTextPolisher {
             text = polisherHelper.localFallbackPunctuate(text, languageTag)
         }
 
+        val shouldConvertTraditional = !languageTag.startsWith("zh-CN", ignoreCase = true) &&
+            (languageTag.startsWith("zh", ignoreCase = true) ||
+                languageTag.startsWith("yue", ignoreCase = true) ||
+                languageTag.isBlank())
         if (shouldConvertTraditional) {
             text = toTraditionalTaiwan(text, applyTaiwanTypoFix)
         }
@@ -279,15 +289,18 @@ object LocalTextPolisher {
         }
         // 2. Full Unicode CLDR Simplified -> Traditional conversion via Android ICU (API 29+)
         val icu = s2tTransliterator
-        if (icu != null) {
-            result = runCatching { icu.transliterate(result) }.getOrDefault(result)
+        var out = if (icu != null) {
+            runCatching { icu.transliterate(result) }
+                .getOrDefault(result)
+                .replace('啓', '啟')
+        } else {
+            // 3. Fallback character table only for API 26-28 where ICU Transliterator is unavailable
+            val sb = StringBuilder(result.length)
+            for (ch in result) {
+                sb.append(charMap[ch] ?: ch)
+            }
+            sb.toString()
         }
-        // 3. Fallback character table for API 26-28 or edge chars
-        val sb = StringBuilder(result.length)
-        for (ch in result) {
-            sb.append(charMap[ch] ?: ch)
-        }
-        var out = sb.toString()
         // 4. Optional Taiwanese common homophone/typo fix table
         if (applyTaiwanTypoFix) {
             for ((wrong, right) in taiwanTypoReplacements) {
