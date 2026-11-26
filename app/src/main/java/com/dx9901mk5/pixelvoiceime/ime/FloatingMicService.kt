@@ -76,6 +76,7 @@ class FloatingMicService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        running = true
         app = application as PixelVoiceApp
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         startForeground(NOTIFICATION_ID, buildNotification())
@@ -136,6 +137,7 @@ class FloatingMicService : Service() {
     }
 
     override fun onDestroy() {
+        running = false
         mainHandler.removeCallbacksAndMessages(null)
         runCatching { unregisterReceiver(imeVisibilityReceiver) }
         removeOverlay()
@@ -397,9 +399,23 @@ class FloatingMicService : Service() {
         private const val CHANNEL_ID = "pixelvoice_floating_ball"
         private const val NOTIFICATION_ID = 5030
 
+        @Volatile
+        private var running: Boolean = false
+
+        fun isRunning(): Boolean = running
+
         fun start(context: Context) {
             val intent = Intent(context, FloatingMicService::class.java)
-            ContextCompat.startForegroundService(context, intent)
+            runCatching { ContextCompat.startForegroundService(context, intent) }
+        }
+
+        fun ensureStarted(context: Context) {
+            if (running) return
+            val app = context.applicationContext as? PixelVoiceApp ?: return
+            if (!app.prefs.config.value.floatingBallEnabled) return
+            if (!app.entitlementManager.hasProAccess()) return
+            if (!Settings.canDrawOverlays(context)) return
+            start(context)
         }
 
         fun stop(context: Context) {

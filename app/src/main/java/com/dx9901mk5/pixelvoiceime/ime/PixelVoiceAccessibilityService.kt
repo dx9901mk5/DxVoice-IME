@@ -43,6 +43,7 @@ class PixelVoiceAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        FloatingMicService.ensureStarted(this)
         updateKeyboardVisibility()
     }
 
@@ -84,6 +85,9 @@ class PixelVoiceAccessibilityService : AccessibilityService() {
 
     private fun updateKeyboardVisibility() {
         val visible = computeExternalKeyboardVisible()
+        if (visible && !FloatingMicService.isRunning()) {
+            FloatingMicService.ensureStarted(this)
+        }
         FloatingMicService.notifyExternalKeyboardVisible(this, visible)
     }
 

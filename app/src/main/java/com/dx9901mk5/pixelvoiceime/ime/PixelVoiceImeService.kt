@@ -147,6 +147,7 @@ class PixelVoiceImeService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         imeLifecycleOwner.onStart()
+        FloatingMicService.ensureStarted(this)
         FloatingMicService.notifyImeVisibility(this, true)
         cancelPendingJobs()
         detectAndRememberOtherIme()
