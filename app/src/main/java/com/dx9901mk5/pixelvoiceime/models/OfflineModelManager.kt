@@ -124,7 +124,13 @@ class OfflineModelManager(
     fun findSpeakerModelFile(): File? {
         val dir = getPackDirectory(VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER)
         if (!File(dir, ".ready").exists()) return null
-        return dir.walkTopDown().firstOrNull { it.isFile && it.name.endsWith(".onnx", ignoreCase = true) }
+        val files = dir.walkTopDown().filter { it.isFile }.toList()
+        val onnx = files.firstOrNull { it.name.endsWith(".onnx", ignoreCase = true) }
+        if (onnx != null) return onnx
+        // Auto-migrate legacy download saved as model.bin (from v3.4.17-v3.4.19) to model.onnx
+        val legacyBin = files.firstOrNull { it.name.equals("model.bin", ignoreCase = true) } ?: return null
+        val migrated = File(legacyBin.parentFile, "model.onnx")
+        return if (legacyBin.renameTo(migrated)) migrated else legacyBin
     }
 
     fun isLocalLlmReady(): Boolean =
@@ -227,10 +233,10 @@ class OfflineModelManager(
                 updatePackState(packId, PackDownloadState.Downloading(0.90f, "解壓縮離線語音模型中…"))
                 extractTarBz2(tempArchive, targetDir)
             } else {
-                val targetName = if (pack.downloadUrl.endsWith(".task", ignoreCase = true)) {
-                    "model.task"
-                } else {
-                    "model.bin"
+                val targetName = when {
+                    pack.downloadUrl.endsWith(".task", ignoreCase = true) -> "model.task"
+                    pack.downloadUrl.endsWith(".onnx", ignoreCase = true) -> "model.onnx"
+                    else -> "model.bin"
                 }
                 tempArchive.copyTo(File(targetDir, targetName), overwrite = true)
             }
