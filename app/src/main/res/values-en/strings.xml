@@ -35,18 +35,18 @@
     <string name="pro_status_beta">Beta Testing · All Pro Features Free</string>
     <string name="pro_status_purchased">DxVoice-IME Pro Unlocked ✓</string>
     <string name="pro_status_trial">Pro 3-Day Free Trial (%1$d hrs left)</string>
-    <string name="pro_status_free">Free Version (Upgrade to Pro for 5 features)</string>
-    <string name="pro_card_subtitle">Floating ball, auto-return IME, local LLM, custom dictionary &amp; cloud backup</string>
+    <string name="pro_status_free">Free Version (Upgrade to Pro for 6 features)</string>
+    <string name="pro_card_subtitle">Floating ball, auto-return IME, local LLM, custom dictionary, cloud backup &amp; voiceprint lock</string>
     <string name="pro_btn_plan">Plan</string>
     <string name="pro_btn_view">View Pro</string>
     <string name="pro_dialog_title">DxVoice-IME Pro License</string>
     <string name="pro_dialog_sub_beta">All features are free during beta (production includes a 3-day free trial)</string>
     <string name="pro_dialog_sub_purchased">You have unlocked DxVoice-IME Pro ✓</string>
     <string name="pro_dialog_sub_trial">3-Day Free Trial active (~%1$d hours remaining)</string>
-    <string name="pro_dialog_sub_free">3-Day Free Trial ended. Upgrade to Pro to unlock all 5 productivity features.</string>
+    <string name="pro_dialog_sub_free">3-Day Free Trial ended. Upgrade to Pro to unlock all 6 productivity features.</string>
     <string name="pro_dialog_feature_highlight">\"%1$s\" is a Pro feature.</string>
     <string name="pro_dialog_free_desc">Always free: core voice typing, offline speech recognition, auto-punctuation, Traditional Chinese conversion, and manual keyboard switch.</string>
-    <string name="pro_dialog_features_header">5 Exclusive Pro Productivity Features:</string>
+    <string name="pro_dialog_features_header">6 Exclusive Pro Productivity Features:</string>
     <string name="pro_dialog_unlocked">Unlocked</string>
     <string name="pro_dialog_select_plan">Select Plan · %1$s</string>
     <string name="pro_promo_title">Friends &amp; Family / Google Play Promo Code</string>
@@ -54,7 +54,7 @@
     <string name="pro_promo_redeem">Redeem</string>
     <string name="pro_restore_btn">Restore Google Play Purchases</string>
     <string name="pro_plan_lifetime_title">DxVoice-IME Pro Lifetime</string>
-    <string name="pro_plan_lifetime_sub">Includes 3-day free trial on release; one-time purchase unlocks all 5 Pro features forever with no subscription.</string>
+    <string name="pro_plan_lifetime_sub">Includes 3-day free trial on release; one-time purchase unlocks all 6 Pro features forever with no subscription.</string>
     <string name="pro_plan_lifetime_price">NT$300 One-Time</string>
     <string name="pro_plan_lifetime_badge">One-Time · No Subscription</string>
     <string name="pro_feat_floating_name">Floating Voice Shortcut Ball</string>
@@ -67,6 +67,8 @@
     <string name="pro_feat_dict_desc">Custom terms, 0ms instant text replacement, and automatic phrase learning</string>
     <string name="pro_feat_backup_name">Cloud &amp; Folder Backup/Restore</string>
     <string name="pro_feat_backup_desc">One-tap backup of all settings, floating ball positions, and custom dictionary to Google Drive or local folder</string>
+    <string name="pro_feat_voiceprint_name">Personal Voiceprint Lock</string>
+    <string name="pro_feat_voiceprint_desc">Offline 3D-Speaker voiceprint verification to recognize only your voice and filter out nearby talkers</string>
 
     <!-- Billing Messages -->
     <string name="billing_not_ready">Google Play Billing service is not ready yet</string>
@@ -318,14 +320,14 @@
     <string name="noise_mode_near_field">Near-Field (Close Mic Only)</string>
     <string name="hw_nr_title">Hardware Noise Suppression &amp; Echo Canceler</string>
     <string name="hw_nr_sub">Enables hardware NoiseSuppressor, AcousticEchoCanceler &amp; 100Hz high-pass filter (blocks AC, wind &amp; speaker audio)</string>
-    <string name="vp_section_title">Personal Voiceprint Verification (Advanced)</string>
+    <string name="vp_section_title">Personal Voiceprint Verification (Pro)</string>
     <string name="vp_section_desc">Offline 3D-Speaker voiceprint matching (~27 MB, 100% on-device) to ignore nearby talkers and TV voices. When enabled, captures local PCM for verification; when off, keeps instant Gboard-speed live streaming.</string>
     <string name="vp_download_model_btn">Download Voiceprint Model (~27 MB)</string>
     <string name="vp_retry_download_btn">Retry Download Voiceprint Model</string>
     <string name="vp_btn_start_enroll">Record Voiceprint (%1$d/3 done)</string>
     <string name="vp_btn_reenroll">Re-record Voiceprint (3/3 ✓)</string>
     <string name="vp_btn_clear">Clear Voiceprint</string>
-    <string name="vp_lock_switch_title">Enable Personal Voiceprint Lock (My Voice Only)</string>
+    <string name="vp_lock_switch_title">Enable Personal Voiceprint Lock (Pro · My Voice Only)</string>
     <string name="vp_lock_switch_sub_ready">Voiceprint enrolled — non-matching voices are ignored automatically</string>
     <string name="vp_lock_switch_sub_need_enroll">Record all 3 sample prompts above to enroll your voiceprint first</string>
     <string name="vp_dialog_title">Enroll Personal Voiceprint (3 Prompts)</string>

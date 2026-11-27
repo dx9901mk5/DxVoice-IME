@@ -701,12 +701,18 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
+                val hasProForVp = app.entitlementManager.hasProAccess()
                 when (val s = vpPackState) {
                     is PackDownloadState.NotInstalled -> {
                         OutlinedButton(
                             onClick = {
-                                scope.launch {
-                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER)
+                                if (!hasProForVp) {
+                                    upgradeDialogFeature = ProFeature.VOICEPRINT_LOCK
+                                    showUpgradeDialog = true
+                                } else {
+                                    scope.launch {
+                                        app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER)
+                                    }
                                 }
                             }
                         ) {
@@ -732,8 +738,13 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         )
                         OutlinedButton(
                             onClick = {
-                                scope.launch {
-                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER)
+                                if (!hasProForVp) {
+                                    upgradeDialogFeature = ProFeature.VOICEPRINT_LOCK
+                                    showUpgradeDialog = true
+                                } else {
+                                    scope.launch {
+                                        app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER)
+                                    }
                                 }
                             }
                         ) {
@@ -748,7 +759,10 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         ) {
                             Button(
                                 onClick = {
-                                    if (!hasMicPermission) {
+                                    if (!hasProForVp) {
+                                        upgradeDialogFeature = ProFeature.VOICEPRINT_LOCK
+                                        showUpgradeDialog = true
+                                    } else if (!hasMicPermission) {
                                         micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                     } else {
                                         showVoiceprintDialog = true
@@ -782,9 +796,12 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                             } else {
                                 stringResource(R.string.vp_lock_switch_sub_need_enroll)
                             },
-                            checked = config.voiceprintLockEnabled && isEnrolled,
+                            checked = config.voiceprintLockEnabled && isEnrolled && hasProForVp,
                             onCheckedChange = { enabled ->
-                                if (enabled && !isEnrolled) {
+                                if (enabled && !hasProForVp) {
+                                    upgradeDialogFeature = ProFeature.VOICEPRINT_LOCK
+                                    showUpgradeDialog = true
+                                } else if (enabled && !isEnrolled) {
                                     if (!hasMicPermission) {
                                         micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                     } else {

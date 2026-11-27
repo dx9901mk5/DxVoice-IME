@@ -35,18 +35,18 @@
     <string name="pro_status_beta">テスト期間中・全機能無料開放</string>
     <string name="pro_status_purchased">DxVoice-IME Pro 解放済み ✓</string>
     <string name="pro_status_trial">Pro 3日間無料トライアル中（残り %1$d 時間）</string>
-    <string name="pro_status_free">無料版（Pro で 5 つの上位機能を解放）</string>
-    <string name="pro_card_subtitle">フローティング球・自動復帰・ローカルLLM・カスタム辞書・クラウドバックアップ</string>
+    <string name="pro_status_free">無料版（Pro で 6 つの上位機能を解放）</string>
+    <string name="pro_card_subtitle">フローティング球・自動復帰・ローカルLLM・カスタム辞書・クラウドバックアップ・個人声紋ロック</string>
     <string name="pro_btn_plan">プラン</string>
     <string name="pro_btn_view">Pro を見る</string>
     <string name="pro_dialog_title">DxVoice-IME Pro ライセンス</string>
     <string name="pro_dialog_sub_beta">テスト期間中は全機能を無料でご利用いただけます（正式版は3日間無料試用あり）</string>
     <string name="pro_dialog_sub_purchased">Pro ライセンスは解放済みです ✓</string>
     <string name="pro_dialog_sub_trial">3日間無料トライアル中（残り約 %1$d 時間）</string>
-    <string name="pro_dialog_sub_free">無料トライアルが終了しました。Pro へアップグレードすると以下5つの機能を引き続き利用できます。</string>
+    <string name="pro_dialog_sub_free">無料トライアルが終了しました。Pro へアップグレードすると以下6つの機能を引き続き利用できます。</string>
     <string name="pro_dialog_feature_highlight">「%1$s」は Pro 限定機能です。</string>
     <string name="pro_dialog_free_desc">無料版で永久利用可能：音声入力、オフライン音声認識、自動句読点、繁体字変換、手動キーボード切替。</string>
-    <string name="pro_dialog_features_header">Pro 専用の 5 つの高効率機能：</string>
+    <string name="pro_dialog_features_header">Pro 専用の 6 つの高効率機能：</string>
     <string name="pro_dialog_unlocked">解放済み</string>
     <string name="pro_dialog_select_plan">プランを選択 · %1$s</string>
     <string name="pro_promo_title">友人・関係者コード / Google Play プロモーションコード</string>
@@ -54,7 +54,7 @@
     <string name="pro_promo_redeem">適用</string>
     <string name="pro_restore_btn">Google Play の購入履歴を復元</string>
     <string name="pro_plan_lifetime_title">DxVoice-IME Pro 買い切り版</string>
-    <string name="pro_plan_lifetime_sub">正式版は初回3日間無料試用付き。一度の購入で5つの上位機能を永久解放（月額・年額なし）</string>
+    <string name="pro_plan_lifetime_sub">正式版は初回3日間無料試用付き。一度の購入で6つの上位機能を永久解放（月額・年額なし）</string>
     <string name="pro_plan_lifetime_price">NT$300 買い切り</string>
     <string name="pro_plan_lifetime_badge">買い切り・月額なし</string>
     <string name="pro_feat_floating_name">フローティング音声ショートカット球</string>
@@ -67,6 +67,8 @@
     <string name="pro_feat_dict_desc">固有名詞登録、0ms 即時置換ルール、手動修正からの自動学習</string>
     <string name="pro_feat_backup_name">クラウド＆フォルダバックアップ復元</string>
     <string name="pro_feat_backup_desc">設定・フローティング球座標・カスタム辞書を Google ドライブや端末へ一括保存</string>
+    <string name="pro_feat_voiceprint_name">個人声紋ロック</string>
+    <string name="pro_feat_voiceprint_desc">オフライン声紋照合で本人の声のみを認識し、周囲の会話やテレビ音声を自動除外</string>
 
     <!-- Billing Messages -->
     <string name="billing_not_ready">Google Play 課金サービスの準備ができていません</string>
@@ -318,14 +320,14 @@
     <string name="noise_mode_near_field">近接マイク専用</string>
     <string name="hw_nr_title">ハードウェア雑音抑制＆エコーキャンセル</string>
     <string name="hw_nr_sub">雑音抑制・エコーキャンセル・100Hz ハイパスフィルタを有効化（空調・風切り音・スピーカー音を遮断）</string>
-    <string name="vp_section_title">個人声紋認証（上級・本人の声のみ認識）</string>
+    <string name="vp_section_title">個人声紋認証（Pro・本人の声のみ認識）</string>
     <string name="vp_section_desc">端末内で声紋ベクトルを照合（約 27 MB・完全オフライン）し、周囲の会話やテレビ音声を除外します。オン時は端末録音照合に切替、オフ時は高速リアルタイム逐次入力を維持します。</string>
     <string name="vp_download_model_btn">声紋モデルをダウンロード (約 27 MB)</string>
     <string name="vp_retry_download_btn">声紋モデルを再ダウンロード</string>
     <string name="vp_btn_start_enroll">声紋を登録（%1$d/3 文完了）</string>
     <string name="vp_btn_reenroll">声紋を再登録 (3/3 ✓)</string>
     <string name="vp_btn_clear">声紋を消去</string>
-    <string name="vp_lock_switch_title">個人声紋ロックを有効にする（本人の声のみ）</string>
+    <string name="vp_lock_switch_title">個人声紋ロックを有効にする（Pro・本人の声のみ）</string>
     <string name="vp_lock_switch_sub_ready">声紋登録済み：本人以外の声や環境音声を自動的に除外します</string>
     <string name="vp_lock_switch_sub_need_enroll">先に上の 3 文を読み上げて声紋を登録してください</string>
     <string name="vp_dialog_title">個人声紋の登録（3 文サンプル）</string>

@@ -246,6 +246,7 @@ class PixelVoiceImeService : InputMethodService() {
             hasApiKey &&
             (config.polishMode == PolishMode.AUDIO_MULTIMODAL || (!sherpaReady && !speechEngine.isAvailable()))
         val voiceprintLockActive = config.voiceprintLockEnabled &&
+            app.entitlementManager.hasProAccess() &&
             app.voiceprintManager.isEnrolled() &&
             app.voiceprintManager.isModelReady()
         // Prioritize Android's streaming SpeechRecognizer (same live word-by-word engine as Gboard)

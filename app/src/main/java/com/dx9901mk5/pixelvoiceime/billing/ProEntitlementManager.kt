@@ -32,7 +32,8 @@ enum class ProFeature(@StringRes val displayNameRes: Int, @StringRes val summary
     AUTO_RETURN_IME(R.string.pro_feat_autoreturn_name, R.string.pro_feat_autoreturn_desc),
     LOCAL_LLM(R.string.pro_feat_llm_name, R.string.pro_feat_llm_desc),
     CUSTOM_DICTIONARY(R.string.pro_feat_dict_name, R.string.pro_feat_dict_desc),
-    CLOUD_BACKUP(R.string.pro_feat_backup_name, R.string.pro_feat_backup_desc)
+    CLOUD_BACKUP(R.string.pro_feat_backup_name, R.string.pro_feat_backup_desc),
+    VOICEPRINT_LOCK(R.string.pro_feat_voiceprint_name, R.string.pro_feat_voiceprint_desc)
 }
 
 sealed interface ProAccessState {
