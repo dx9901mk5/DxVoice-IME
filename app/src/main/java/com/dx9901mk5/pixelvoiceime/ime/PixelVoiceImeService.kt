@@ -245,7 +245,10 @@ class PixelVoiceImeService : InputMethodService() {
         val useGeminiAudioMode = config.geminiPolishEnabled &&
             hasApiKey &&
             (config.polishMode == PolishMode.AUDIO_MULTIMODAL || (!sherpaReady && !speechEngine.isAvailable()))
-        val useSherpaLocalMode = !useCustomOpenAiMode && !useGeminiAudioMode && sherpaReady
+        // Prioritize Android's streaming SpeechRecognizer (same live word-by-word engine as Gboard)
+        // whenever available, and keep Sherpa-ONNX as automatic offline fallback.
+        val preferStreamingAsr = speechEngine.isAvailable()
+        val useSherpaLocalMode = !useCustomOpenAiMode && !useGeminiAudioMode && sherpaReady && !preferStreamingAsr
         val shouldUseAudioCapture = useCustomOpenAiMode || useGeminiAudioMode || useSherpaLocalMode
 
         if (!shouldUseAudioCapture && !speechEngine.isAvailable()) {
@@ -325,14 +328,28 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onPartial(text: String) {
+                        val liveText = if (
+                            !activeLang.bcp47.startsWith("zh-CN", ignoreCase = true) &&
+                            (activeLang.bcp47.startsWith("zh", ignoreCase = true) ||
+                                activeLang.bcp47.startsWith("yue", ignoreCase = true))
+                        ) {
+                            app.customDictionaryStore.applyReplacements(
+                                LocalTextPolisher.toTraditionalTaiwan(
+                                    text,
+                                    applyTaiwanTypoFix = config.localTaiwanTypoFixEnabled
+                                )
+                            )
+                        } else {
+                            app.customDictionaryStore.applyReplacements(text)
+                        }
                         val cur = sessionState.value
                         if (cur is VoiceSessionState.Listening) {
                             sessionState.value = cur.copy(
-                                partialText = text,
+                                partialText = liveText,
                                 speechDetected = true
                             )
                         }
-                        currentInputConnection?.setComposingText(text, 1)
+                        currentInputConnection?.setComposingText(liveText, 1)
                     }
 
                     override fun onFinal(text: String) {
@@ -340,6 +357,16 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onError(code: Int, message: String) {
+                        val isOfflineOrNetworkErr =
+                            code == android.speech.SpeechRecognizer.ERROR_NETWORK ||
+                                code == android.speech.SpeechRecognizer.ERROR_NETWORK_TIMEOUT ||
+                                code == 12 ||
+                                code == 13
+                        if (isOfflineOrNetworkErr && sherpaReady) {
+                            currentInputConnection?.setComposingText("", 1)
+                            startSherpaOfflineFallback(config)
+                            return
+                        }
                         currentInputConnection?.finishComposingText()
                         if (code == android.speech.SpeechRecognizer.ERROR_SPEECH_TIMEOUT ||
                             code == android.speech.SpeechRecognizer.ERROR_NO_MATCH
@@ -352,6 +379,46 @@ class PixelVoiceImeService : InputMethodService() {
                 }
             )
         }
+    }
+
+    private fun startSherpaOfflineFallback(config: com.dx9901mk5.pixelvoiceime.data.VoiceImeConfig) {
+        usingAudioCaptureEngine = true
+        usingLocalSherpa = true
+        usingCustomOpenAi = false
+        sessionState.value = VoiceSessionState.Listening(
+            partialText = "",
+            amplitude = 0.1f,
+            speechDetected = false,
+            engineLabel = "離線備援 (Sherpa)"
+        )
+        audioCaptureEngine.start(
+            scope = serviceScope,
+            silenceTimeoutMs = config.silenceTimeoutMs,
+            noSpeechTimeoutMs = config.noSpeechTimeoutMs,
+            callbacks = object : LocalAudioCaptureEngine.Callbacks {
+                override fun onAmplitude(normalized: Float, speechDetected: Boolean) {
+                    val cur = sessionState.value
+                    if (cur is VoiceSessionState.Listening) {
+                        sessionState.value = cur.copy(
+                            amplitude = normalized,
+                            speechDetected = cur.speechDetected || speechDetected
+                        )
+                    }
+                }
+
+                override fun onCaptured(pcmBytes: ByteArray) {
+                    processCapturedAudioWithSherpa(pcmBytes)
+                }
+
+                override fun onNoSpeechTimeout() {
+                    handleNoSpeechAutoReturn("未偵測到語音")
+                }
+
+                override fun onError(message: String) {
+                    sessionState.value = VoiceSessionState.Error(message)
+                }
+            }
+        )
     }
 
     private fun handleNoSpeechAutoReturn(reason: String) {

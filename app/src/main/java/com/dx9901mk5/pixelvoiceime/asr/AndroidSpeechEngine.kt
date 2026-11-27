@@ -250,13 +250,14 @@ class AndroidSpeechEngine(
                 }
 
                 cancelFinishTimer()
+                val continuationWindowMs = (silenceTimeoutMs / 3L).coerceIn(700L, 1200L)
                 val timer = Runnable {
                     if (sessionActive) {
                         flushAccumulated(callbacks)
                     }
                 }
                 finishRunnable = timer
-                mainHandler.postDelayed(timer, silenceTimeoutMs)
+                mainHandler.postDelayed(timer, continuationWindowMs)
 
                 mainHandler.postDelayed({
                     if (sessionActive && !manualFinishRequested && finishRunnable != null) {
@@ -269,7 +270,7 @@ class AndroidSpeechEngine(
                             callbacks = callbacks
                         )
                     }
-                }, 120L)
+                }, 90L)
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
@@ -313,13 +314,14 @@ class AndroidSpeechEngine(
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, preferOffline)
+            val srSilenceMs = silenceTimeoutMs.coerceIn(1000L, 1800L)
             putExtra(
                 RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,
-                silenceTimeoutMs
+                srSilenceMs
             )
             putExtra(
                 RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,
-                silenceTimeoutMs
+                (srSilenceMs - 300L).coerceAtLeast(800L)
             )
         }
         sr.startListening(intent)
