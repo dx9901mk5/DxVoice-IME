@@ -7,12 +7,12 @@
     <string name="accessibility_service_description">用于检测系统键盘显示/隐藏状态以自动显示或隐藏悬浮语音球，并在点击悬浮球时直接切换启动 DxVoice-IME（绝不记录或上传任何个人输入内容）。</string>
 
     <!-- Top Bar & Navigation -->
-    <string name="app_subtitle">本地极速 / 词库与本地模型 / 自建端点语音输入法</string>
+    <string name="app_subtitle">本地极速 / 词库模型 / 云端语音输入法</string>
     <string name="nav_setup">启用行为</string>
     <string name="nav_languages">离线语系</string>
-    <string name="nav_models">词库与本地模型</string>
+    <string name="nav_models">词库模型</string>
     <string name="nav_backup">备份</string>
-    <string name="nav_about">主题与更新</string>
+    <string name="nav_about">主题更新</string>
     <string name="layout_single_pane"> 单栏</string>
     <string name="layout_side_by_side"> 并排</string>
     <string name="ui_language_title">界面语言</string>

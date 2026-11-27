@@ -80,6 +80,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -164,7 +165,9 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                             Text(
                                 text = stringResource(R.string.app_subtitle),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     },
@@ -235,7 +238,9 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                 label = {
                                     Text(
                                         text = stringResource(item.labelRes),
-                                        maxLines = 2,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis,
                                         textAlign = TextAlign.Center
                                     )
                                 }
@@ -265,7 +270,9 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
                                 label = {
                                     Text(
                                         text = stringResource(item.labelRes),
-                                        maxLines = 2,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis,
                                         textAlign = TextAlign.Center
                                     )
                                 }

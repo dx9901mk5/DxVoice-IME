@@ -112,37 +112,52 @@ class LocalLlmPolisher(
         val engine = ensureLoaded()
             ?: return@withContext Result.failure(IllegalStateException("尚未下載或無法初始化本地 Qwen2.5 0.5B 模型"))
 
+        // Only run Chinese local LLM on Chinese/Cantonese inputs; skip very short phrases (< 6 core chars)
+        // where a 0.5B model is prone to hallucination or answering instead of correcting.
+        val isChinese = languageTag.isBlank() ||
+            languageTag.startsWith("zh", ignoreCase = true) ||
+            languageTag.startsWith("yue", ignoreCase = true)
+        if (!isChinese) {
+            return@withContext Result.failure(IllegalStateException("非中文語系略過本地中文小模型"))
+        }
+
         val preferTraditional = !languageTag.startsWith("zh-CN", ignoreCase = true)
         val preInput = if (preferTraditional) {
             LocalTextPolisher.toTraditionalTaiwan(clean, applyTaiwanTypoFix = true)
         } else {
             clean
         }
+        val origCore = extractCoreChars(preInput)
+        if (origCore.length < MIN_CORE_CHARS_FOR_LLM) {
+            return@withContext Result.failure(IllegalStateException("短句改用 0ms 本地詞庫與標點直出"))
+        }
 
-        // Compact Qwen2.5 ChatML prompt for low prefill latency & strict direct output
+        // Plain single-turn instruction without manual <|im_start|>/<|im_end|> tokens:
+        // Qwen2.5-0.5B-Instruct .task bundles embed the ChatML prompt template in MediaPipe metadata;
+        // double-wrapping ChatML tags breaks tokenization and causes garbled/weird characters.
         val prompt = buildString {
-            append("<|im_start|>system\n")
             if (preferTraditional) {
-                append("你是繁體中文語音錯字標點修正器。只輸出修正後的這一句話，禁止問候、解釋、引號或重複。")
+                appendLine("任務：僅修正下方「原文」的同音錯別字與標點符號。")
+                appendLine("規則：1.必須保留原意與幾乎所有原字，不可回答問題、不可增刪內容、不可改寫。")
+                appendLine("2.只輸出修正後的一行繁體中文，不可加引號、解釋、前綴或外文。")
                 if (removeFillers) {
-                    append("去除口語贅詞，句中用「，」，句尾用「。」或「？」。")
+                    appendLine("3.可微調口語贅詞，句中用「，」，句尾用「。」或「？」。")
                 }
                 if (referenceHints.isNotBlank()) {
-                    append("\n參考詞彙：").append(referenceHints.take(220))
+                    append("參考專有名詞：").appendLine(referenceHints.take(160))
                 }
+                append("原文：").appendLine(preInput)
+                append("修正：")
             } else {
-                append("你是语音错字标点修正器。只输出修正后的这一句话，禁止问候、解释、引号或重复。")
+                appendLine("任务：仅修正下方「原文」的同音错别字与标点符号。")
+                appendLine("规则：1.必须保留原意与几乎所有原字，不可回答问题、不可增删内容、不可改写。")
+                appendLine("2.只输出修正后的一行简体中文，不可加引号、解释、前缀或外文。")
+                if (referenceHints.isNotBlank()) {
+                    append("参考专有名词：").appendLine(referenceHints.take(160))
+                }
+                append("原文：").appendLine(preInput)
+                append("修正：")
             }
-            append("<|im_end|>\n")
-            append("<|im_start|>user\n")
-            if (preferTraditional) {
-                appendLine("嗯今天天氣因該不錯我們去吃午飯吧")
-                append("<|im_end|>\n<|im_start|>assistant\n")
-                appendLine("今天天氣應該不錯，我們去吃午飯吧。")
-                append("<|im_end|>\n<|im_start|>user\n")
-            }
-            append(preInput)
-            append("<|im_end|>\n<|im_start|>assistant\n")
         }
 
         try {
@@ -169,8 +184,9 @@ class LocalLlmPolisher(
     private fun generateLowTempResponse(engine: LlmInference, prompt: String): String {
         val sessionResult = runCatching {
             val sessionOpts = LlmInferenceSession.LlmInferenceSessionOptions.builder()
-                .setTemperature(0.1f)
-                .setTopK(12)
+                .setTemperature(0.05f)
+                .setTopK(4)
+                .setTopP(0.8f)
                 .build()
             LlmInferenceSession.createFromOptions(engine, sessionOpts).use { session ->
                 session.addQueryChunk(prompt)
@@ -204,7 +220,11 @@ class LocalLlmPolisher(
             .removePrefix("輸出:")
             .removePrefix("输出:")
             .removePrefix("修正：")
+            .removePrefix("修正:")
             .removePrefix("修正後：")
+            .removePrefix("修正后：")
+            .removePrefix("結果：")
+            .removePrefix("结果：")
             .trim()
 
         val quotePairs = listOf("「" to "」", "『" to "』", "“" to "”", "\"" to "\"")
@@ -216,14 +236,33 @@ class LocalLlmPolisher(
 
         if (text.isBlank()) return null
 
+        // Reject special tokens, markdown artifacts, or replacement/garbled characters
+        if (text.contains("<|") || text.contains("|>") || text.contains('\uFFFD') ||
+            text.contains("**") || text.contains("```") || text.contains("##")
+        ) {
+            return null
+        }
+
         for (marker in CHATTER_MARKERS) {
             if (text.contains(marker) && !originalInput.contains(marker)) {
                 return null
             }
         }
 
-        val maxAllowedLen = (originalInput.length * 1.6f + 12).toInt().coerceAtLeast(24)
-        if (text.length > maxAllowedLen) {
+        // Reject unexpected foreign scripts (Korean Hangul, Japanese Kana, Cyrillic, Arabic, etc.)
+        // or sudden English bursts that were NOT present in the original ASR input.
+        if (hasUnexpectedAlienCharacters(text, originalInput)) {
+            return null
+        }
+
+        val origCore = extractCoreChars(originalInput)
+        val outCore = extractCoreChars(text)
+        if (origCore.isBlank() || outCore.isBlank()) return null
+
+        // Strict length guardrail: a typo/punctuation fixer must not drastically shrink or expand the text
+        val minAllowedCore = (origCore.length * 0.78f).toInt().coerceAtLeast(3)
+        val maxAllowedCore = (origCore.length * 1.18f + 2).toInt()
+        if (outCore.length < minAllowedCore || outCore.length > maxAllowedCore) {
             return null
         }
 
@@ -231,7 +270,79 @@ class LocalLlmPolisher(
             return null
         }
 
+        // Fidelity guardrail via LCS similarity: reject hallucinations, rewrites, or Q&A replies
+        val maxLen = maxOf(origCore.length, outCore.length)
+        val lcs = longestCommonSubsequenceLength(origCore, outCore)
+        val similarity = lcs.toFloat() / maxLen.toFloat()
+        if (similarity < MIN_LCS_FIDELITY) {
+            return null
+        }
+
         return text
+    }
+
+    private fun extractCoreChars(text: String): String {
+        val sb = StringBuilder(text.length)
+        for (ch in text) {
+            if (!ch.isWhitespace() && ch !in PUNCTUATION_CHARS) {
+                sb.append(ch.lowercaseChar())
+            }
+        }
+        return sb.toString()
+    }
+
+    private fun hasUnexpectedAlienCharacters(output: String, original: String): Boolean {
+        val origHasLatin = original.any { it in 'a'..'z' || it in 'A'..'Z' }
+        var extraLatinCount = 0
+        for (ch in output) {
+            if (ch in original) continue
+            val code = ch.code
+            // Control chars or Unicode replacement / private use
+            if (Character.isISOControl(ch) || code == 0xFFFD || code in 0xE000..0xF8FF) {
+                return true
+            }
+            // Korean Hangul / Jamo
+            if (code in 0xAC00..0xD7AF || code in 0x1100..0x11FF || code in 0x3130..0x318F) {
+                return true
+            }
+            // Japanese Hiragana / Katakana
+            if (code in 0x3040..0x30FF || code in 0x31F0..0x31FF) {
+                return true
+            }
+            // Cyrillic / Arabic / Thai / Devanagari / Greek
+            if (code in 0x0370..0x06FF || code in 0x0900..0x0E7F) {
+                return true
+            }
+            // Unexpected Latin burst when original had no English
+            if (!origHasLatin && (ch in 'a'..'z' || ch in 'A'..'Z')) {
+                extraLatinCount++
+                if (extraLatinCount >= 3) return true
+            }
+        }
+        return false
+    }
+
+    private fun longestCommonSubsequenceLength(a: String, b: String): Int {
+        if (a.isEmpty() || b.isEmpty()) return 0
+        // Cap DP memory for unusually long inputs
+        val s1 = if (a.length > 240) a.substring(0, 240) else a
+        val s2 = if (b.length > 240) b.substring(0, 240) else b
+        var prev = IntArray(s2.length + 1)
+        var curr = IntArray(s2.length + 1)
+        for (i in 1..s1.length) {
+            val c1 = s1[i - 1]
+            for (j in 1..s2.length) {
+                curr[j] = if (c1 == s2[j - 1]) {
+                    prev[j - 1] + 1
+                } else {
+                    maxOf(prev[j], curr[j - 1])
+                }
+            }
+            val tmp = prev
+            prev = curr
+            curr = tmp
+        }
+        return prev[s2.length]
     }
 
     private fun hasRepetitionLoop(text: String): Boolean {
@@ -336,6 +447,9 @@ class LocalLlmPolisher(
         private const val KEY_CPU_LOADING_IN_PROGRESS = "cpu_loading_in_progress"
         private const val KEY_VERSION_CODE = "version_code"
         private const val MIN_VALID_MODEL_BYTES = 50L * 1024L * 1024L
+        private const val MIN_CORE_CHARS_FOR_LLM = 6
+        private const val MIN_LCS_FIDELITY = 0.68f
+        private const val PUNCTUATION_CHARS = "，。！？、；：「」『』（）(),.!?;:'\"—–-…·"
 
         private val CHATTER_MARKERS = listOf(
             "您好",

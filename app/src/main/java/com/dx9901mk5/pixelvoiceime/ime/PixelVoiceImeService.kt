@@ -522,7 +522,10 @@ class PixelVoiceImeService : InputMethodService() {
                     wasAiPolished = result is GeminiResult.Success
                 )
             } else {
-                val localLlmOut = if (config.localLlmEnabled && app.localLlmPolisher.isModelDownloaded()) {
+                val localLlmOut = if (config.localLlmEnabled &&
+                    app.entitlementManager.hasProAccess() &&
+                    app.localLlmPolisher.isModelDownloaded()
+                ) {
                     sessionState.value = VoiceSessionState.Polishing(
                         rawText = cleanRaw,
                         statusText = "本地 Qwen2.5 0.5B 極速修潤中…"
@@ -703,7 +706,11 @@ class PixelVoiceImeService : InputMethodService() {
                 }
             } else null
 
-            if (polished == null && config.localLlmEnabled && app.localLlmPolisher.isModelDownloaded()) {
+            if (polished == null &&
+                config.localLlmEnabled &&
+                app.entitlementManager.hasProAccess() &&
+                app.localLlmPolisher.isModelDownloaded()
+            ) {
                 sessionState.value = VoiceSessionState.Polishing(
                     rawText = rawText,
                     statusText = "本地 Qwen2.5 0.5B 極速修潤中…"

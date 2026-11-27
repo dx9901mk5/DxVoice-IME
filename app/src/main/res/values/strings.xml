@@ -7,12 +7,12 @@
     <string name="accessibility_service_description">用於偵測系統鍵盤顯示/隱藏狀態以自動顯示或隱藏懸浮語音球，並在點擊懸浮球時直接切換啟動 DxVoice-IME（絕不記錄或上傳任何個人輸入內容）。</string>
 
     <!-- Top Bar & Navigation -->
-    <string name="app_subtitle">本地極速 / 詞庫與本地模型 / 自架端點語音輸入法</string>
+    <string name="app_subtitle">本地極速 / 詞庫模型 / 雲端語音輸入法</string>
     <string name="nav_setup">啟用行為</string>
     <string name="nav_languages">離線語系</string>
-    <string name="nav_models">詞庫與本地模型</string>
+    <string name="nav_models">詞庫模型</string>
     <string name="nav_backup">備份</string>
-    <string name="nav_about">主題與更新</string>
+    <string name="nav_about">主題更新</string>
     <string name="layout_single_pane"> 單欄</string>
     <string name="layout_side_by_side"> 並排</string>
     <string name="ui_language_title">介面語言</string>

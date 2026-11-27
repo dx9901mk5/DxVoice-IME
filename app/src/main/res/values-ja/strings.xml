@@ -7,12 +7,12 @@
     <string name="accessibility_service_description">システムキーボードの表示／非表示を検知してフローティング音声ボタンを自動制御し、タップ時に直接 DxVoice-IME を起動するためにのみ使用します（入力内容の記録や送信は一切行いません）。</string>
 
     <!-- Top Bar & Navigation -->
-    <string name="app_subtitle">高速ローカル音声 / 辞書＆ローカルLLM / 自前エンドポイント入力</string>
-    <string name="nav_setup">設定・動作</string>
-    <string name="nav_languages">オフライン言語</string>
-    <string name="nav_models">辞書とモデル</string>
-    <string name="nav_backup">バックアップ</string>
-    <string name="nav_about">テーマと更新</string>
+    <string name="app_subtitle">高速ローカル音声 / 辞書＆ローカルAI入力</string>
+    <string name="nav_setup">設定</string>
+    <string name="nav_languages">言語</string>
+    <string name="nav_models">辞書・AI</string>
+    <string name="nav_backup">保存</string>
+    <string name="nav_about">テーマ</string>
     <string name="layout_single_pane"> 1画面</string>
     <string name="layout_side_by_side"> 2画面</string>
     <string name="ui_language_title">表示言語</string>

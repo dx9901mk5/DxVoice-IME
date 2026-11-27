@@ -7,12 +7,12 @@
     <string name="accessibility_service_description">Detects when the system soft keyboard opens or closes to show/hide the floating voice shortcut ball, and switches directly to DxVoice-IME when tapped (never records or uploads any personal text).</string>
 
     <!-- Top Bar & Navigation -->
-    <string name="app_subtitle">On-Device Fast Voice / Dictionary &amp; Local LLM / Custom Endpoint IME</string>
+    <string name="app_subtitle">Fast On-Device Voice / Local AI &amp; Cloud IME</string>
     <string name="nav_setup">Setup</string>
     <string name="nav_languages">Languages</string>
-    <string name="nav_models">Dict &amp; Models</string>
+    <string name="nav_models">Models</string>
     <string name="nav_backup">Backup</string>
-    <string name="nav_about">Theme &amp; Updates</string>
+    <string name="nav_about">Themes</string>
     <string name="layout_single_pane"> Single</string>
     <string name="layout_side_by_side"> Split</string>
     <string name="ui_language_title">App Language</string>
