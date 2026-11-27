@@ -162,7 +162,8 @@ object BackupManager {
                 cur.copy(
                     autoListenOnStart = cfgJson.optBoolean("autoListenOnStart", cur.autoListenOnStart),
                     autoReturnToPreviousIme = cfgJson.optBoolean("autoReturnToPreviousIme", cur.autoReturnToPreviousIme),
-                    autoReturnDelayMs = cfgJson.optLong("autoReturnDelayMs", cur.autoReturnDelayMs),
+                    autoReturnDelayMs = cfgJson.optLong("autoReturnDelayMs", cur.autoReturnDelayMs)
+                        .let { if (it < 1800L) 2500L else it },
                     silenceTimeoutMs = cfgJson.optLong("silenceTimeoutMs", cur.silenceTimeoutMs),
                     noSpeechTimeoutMs = cfgJson.optLong("noSpeechTimeoutMs", cur.noSpeechTimeoutMs),
                     geminiPolishEnabled = cfgJson.optBoolean("geminiPolishEnabled", cur.geminiPolishEnabled),

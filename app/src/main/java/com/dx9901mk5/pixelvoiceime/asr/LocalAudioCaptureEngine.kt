@@ -58,11 +58,10 @@ class LocalAudioCaptureEngine {
                 return@launch
             }
 
-            val audioSource = if (hardwareNoiseReduction && noiseFilterMode != NoiseFilterMode.NORMAL) {
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION
-            } else {
-                MediaRecorder.AudioSource.VOICE_RECOGNITION
-            }
+            // Always prefer VOICE_RECOGNITION to avoid severe mic gain attenuation caused by
+            // VOICE_COMMUNICATION on many Android OEMs (Vivo/Oppo/Samsung), which caused false
+            // "no speech detected" timeouts.
+            val audioSource = MediaRecorder.AudioSource.VOICE_RECOGNITION
 
             val recorder = try {
                 AudioRecord(
@@ -91,17 +90,17 @@ class LocalAudioCaptureEngine {
             var speechStarted = false
             var consecutiveSpeechFrames = 0
             var lastSpeechTime = startTime
-            var noiseFloorRms = 180f
+            var noiseFloorRms = 140f
             var calibratedFrames = 0
             // 100Hz 1st-order high-pass filter state (cuts AC hum, wind rumble, traffic bass)
             var hpPrevIn = 0f
             var hpPrevOut = 0f
             val hpAlpha = 0.962f
 
-            val (thresholdMultiplier, thresholdFloor) = when (noiseFilterMode) {
-                NoiseFilterMode.NORMAL -> 2.6f to 380f
-                NoiseFilterMode.NOISY -> 3.2f to 580f
-                NoiseFilterMode.NEAR_FIELD -> 3.8f to 860f
+            val (thresholdMultiplier, thresholdFloor, thresholdCap) = when (noiseFilterMode) {
+                NoiseFilterMode.NORMAL -> Triple(2.0f, 220f, 1400f)
+                NoiseFilterMode.NOISY -> Triple(2.4f, 340f, 1800f)
+                NoiseFilterMode.NEAR_FIELD -> Triple(2.8f, 480f, 2200f)
             }
 
             var noiseSuppressor: NoiseSuppressor? = null
@@ -113,7 +112,7 @@ class LocalAudioCaptureEngine {
                             enabled = true
                         }
                     }
-                    if (AcousticEchoCanceler.isAvailable()) {
+                    if (noiseFilterMode != NoiseFilterMode.NORMAL && AcousticEchoCanceler.isAvailable()) {
                         echoCanceler = AcousticEchoCanceler.create(recorder.audioSessionId)?.apply {
                             enabled = true
                         }
@@ -147,23 +146,27 @@ class LocalAudioCaptureEngine {
                     val rms = computeRms(frameBuffer, read)
                     val now = System.currentTimeMillis()
 
-                    if (calibratedFrames < 6) {
+                    // Min-tracking noise floor calibration: never let immediate user speech
+                    // during the first 200ms poison the ambient noise floor.
+                    if (calibratedFrames < 4) {
                         noiseFloorRms = if (calibratedFrames == 0) {
-                            rms
+                            rms.coerceAtMost(350f)
                         } else {
-                            noiseFloorRms * 0.6f + rms * 0.4f
+                            minOf(noiseFloorRms, rms).coerceIn(60f, 350f)
                         }
                         calibratedFrames++
-                    } else if (!speechStarted || rms < noiseFloorRms * 1.6f) {
-                        noiseFloorRms = (noiseFloorRms * 0.92f + rms * 0.08f).coerceIn(80f, 1600f)
+                    } else if (!speechStarted && rms < noiseFloorRms * 1.5f) {
+                        noiseFloorRms = (noiseFloorRms * 0.90f + rms * 0.10f).coerceIn(60f, 520f)
+                    } else if (rms < noiseFloorRms) {
+                        noiseFloorRms = (noiseFloorRms * 0.85f + rms * 0.15f).coerceIn(60f, 520f)
                     }
 
-                    val dynamicThreshold = (noiseFloorRms * thresholdMultiplier).coerceIn(thresholdFloor, 3200f)
-                    val normalized = (rms / (dynamicThreshold * 2.5f)).coerceIn(0.05f, 1f)
+                    val dynamicThreshold = (noiseFloorRms * thresholdMultiplier).coerceIn(thresholdFloor, thresholdCap)
+                    val normalized = (rms / (dynamicThreshold * 2.2f)).coerceIn(0.05f, 1f)
 
-                    if (calibratedFrames >= 3 && rms >= dynamicThreshold) {
+                    if (rms >= dynamicThreshold) {
                         consecutiveSpeechFrames++
-                        if (speechStarted || consecutiveSpeechFrames >= 2) {
+                        if (speechStarted || consecutiveSpeechFrames >= 2 || rms >= dynamicThreshold * 1.35f) {
                             speechStarted = true
                             lastSpeechTime = now
                         }

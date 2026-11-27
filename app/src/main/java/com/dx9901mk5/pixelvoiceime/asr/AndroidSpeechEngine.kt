@@ -38,10 +38,10 @@ class AndroidSpeechEngine(
     private var finishRunnable: Runnable? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var noiseFilterMode: NoiseFilterMode = NoiseFilterMode.NORMAL
-    private var ambientRmsSum: Float = 0f
     private var ambientRmsCount: Int = 0
     private var ambientNoiseDb: Float = 0f
     private var peakUtteranceRmsDb: Float = -10f
+    private var rmsCallbackReceived: Boolean = false
 
     fun isAvailable(): Boolean {
         if (SpeechRecognizer.isRecognitionAvailable(context)) return true
@@ -58,10 +58,10 @@ class AndroidSpeechEngine(
     ) {
         stop()
         this.noiseFilterMode = noiseFilterMode
-        ambientRmsSum = 0f
         ambientRmsCount = 0
         ambientNoiseDb = 0f
         peakUtteranceRmsDb = -10f
+        rmsCallbackReceived = false
         accumulatedSegments.clear()
         manualFinishRequested = false
         sessionActive = true
@@ -150,11 +150,15 @@ class AndroidSpeechEngine(
 
             override fun onRmsChanged(rmsdB: Float) {
                 if (!active) return
-                // Calibrate ambient noise floor during the first ~5 RMS ticks before speech peaks
+                rmsCallbackReceived = true
+                // Min-tracking ambient noise floor so immediate user speech cannot inflate baseline
                 if (ambientRmsCount < 5 && lastPartial.isBlank()) {
-                    ambientRmsSum += rmsdB
+                    ambientNoiseDb = if (ambientRmsCount == 0) {
+                        rmsdB.coerceAtMost(2.5f)
+                    } else {
+                        minOf(ambientNoiseDb, rmsdB).coerceIn(-2f, 2.5f)
+                    }
                     ambientRmsCount++
-                    ambientNoiseDb = ambientRmsSum / ambientRmsCount
                 }
                 if (rmsdB > peakUtteranceRmsDb) {
                     peakUtteranceRmsDb = rmsdB
@@ -352,10 +356,11 @@ class AndroidSpeechEngine(
     }
 
     private fun passesNearFieldRmsGate(): Boolean {
+        if (!rmsCallbackReceived) return true
         return when (noiseFilterMode) {
             NoiseFilterMode.NORMAL -> true
-            NoiseFilterMode.NOISY -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 2.2f, 3.2f)
-            NoiseFilterMode.NEAR_FIELD -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 3.8f, 5.2f)
+            NoiseFilterMode.NOISY -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 1.2f, 1.5f)
+            NoiseFilterMode.NEAR_FIELD -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 2.2f, 2.8f)
         }
     }
 

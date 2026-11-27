@@ -111,13 +111,12 @@ class VoiceImePrefs(context: Context) {
         val rawSilence = prefs.getLong(KEY_SILENCE_TIMEOUT, 3000L)
         val silenceTimeoutMs = if (rawSilence < 2500L) 3000L else rawSilence
         val rawDelay = prefs.getLong(KEY_AUTO_RETURN_DELAY, 2500L)
-        val migratedDelay = if (!prefs.getBoolean(KEY_MIGRATED_DELAY_2500, false)) {
-            val nextDelay = if (rawDelay == 450L) 2500L else rawDelay
+        val migratedDelay = if (rawDelay < 1800L) {
             prefs.edit()
-                .putLong(KEY_AUTO_RETURN_DELAY, nextDelay)
+                .putLong(KEY_AUTO_RETURN_DELAY, 2500L)
                 .putBoolean(KEY_MIGRATED_DELAY_2500, true)
                 .apply()
-            nextDelay
+            2500L
         } else {
             rawDelay
         }

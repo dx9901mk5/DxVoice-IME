@@ -617,9 +617,6 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
-                        0L to R.string.delay_0,
-                        450L to R.string.delay_450,
-                        1000L to R.string.delay_1000,
                         1800L to R.string.delay_1800,
                         2500L to R.string.delay_2500
                     ).forEach { (delayMs, labelRes) ->

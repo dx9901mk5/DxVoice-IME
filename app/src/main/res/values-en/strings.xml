@@ -101,9 +101,6 @@
     <string name="behavior_auto_return_title">Auto-return to previous keyboard (Pro)</string>
     <string name="behavior_auto_return_sub">Remembers your previous keyboard and switches back right after committing text</string>
     <string name="behavior_delay_label">Auto-return delay</string>
-    <string name="delay_0">Instant (0s)</string>
-    <string name="delay_450">Fast (0.45s)</string>
-    <string name="delay_1000">Preview (1s)</string>
     <string name="delay_1800">Relaxed (1.8s)</string>
     <string name="delay_2500">Relaxed (2.5s / Default)</string>
     <string name="delay_manual">Manual switch</string>

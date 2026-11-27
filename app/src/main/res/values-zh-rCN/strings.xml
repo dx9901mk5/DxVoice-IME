@@ -101,9 +101,6 @@
     <string name="behavior_auto_return_title">结束后立刻切回原输入法（Pro）</string>
     <string name="behavior_auto_return_sub">记忆先前键盘，修正上屏完成后自动切回原本使用的输入法</string>
     <string name="behavior_delay_label">切回原输入法延迟时间</string>
-    <string name="delay_0">立刻 (0秒)</string>
-    <string name="delay_450">极快 (0.45秒)</string>
-    <string name="delay_1000">预览 (1秒)</string>
     <string name="delay_1800">宽裕 (1.8秒)</string>
     <string name="delay_2500">宽裕 (2.5秒 / 默认)</string>
     <string name="delay_manual">手动点击切回</string>

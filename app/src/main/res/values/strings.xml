@@ -101,9 +101,6 @@
     <string name="behavior_auto_return_title">結束後立刻切回原輸入法（Pro）</string>
     <string name="behavior_auto_return_sub">記憶先前鍵盤，修正貼回完成後自動切回原本使用的輸入法</string>
     <string name="behavior_delay_label">切回原輸入法延遲時間</string>
-    <string name="delay_0">立刻 (0秒)</string>
-    <string name="delay_450">極快 (0.45秒)</string>
-    <string name="delay_1000">預覽 (1秒)</string>
     <string name="delay_1800">寬裕 (1.8秒)</string>
     <string name="delay_2500">寬裕 (2.5秒 / 預設)</string>
     <string name="delay_manual">手動點擊切回</string>

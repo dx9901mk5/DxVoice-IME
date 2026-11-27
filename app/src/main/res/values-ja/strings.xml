@@ -101,9 +101,6 @@
     <string name="behavior_auto_return_title">入力完了後に元のキーボードへ自動復帰（Pro）</string>
     <string name="behavior_auto_return_sub">直前のキーボードを記憶し、テキスト確定後に自動で戻ります</string>
     <string name="behavior_delay_label">元のキーボードへ戻るまでの遅延</string>
-    <string name="delay_0">即時 (0秒)</string>
-    <string name="delay_450">最速 (0.45秒)</string>
-    <string name="delay_1000">確認 (1秒)</string>
     <string name="delay_1800">ゆったり (1.8秒)</string>
     <string name="delay_2500">ゆったり (2.5秒 / 標準)</string>
     <string name="delay_manual">手動で戻る</string>
