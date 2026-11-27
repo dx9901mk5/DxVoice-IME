@@ -109,6 +109,12 @@
     <string name="silence_2700">2.7秒</string>
     <string name="silence_3000">3.0秒 (標準)</string>
     <string name="silence_4000">4.0秒</string>
+    <string name="behavior_lift_label">入力パネルの下部持ち上げ：+%1$d dp（ナビバー自動回避済み）</string>
+    <string name="behavior_lift_desc">システムナビゲーションバーとジェスチャーバーを自動回避します。下部の重なりや誤操作を防ぐために追加で持ち上げでき、キーボード右上のアイコンでも切替可能です。</string>
+    <string name="lift_0">標準 (0dp)</string>
+    <string name="lift_16">少し上 (16dp・標準)</string>
+    <string name="lift_32">中くらい (32dp)</string>
+    <string name="lift_52">高め (52dp)</string>
 
     <!-- Floating Ball -->
     <string name="floating_title">フローティング音声ショートカット球</string>
@@ -291,6 +297,7 @@
     <string name="ime_switch_lang">言語切替</string>
     <string name="ime_offline_ready">オフライン可</string>
     <string name="ime_trans_prefix">訳:%1$s</string>
+    <string name="ime_lift_cd">入力パネルを持ち上げる</string>
     <string name="ime_settings_cd">入力設定</string>
     <string name="ime_listening_detected">音声認識中…</string>
     <string name="ime_listening_prompt">お話しください（話し終えると自動補正して入力）</string>

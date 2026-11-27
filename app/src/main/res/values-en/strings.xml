@@ -109,6 +109,12 @@
     <string name="silence_2700">2.7s</string>
     <string name="silence_3000">3.0s (Default)</string>
     <string name="silence_4000">4.0s</string>
+    <string name="behavior_lift_label">Keyboard bottom lift: +%1$d dp (auto-clears nav bar)</string>
+    <string name="behavior_lift_desc">Automatically clears the system navigation bar and gesture pill. Add extra lift to keep bottom buttons unobstructed; you can also cycle heights via the lift icon on the keyboard bar.</string>
+    <string name="lift_0">Flush (0dp)</string>
+    <string name="lift_16">Slight (16dp · Default)</string>
+    <string name="lift_32">Medium (32dp)</string>
+    <string name="lift_52">High (52dp)</string>
 
     <!-- Floating Ball -->
     <string name="floating_title">Floating Voice Shortcut Ball</string>
@@ -291,6 +297,7 @@
     <string name="ime_switch_lang">Switch Language</string>
     <string name="ime_offline_ready">Offline Ready</string>
     <string name="ime_trans_prefix">Tr:%1$s</string>
+    <string name="ime_lift_cd">Raise keyboard height</string>
     <string name="ime_settings_cd">IME Settings</string>
     <string name="ime_listening_detected">Listening &amp; transcribing…</string>
     <string name="ime_listening_prompt">Speak now (auto-polishes &amp; commits when done)</string>

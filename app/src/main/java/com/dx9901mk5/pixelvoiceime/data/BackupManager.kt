@@ -74,6 +74,7 @@ object BackupManager {
                     put("floatingBallOuterY", cfg.floatingBallOuterY)
                     put("floatingBallInnerX", cfg.floatingBallInnerX)
                     put("floatingBallInnerY", cfg.floatingBallInnerY)
+                    put("imeBottomLiftDp", cfg.imeBottomLiftDp)
                     put("backupDeviceName", cfg.backupDeviceName)
                 }
             )
@@ -189,6 +190,7 @@ object BackupManager {
                     floatingBallOuterY = cfgJson.optInt("floatingBallOuterY", cur.floatingBallOuterY),
                     floatingBallInnerX = cfgJson.optInt("floatingBallInnerX", cur.floatingBallInnerX),
                     floatingBallInnerY = cfgJson.optInt("floatingBallInnerY", cur.floatingBallInnerY),
+                    imeBottomLiftDp = cfgJson.optInt("imeBottomLiftDp", cur.imeBottomLiftDp).coerceIn(0, 80),
                     backupDeviceName = cfgJson.optString("backupDeviceName", cur.backupDeviceName)
                 )
             }

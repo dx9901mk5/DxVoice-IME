@@ -71,7 +71,8 @@ data class VoiceImeConfig(
     val noiseFilterMode: NoiseFilterMode = NoiseFilterMode.NORMAL,
     val hardwareNoiseReduction: Boolean = true,
     val voiceprintLockEnabled: Boolean = false,
-    val voiceprintThreshold: Float = 0.50f
+    val voiceprintThreshold: Float = 0.50f,
+    val imeBottomLiftDp: Int = 16
 ) {
     companion object {
         const val DEFAULT_GITHUB_REPO = "https://github.com/dx9901mk5/DxVoice-IME"
@@ -164,7 +165,8 @@ class VoiceImePrefs(context: Context) {
             noiseFilterMode = noiseFilterMode,
             hardwareNoiseReduction = prefs.getBoolean(KEY_HARDWARE_NR, true),
             voiceprintLockEnabled = prefs.getBoolean(KEY_VOICEPRINT_LOCK, false),
-            voiceprintThreshold = prefs.getFloat(KEY_VOICEPRINT_THRESHOLD, 0.50f).coerceIn(0.35f, 0.75f)
+            voiceprintThreshold = prefs.getFloat(KEY_VOICEPRINT_THRESHOLD, 0.50f).coerceIn(0.35f, 0.75f),
+            imeBottomLiftDp = prefs.getInt(KEY_IME_BOTTOM_LIFT_DP, 16).coerceIn(0, 80)
         )
     }
 
@@ -210,6 +212,7 @@ class VoiceImePrefs(context: Context) {
             .putBoolean(KEY_HARDWARE_NR, updated.hardwareNoiseReduction)
             .putBoolean(KEY_VOICEPRINT_LOCK, updated.voiceprintLockEnabled)
             .putFloat(KEY_VOICEPRINT_THRESHOLD, updated.voiceprintThreshold)
+            .putInt(KEY_IME_BOTTOM_LIFT_DP, updated.imeBottomLiftDp.coerceIn(0, 80))
             .apply()
         _config.value = updated
     }
@@ -261,5 +264,6 @@ class VoiceImePrefs(context: Context) {
         private const val KEY_HARDWARE_NR = "hardware_noise_reduction"
         private const val KEY_VOICEPRINT_LOCK = "voiceprint_lock_enabled"
         private const val KEY_VOICEPRINT_THRESHOLD = "voiceprint_threshold"
+        private const val KEY_IME_BOTTOM_LIFT_DP = "ime_bottom_lift_dp"
     }
 }

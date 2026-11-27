@@ -109,6 +109,12 @@
     <string name="silence_2700">2.7秒</string>
     <string name="silence_3000">3.0秒 (默认)</string>
     <string name="silence_4000">4.0秒</string>
+    <string name="behavior_lift_label">输入法面板上抬高度：+%1$d dp（已自动避开系统导航栏）</string>
+    <string name="behavior_lift_desc">自动检测并避开底部导航栏与手势条；可再向上抬升键盘面板避免下方按钮被遮挡或误触，键盘右上角也可一键循环切换。</string>
+    <string name="lift_0">贴齐导航栏 (0dp)</string>
+    <string name="lift_16">微抬 (16dp・默认)</string>
+    <string name="lift_32">标准上抬 (32dp)</string>
+    <string name="lift_52">高抬防误触 (52dp)</string>
 
     <!-- Floating Ball -->
     <string name="floating_title">悬浮语音快捷球（跟随其他输入法）</string>
@@ -291,6 +297,7 @@
     <string name="ime_switch_lang">切换语系</string>
     <string name="ime_offline_ready">离线就绪</string>
     <string name="ime_trans_prefix">译:%1$s</string>
+    <string name="ime_lift_cd">上抬输入法面板高度</string>
     <string name="ime_settings_cd">输入法设置</string>
     <string name="ime_listening_detected">正在聆听识别中…</string>
     <string name="ime_listening_prompt">请开始说话（说完自动润色上屏）</string>

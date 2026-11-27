@@ -656,6 +656,40 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                         )
                     }
                 }
+
+                Text(
+                    text = stringResource(R.string.behavior_lift_label, config.imeBottomLiftDp),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+                Text(
+                    text = stringResource(R.string.behavior_lift_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Slider(
+                    value = config.imeBottomLiftDp.toFloat(),
+                    onValueChange = { raw ->
+                        val stepped = ((raw / 4f).roundToInt() * 4).coerceIn(0, 80)
+                        app.prefs.update { it.copy(imeBottomLiftDp = stepped) }
+                    },
+                    valueRange = 0f..80f,
+                    steps = 19
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(
+                        0 to R.string.lift_0,
+                        16 to R.string.lift_16,
+                        32 to R.string.lift_32,
+                        52 to R.string.lift_52
+                    ).forEach { (liftDp, labelRes) ->
+                        FilterChip(
+                            selected = config.imeBottomLiftDp == liftDp,
+                            onClick = { app.prefs.update { it.copy(imeBottomLiftDp = liftDp) } },
+                            label = { Text(stringResource(labelRes)) }
+                        )
+                    }
+                }
             }
         }
 

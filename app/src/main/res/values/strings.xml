@@ -109,6 +109,12 @@
     <string name="silence_2700">2.7秒</string>
     <string name="silence_3000">3.0秒 (預設)</string>
     <string name="silence_4000">4.0秒</string>
+    <string name="behavior_lift_label">輸入法面板上抬高度：+%1$d dp（已自動避開系統導覽列）</string>
+    <string name="behavior_lift_desc">自動偵測並避開底部導覽列與手勢條；可再向上抬升鍵盤面板避免下方按鈕被遮擋或誤觸，鍵盤右上角也可一鍵循環切換。</string>
+    <string name="lift_0">貼齊導覽列 (0dp)</string>
+    <string name="lift_16">微抬 (16dp・預設)</string>
+    <string name="lift_32">標準上抬 (32dp)</string>
+    <string name="lift_52">高抬防誤觸 (52dp)</string>
 
     <!-- Floating Ball -->
     <string name="floating_title">懸浮語音捷徑球（跟隨其他輸入法）</string>
@@ -291,6 +297,7 @@
     <string name="ime_switch_lang">切換語系</string>
     <string name="ime_offline_ready">離線就緒</string>
     <string name="ime_trans_prefix">譯:%1$s</string>
+    <string name="ime_lift_cd">上抬輸入法面板高度</string>
     <string name="ime_settings_cd">輸入法設定</string>
     <string name="ime_listening_detected">正在聆聽辨識中…</string>
     <string name="ime_listening_prompt">請開始說話（說完自動修潤貼回）</string>

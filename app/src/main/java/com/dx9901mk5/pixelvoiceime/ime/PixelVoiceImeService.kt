@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
@@ -59,6 +61,8 @@ class PixelVoiceImeService : InputMethodService() {
     private val audioCaptureEngine = LocalAudioCaptureEngine()
 
     private val sessionState = MutableStateFlow<VoiceSessionState>(VoiceSessionState.Idle)
+    private val systemNavBarOverlapDp = MutableStateFlow(0)
+    private var inputComposeView: ComposeView? = null
     private var activePolishJob: Job? = null
     private var autoReturnJob: Job? = null
     private var usingAudioCaptureEngine: Boolean = false
@@ -109,13 +113,21 @@ class PixelVoiceImeService : InputMethodService() {
             decor.setViewTreeSavedStateRegistryOwner(imeLifecycleOwner)
         }
 
-        return ComposeView(this).apply {
+        val composeView = ComposeView(this).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
+                updateSystemNavBarOverlap(view, insets)
+                insets
+            }
+            addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
+                updateSystemNavBarOverlap(view, null)
+            }
             setContent {
                 val state by sessionState.collectAsState()
                 val config by app.prefs.config.collectAsState()
                 val packStates by app.modelManager.packStates.collectAsState()
                 val hasApiKey by app.apiKeyStore.hasApiKey.collectAsState()
+                val navBarOverlapDp by systemNavBarOverlapDp.collectAsState()
 
                 val activeLang = VoiceLanguageCatalog.findByTag(config.activeLanguageTag)
                 val offlineReady = packStates[activeLang.packId] is PackDownloadState.Installed
@@ -129,8 +141,11 @@ class PixelVoiceImeService : InputMethodService() {
                         targetTranslationCode = config.targetTranslationLang,
                         themeMode = config.appThemeMode,
                         previousImeLabel = config.previousImeLabel,
+                        bottomLiftDp = config.imeBottomLiftDp,
+                        systemNavBarDp = navBarOverlapDp,
                         onCycleLanguage = ::cycleActiveLanguage,
                         onCycleTranslation = ::cycleTargetTranslation,
+                        onCycleBottomLift = ::cycleImeBottomLift,
                         onOpenSettings = ::openSettingsActivity,
                         onMicPrimaryAction = ::handleMicButtonClick,
                         onSwitchToPreviousIme = ::returnToPreviousInputMethod,
@@ -142,11 +157,62 @@ class PixelVoiceImeService : InputMethodService() {
                 }
             }
         }
+        inputComposeView = composeView
+        return composeView
+    }
+
+    private fun updateSystemNavBarOverlap(view: View, dispatchedInsets: WindowInsetsCompat?) {
+        val dispatchedNavBottom = dispatchedInsets?.getInsets(
+            WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.displayCutout()
+        )?.bottom ?: 0
+
+        val overlapPx = if (dispatchedNavBottom > 0) {
+            dispatchedNavBottom
+        } else {
+            val rootInsets = ViewCompat.getRootWindowInsets(view)
+            val rootNavBottom = rootInsets?.getInsetsIgnoringVisibility(
+                WindowInsetsCompat.Type.navigationBars()
+            )?.bottom ?: 0
+            val decor = window?.window?.decorView
+            if (rootNavBottom > 0 && decor != null && decor.height > 0 && view.height > 0) {
+                val screenHeight = resources.displayMetrics.heightPixels
+                val decorReachesBottom = Build.VERSION.SDK_INT >= 35 || decor.height >= screenHeight - (rootNavBottom / 2)
+                if (decorReachesBottom) {
+                    val decorLoc = IntArray(2)
+                    val viewLoc = IntArray(2)
+                    decor.getLocationInWindow(decorLoc)
+                    view.getLocationInWindow(viewLoc)
+                    val viewBottomInDecor = (viewLoc[1] - decorLoc[1]) + view.height
+                    val gapBelowView = (decor.height - viewBottomInDecor).coerceAtLeast(0)
+                    (rootNavBottom - gapBelowView).coerceAtLeast(0)
+                } else {
+                    0
+                }
+            } else if (Build.VERSION.SDK_INT >= 35 && rootNavBottom > 0) {
+                rootNavBottom
+            } else {
+                0
+            }
+        }
+
+        val density = resources.displayMetrics.density.coerceAtLeast(1f)
+        val overlapDp = kotlin.math.ceil(overlapPx / density).toInt().coerceIn(0, 96)
+        if (systemNavBarOverlapDp.value != overlapDp) {
+            systemNavBarOverlapDp.value = overlapDp
+        }
+    }
+
+    private fun cycleImeBottomLift() {
+        val presets = listOf(0, 16, 32, 52)
+        val cur = app.prefs.config.value.imeBottomLiftDp
+        val next = presets.firstOrNull { it > cur } ?: presets.first()
+        app.prefs.update { it.copy(imeBottomLiftDp = next) }
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         imeLifecycleOwner.onStart()
+        inputComposeView?.let { ViewCompat.requestApplyInsets(it) }
         FloatingMicService.ensureStarted(this)
         FloatingMicService.notifyImeVisibility(this, true)
         cancelPendingJobs()
@@ -201,6 +267,7 @@ class PixelVoiceImeService : InputMethodService() {
         stopAllListening()
         cancelPendingJobs()
         serviceScope.cancel()
+        inputComposeView = null
         imeLifecycleOwner.onDestroy()
         super.onDestroy()
     }

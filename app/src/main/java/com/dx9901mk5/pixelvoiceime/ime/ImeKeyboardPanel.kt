@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Backspace
 import androidx.compose.material.icons.automirrored.rounded.KeyboardReturn
+import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Keyboard
@@ -28,7 +32,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Stop
-import androidx.compose.material.icons.rounded.Undo
+import androidx.compose.material.icons.rounded.VerticalAlignTop
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -64,8 +68,11 @@ fun ImeKeyboardPanel(
     targetTranslationCode: String,
     themeMode: AppThemeMode = AppThemeMode.DYNAMIC_PIXEL,
     previousImeLabel: String,
+    bottomLiftDp: Int = 16,
+    systemNavBarDp: Int = 0,
     onCycleLanguage: () -> Unit,
     onCycleTranslation: () -> Unit,
+    onCycleBottomLift: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onMicPrimaryAction: () -> Unit,
     onSwitchToPreviousIme: () -> Unit,
@@ -75,6 +82,13 @@ fun ImeKeyboardPanel(
     onOpenPermissionSetup: () -> Unit
 ) {
     PixelVoiceTheme(themeMode = themeMode) {
+        val composeNavBarDp = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        val safeNavBarDp = maxOf(composeNavBarDp, systemNavBarDp.coerceAtLeast(0).dp)
+        val animatedLiftDp by animateDpAsState(
+            targetValue = bottomLiftDp.coerceIn(0, 80).dp,
+            animationSpec = tween(durationMillis = 180),
+            label = "imeBottomLift"
+        )
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.surface,
@@ -88,7 +102,12 @@ fun ImeKeyboardPanel(
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 680.dp)
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                        .padding(
+                            start = 14.dp,
+                            end = 14.dp,
+                            top = 10.dp,
+                            bottom = 12.dp + safeNavBarDp + animatedLiftDp
+                        ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(
@@ -98,6 +117,7 @@ fun ImeKeyboardPanel(
                     ) {
                         Surface(
                             modifier = Modifier
+                                .weight(1f, fill = false)
                                 .clip(RoundedCornerShape(50))
                                 .clickable(onClick = onCycleLanguage),
                             color = MaterialTheme.colorScheme.surfaceVariant,
@@ -185,7 +205,25 @@ fun ImeKeyboardPanel(
                                     }
                                 }
                             }
-                            IconButton(onClick = onOpenSettings) {
+                            IconButton(
+                                onClick = onCycleBottomLift,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.VerticalAlignTop,
+                                    contentDescription = stringResource(R.string.ime_lift_cd),
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (bottomLiftDp > 0) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                )
+                            }
+                            IconButton(
+                                onClick = onOpenSettings,
+                                modifier = Modifier.size(36.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Settings,
                                     contentDescription = stringResource(R.string.ime_settings_cd),
@@ -291,7 +329,7 @@ fun ImeKeyboardPanel(
                                     if (state.wasAiPolished && state.rawText.isNotBlank() && state.rawText != state.finalText) {
                                         TextButton(onClick = onUndoAiPolish) {
                                             Icon(
-                                                imageVector = Icons.Rounded.Undo,
+                                                imageVector = Icons.AutoMirrored.Rounded.Undo,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(16.dp)
                                             )
