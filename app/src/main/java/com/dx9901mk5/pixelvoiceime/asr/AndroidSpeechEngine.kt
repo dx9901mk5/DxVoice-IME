@@ -9,6 +9,7 @@ import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import com.dx9901mk5.pixelvoiceime.data.NoiseFilterMode
 
 /**
  * Wraps Android's SpeechRecognizer with offline-preference, partial result streaming,
@@ -36,6 +37,11 @@ class AndroidSpeechEngine(
     private var currentCallbacks: Callbacks? = null
     private var finishRunnable: Runnable? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var noiseFilterMode: NoiseFilterMode = NoiseFilterMode.NORMAL
+    private var ambientRmsSum: Float = 0f
+    private var ambientRmsCount: Int = 0
+    private var ambientNoiseDb: Float = 0f
+    private var peakUtteranceRmsDb: Float = -10f
 
     fun isAvailable(): Boolean {
         if (SpeechRecognizer.isRecognitionAvailable(context)) return true
@@ -47,9 +53,15 @@ class AndroidSpeechEngine(
         languageTag: String,
         preferOffline: Boolean,
         silenceTimeoutMs: Long,
+        noiseFilterMode: NoiseFilterMode = NoiseFilterMode.NORMAL,
         callbacks: Callbacks
     ) {
         stop()
+        this.noiseFilterMode = noiseFilterMode
+        ambientRmsSum = 0f
+        ambientRmsCount = 0
+        ambientNoiseDb = 0f
+        peakUtteranceRmsDb = -10f
         accumulatedSegments.clear()
         manualFinishRequested = false
         sessionActive = true
@@ -138,6 +150,15 @@ class AndroidSpeechEngine(
 
             override fun onRmsChanged(rmsdB: Float) {
                 if (!active) return
+                // Calibrate ambient noise floor during the first ~5 RMS ticks before speech peaks
+                if (ambientRmsCount < 5 && lastPartial.isBlank()) {
+                    ambientRmsSum += rmsdB
+                    ambientRmsCount++
+                    ambientNoiseDb = ambientRmsSum / ambientRmsCount
+                }
+                if (rmsdB > peakUtteranceRmsDb) {
+                    peakUtteranceRmsDb = rmsdB
+                }
                 // rmsdB typically ranges from -2 to 10
                 val norm = ((rmsdB + 2f) / 12f).coerceIn(0.05f, 1f)
                 callbacks.onAmplitude(norm)
@@ -233,9 +254,11 @@ class AndroidSpeechEngine(
                 active = false
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val best = matches?.firstOrNull()?.trim().orEmpty().ifBlank { lastPartial }
-                val withPauses = applyPauseCommas(best)
+                val passedNearFieldGate = passesNearFieldRmsGate()
+                val withPauses = if (passedNearFieldGate) applyPauseCommas(best) else ""
                 lastPartial = ""
                 pauseBreakLengths.clear()
+                peakUtteranceRmsDb = -10f
                 if (withPauses.isNotBlank()) {
                     accumulatedSegments.add(withPauses)
                 }
@@ -275,6 +298,7 @@ class AndroidSpeechEngine(
 
             override fun onPartialResults(partialResults: Bundle?) {
                 if (!active || !sessionActive) return
+                if (!passesNearFieldRmsGate()) return
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val text = matches?.firstOrNull()?.trim().orEmpty()
                 if (text.isNotBlank()) {
@@ -325,6 +349,14 @@ class AndroidSpeechEngine(
             )
         }
         sr.startListening(intent)
+    }
+
+    private fun passesNearFieldRmsGate(): Boolean {
+        return when (noiseFilterMode) {
+            NoiseFilterMode.NORMAL -> true
+            NoiseFilterMode.NOISY -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 2.2f, 3.2f)
+            NoiseFilterMode.NEAR_FIELD -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 3.8f, 5.2f)
+        }
     }
 
     private fun applyPauseCommas(text: String): String {

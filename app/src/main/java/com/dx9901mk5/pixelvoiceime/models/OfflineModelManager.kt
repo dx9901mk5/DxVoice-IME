@@ -121,6 +121,12 @@ class OfflineModelManager(
             ?: files.firstOrNull { it.name.endsWith(".onnx", ignoreCase = true) }
     }
 
+    fun findSpeakerModelFile(): File? {
+        val dir = getPackDirectory(VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER)
+        if (!File(dir, ".ready").exists()) return null
+        return dir.walkTopDown().firstOrNull { it.isFile && it.name.endsWith(".onnx", ignoreCase = true) }
+    }
+
     fun isLocalLlmReady(): Boolean =
         _packStates.value[VoiceLanguageCatalog.PACK_LOCAL_LLM_QWEN25_05B] is PackDownloadState.Installed
 

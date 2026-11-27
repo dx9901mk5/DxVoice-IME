@@ -309,4 +309,36 @@
     <string name="ime_start_cd">開始語音輸入</string>
     <string name="ime_backspace_cd">刪除</string>
     <string name="ime_enter_cd">換行或送出</string>
+
+    <!-- Noise Filter (Plan A+B) & Personal Voiceprint (Plan C) -->
+    <string name="noise_card_title">環境抗噪與個人聲紋鎖定（避開環境收音）</string>
+    <string name="noise_mode_label">環境收音抗噪模式（適用即時邊講邊出字與離線收音）</string>
+    <string name="noise_mode_normal">一般（室內）</string>
+    <string name="noise_mode_noisy">抗噪（咖啡廳・戶外）</string>
+    <string name="noise_mode_near_field">極近場（只收貼近說話）</string>
+    <string name="hw_nr_title">硬體級降噪與回音消除</string>
+    <string name="hw_nr_sub">啟用雙麥克風降噪、回音消除與 100Hz 低頻濾波（濾除冷氣、風聲與手機喇叭聲音）</string>
+    <string name="vp_section_title">個人聲紋辨識（進階・僅收本人聲音）</string>
+    <string name="vp_section_desc">離線比對個人聲紋向量（約 27 MB，100% 存於本機），可過濾旁人說話與背景電視聲。開啟時會改走本機收音比對；關閉時維持 Gboard 同級即時邊講邊出字。</string>
+    <string name="vp_download_model_btn">下載個人聲紋模型 (約 27 MB)</string>
+    <string name="vp_retry_download_btn">重試下載聲紋模型</string>
+    <string name="vp_btn_start_enroll">錄製個人聲紋（已完成 %1$d/3 句）</string>
+    <string name="vp_btn_reenroll">重新錄製個人聲紋 (3/3 ✓)</string>
+    <string name="vp_btn_clear">清除聲紋</string>
+    <string name="vp_lock_switch_title">啟用個人聲紋鎖定（只收本人聲音）</string>
+    <string name="vp_lock_switch_sub_ready">已建立個人聲紋，非本人或背景人聲將自動忽略</string>
+    <string name="vp_lock_switch_sub_need_enroll">請先完成上方 3 句範本錄製以建立專屬聲紋</string>
+    <string name="vp_dialog_title">錄製專屬個人聲紋（3 句範本）</string>
+    <string name="vp_dialog_guide">請在相對安靜處，距離手機麥克風約 15–20 公分，以平常說話的語速依序清晰朗讀以下 3 句範本（每句約 3 秒，所有聲紋僅存於本機）：</string>
+    <string name="vp_step_indicator">第 %1$d / %2$d 句（已記錄 %3$d 句）</string>
+    <string name="vp_read_aloud_label">請朗讀以下範本句子：</string>
+    <string name="vp_prompt_1">今天的天氣很不錯，我準備用語音輸入法開始工作。</string>
+    <string name="vp_prompt_2">請幫我開啟懸浮語音按鈕，說完後自動切回原本鍵盤。</string>
+    <string name="vp_prompt_3">這是一段專屬我的個人聲紋樣本，用來過濾周圍的環境雜音。</string>
+    <string name="vp_recording_now">正在錄製聲紋樣本…（目前音量 %1$d%%）</string>
+    <string name="vp_btn_recording">錄音中，請清晰朗讀…</string>
+    <string name="vp_btn_record_step">開始錄製第 %1$d 句</string>
+    <string name="vp_btn_reset">全部重錄</string>
+    <string name="vp_enroll_step_ok">✓ 第 %1$d 句錄製成功！請繼續朗讀下一句。</string>
+    <string name="vp_enroll_all_done">🎉 3 句聲紋樣本皆已完成，已自動為您啟用個人聲紋鎖定！</string>
 </resources>

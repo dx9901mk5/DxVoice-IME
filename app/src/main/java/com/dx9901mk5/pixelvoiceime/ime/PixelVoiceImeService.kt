@@ -245,11 +245,15 @@ class PixelVoiceImeService : InputMethodService() {
         val useGeminiAudioMode = config.geminiPolishEnabled &&
             hasApiKey &&
             (config.polishMode == PolishMode.AUDIO_MULTIMODAL || (!sherpaReady && !speechEngine.isAvailable()))
+        val voiceprintLockActive = config.voiceprintLockEnabled &&
+            app.voiceprintManager.isEnrolled() &&
+            app.voiceprintManager.isModelReady()
         // Prioritize Android's streaming SpeechRecognizer (same live word-by-word engine as Gboard)
-        // whenever available, and keep Sherpa-ONNX as automatic offline fallback.
-        val preferStreamingAsr = speechEngine.isAvailable()
+        // whenever available and voiceprint lock is off; when voiceprint lock is on, capture raw PCM
+        // so 3D-Speaker can verify the user's voiceprint before transcribing.
+        val preferStreamingAsr = speechEngine.isAvailable() && !voiceprintLockActive
         val useSherpaLocalMode = !useCustomOpenAiMode && !useGeminiAudioMode && sherpaReady && !preferStreamingAsr
-        val shouldUseAudioCapture = useCustomOpenAiMode || useGeminiAudioMode || useSherpaLocalMode
+        val shouldUseAudioCapture = useCustomOpenAiMode || useGeminiAudioMode || useSherpaLocalMode || voiceprintLockActive
 
         if (!shouldUseAudioCapture && !speechEngine.isAvailable()) {
             sessionState.value = VoiceSessionState.Error(
@@ -278,6 +282,8 @@ class PixelVoiceImeService : InputMethodService() {
                 scope = serviceScope,
                 silenceTimeoutMs = config.silenceTimeoutMs,
                 noSpeechTimeoutMs = config.noSpeechTimeoutMs,
+                noiseFilterMode = config.noiseFilterMode,
+                hardwareNoiseReduction = config.hardwareNoiseReduction,
                 callbacks = object : LocalAudioCaptureEngine.Callbacks {
                     override fun onAmplitude(normalized: Float, speechDetected: Boolean) {
                         val cur = sessionState.value
@@ -290,10 +296,25 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onCaptured(pcmBytes: ByteArray) {
-                        when {
-                            usingCustomOpenAi -> processCapturedAudioWithCustomEndpoint(pcmBytes)
-                            usingLocalSherpa -> processCapturedAudioWithSherpa(pcmBytes)
-                            else -> processCapturedAudio(pcmBytes)
+                        if (voiceprintLockActive) {
+                            activePolishJob = serviceScope.launch {
+                                sessionState.value = VoiceSessionState.Polishing(
+                                    rawText = "",
+                                    statusText = "正在比對個人聲紋…"
+                                )
+                                val check = app.voiceprintManager.verifySpeaker(
+                                    pcmBytes = pcmBytes,
+                                    threshold = config.voiceprintThreshold
+                                )
+                                if (!check.matched) {
+                                    val pct = (check.similarity * 100f).toInt().coerceIn(0, 100)
+                                    handleNoSpeechAutoReturn("非本人聲音已過濾（相似度 $pct%）")
+                                    return@launch
+                                }
+                                dispatchCapturedAudio(pcmBytes)
+                            }
+                        } else {
+                            dispatchCapturedAudio(pcmBytes)
                         }
                     }
 
@@ -317,6 +338,7 @@ class PixelVoiceImeService : InputMethodService() {
                 languageTag = activeLang.bcp47,
                 preferOffline = false,
                 silenceTimeoutMs = config.silenceTimeoutMs,
+                noiseFilterMode = config.noiseFilterMode,
                 callbacks = object : AndroidSpeechEngine.Callbacks {
                     override fun onReady() = Unit
 
@@ -381,6 +403,15 @@ class PixelVoiceImeService : InputMethodService() {
         }
     }
 
+    private fun dispatchCapturedAudio(pcmBytes: ByteArray) {
+        when {
+            usingCustomOpenAi -> processCapturedAudioWithCustomEndpoint(pcmBytes)
+            usingLocalSherpa || app.localSherpaAsrEngine.isReadyForLanguage(app.prefs.config.value.activeLanguageTag) ->
+                processCapturedAudioWithSherpa(pcmBytes)
+            else -> processCapturedAudio(pcmBytes)
+        }
+    }
+
     private fun startSherpaOfflineFallback(config: com.dx9901mk5.pixelvoiceime.data.VoiceImeConfig) {
         usingAudioCaptureEngine = true
         usingLocalSherpa = true
@@ -395,6 +426,8 @@ class PixelVoiceImeService : InputMethodService() {
             scope = serviceScope,
             silenceTimeoutMs = config.silenceTimeoutMs,
             noSpeechTimeoutMs = config.noSpeechTimeoutMs,
+            noiseFilterMode = config.noiseFilterMode,
+            hardwareNoiseReduction = config.hardwareNoiseReduction,
             callbacks = object : LocalAudioCaptureEngine.Callbacks {
                 override fun onAmplitude(normalized: Float, speechDetected: Boolean) {
                     val cur = sessionState.value

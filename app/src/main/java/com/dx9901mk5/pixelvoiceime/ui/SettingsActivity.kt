@@ -51,6 +51,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -71,6 +72,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,9 +90,13 @@ import com.dx9901mk5.pixelvoiceime.R
 import com.dx9901mk5.pixelvoiceime.billing.ProAccessState
 import com.dx9901mk5.pixelvoiceime.billing.ProFeature
 import com.dx9901mk5.pixelvoiceime.data.AppUiLanguage
+import com.dx9901mk5.pixelvoiceime.data.NoiseFilterMode
 import com.dx9901mk5.pixelvoiceime.ime.FloatingMicService
 import com.dx9901mk5.pixelvoiceime.ime.PixelVoiceAccessibilityService
+import com.dx9901mk5.pixelvoiceime.models.PackDownloadState
+import com.dx9901mk5.pixelvoiceime.models.VoiceLanguageCatalog
 import com.dx9901mk5.pixelvoiceime.ui.theme.PixelVoiceTheme
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 class SettingsActivity : ComponentActivity() {
@@ -335,6 +341,10 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val config by app.prefs.config.collectAsState()
     val accessState by app.entitlementManager.accessState.collectAsState()
+    val packStates by app.modelManager.packStates.collectAsState()
+    val vpEnrolledCount by app.voiceprintManager.enrolledCount.collectAsState()
+    val vpPackState = packStates[VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER] ?: PackDownloadState.NotInstalled
+    val scope = rememberCoroutineScope()
 
     var hasMicPermission by remember { mutableStateOf(checkMicPermission(context)) }
     var isImeEnabled by remember { mutableStateOf(checkImeEnabled(context)) }
@@ -345,6 +355,7 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
     }
     var sandboxText by remember { mutableStateOf("") }
     var showAccessibilityDisclosure by remember { mutableStateOf(false) }
+    var showVoiceprintDialog by remember { mutableStateOf(false) }
     var upgradeDialogFeature by remember { mutableStateOf<ProFeature?>(null) }
     var showUpgradeDialog by remember { mutableStateOf(false) }
 
@@ -404,6 +415,16 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                 showUpgradeDialog = false
                 upgradeDialogFeature = null
             }
+        )
+    }
+
+    if (showVoiceprintDialog) {
+        VoiceprintEnrollDialog(
+            voiceprintManager = app.voiceprintManager,
+            onEnrolledComplete = {
+                app.prefs.update { it.copy(voiceprintLockEnabled = true) }
+            },
+            onDismiss = { showVoiceprintDialog = false }
         )
     }
 
@@ -628,6 +649,151 @@ private fun SetupAndBehaviorTab(app: PixelVoiceApp) {
                             selected = config.silenceTimeoutMs == ms,
                             onClick = { app.prefs.update { it.copy(silenceTimeoutMs = ms) } },
                             label = { Text(stringResource(labelRes)) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Environment Noise Reduction (Plan A + B) & Personal Voiceprint Lock (Plan C)
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.noise_card_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = stringResource(R.string.noise_mode_label),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(
+                        NoiseFilterMode.NORMAL to R.string.noise_mode_normal,
+                        NoiseFilterMode.NOISY to R.string.noise_mode_noisy,
+                        NoiseFilterMode.NEAR_FIELD to R.string.noise_mode_near_field
+                    ).forEach { (mode, labelRes) ->
+                        FilterChip(
+                            selected = config.noiseFilterMode == mode,
+                            onClick = { app.prefs.update { it.copy(noiseFilterMode = mode) } },
+                            label = { Text(stringResource(labelRes)) }
+                        )
+                    }
+                }
+                SettingSwitchRow(
+                    title = stringResource(R.string.hw_nr_title),
+                    subtitle = stringResource(R.string.hw_nr_sub),
+                    checked = config.hardwareNoiseReduction,
+                    onCheckedChange = { v -> app.prefs.update { it.copy(hardwareNoiseReduction = v) } }
+                )
+
+                Text(
+                    text = stringResource(R.string.vp_section_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = stringResource(R.string.vp_section_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                when (val s = vpPackState) {
+                    is PackDownloadState.NotInstalled -> {
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER)
+                                }
+                            }
+                        ) {
+                            Text(stringResource(R.string.vp_download_model_btn))
+                        }
+                    }
+                    is PackDownloadState.Downloading -> {
+                        LinearProgressIndicator(
+                            progress = { s.progress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = s.statusLabel,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    is PackDownloadState.Error -> {
+                        Text(
+                            text = stringResource(R.string.offline_download_failed, s.message),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    app.modelManager.downloadPack(VoiceLanguageCatalog.PACK_SPEAKER_3DSPEAKER)
+                                }
+                            }
+                        ) {
+                            Text(stringResource(R.string.vp_retry_download_btn))
+                        }
+                    }
+                    is PackDownloadState.Installed -> {
+                        val isEnrolled = vpEnrolledCount >= com.dx9901mk5.pixelvoiceime.asr.VoiceprintManager.REQUIRED_SAMPLES
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    if (!hasMicPermission) {
+                                        micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    } else {
+                                        showVoiceprintDialog = true
+                                    }
+                                }
+                            ) {
+                                Text(
+                                    if (isEnrolled) {
+                                        stringResource(R.string.vp_btn_reenroll)
+                                    } else {
+                                        stringResource(R.string.vp_btn_start_enroll, vpEnrolledCount)
+                                    }
+                                )
+                            }
+                            if (vpEnrolledCount > 0) {
+                                OutlinedButton(
+                                    onClick = {
+                                        app.voiceprintManager.clearEnrollment()
+                                        app.prefs.update { it.copy(voiceprintLockEnabled = false) }
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.vp_btn_clear))
+                                }
+                            }
+                        }
+
+                        SettingSwitchRow(
+                            title = stringResource(R.string.vp_lock_switch_title),
+                            subtitle = if (isEnrolled) {
+                                stringResource(R.string.vp_lock_switch_sub_ready)
+                            } else {
+                                stringResource(R.string.vp_lock_switch_sub_need_enroll)
+                            },
+                            checked = config.voiceprintLockEnabled && isEnrolled,
+                            onCheckedChange = { enabled ->
+                                if (enabled && !isEnrolled) {
+                                    if (!hasMicPermission) {
+                                        micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    } else {
+                                        showVoiceprintDialog = true
+                                    }
+                                } else {
+                                    app.prefs.update { it.copy(voiceprintLockEnabled = enabled) }
+                                }
+                            }
                         )
                     }
                 }

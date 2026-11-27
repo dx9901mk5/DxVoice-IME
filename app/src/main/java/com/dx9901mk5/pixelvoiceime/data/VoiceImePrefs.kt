@@ -26,6 +26,12 @@ enum class AppUiLanguage(val code: String) {
     JA("ja")
 }
 
+enum class NoiseFilterMode {
+    NORMAL,
+    NOISY,
+    NEAR_FIELD
+}
+
 data class VoiceImeConfig(
     val autoListenOnStart: Boolean = true,
     val autoReturnToPreviousIme: Boolean = true,
@@ -61,7 +67,11 @@ data class VoiceImeConfig(
     val floatingBallInnerY: Int = 520,
     val backupDeviceName: String = Build.MODEL ?: "DxVoice-IME",
     val backupTreeUri: String = "",
-    val uiLanguage: AppUiLanguage = AppUiLanguage.SYSTEM
+    val uiLanguage: AppUiLanguage = AppUiLanguage.SYSTEM,
+    val noiseFilterMode: NoiseFilterMode = NoiseFilterMode.NORMAL,
+    val hardwareNoiseReduction: Boolean = true,
+    val voiceprintLockEnabled: Boolean = false,
+    val voiceprintThreshold: Float = 0.50f
 ) {
     companion object {
         const val DEFAULT_GITHUB_REPO = "https://github.com/dx9901mk5/DxVoice-IME"
@@ -95,6 +105,9 @@ class VoiceImePrefs(context: Context) {
         val uiLangName = prefs.getString(KEY_UI_LANGUAGE, AppUiLanguage.SYSTEM.name)
         val uiLanguage = runCatching { AppUiLanguage.valueOf(uiLangName ?: "") }
             .getOrDefault(AppUiLanguage.SYSTEM)
+        val noiseModeName = prefs.getString(KEY_NOISE_FILTER_MODE, NoiseFilterMode.NORMAL.name)
+        val noiseFilterMode = runCatching { NoiseFilterMode.valueOf(noiseModeName ?: "") }
+            .getOrDefault(NoiseFilterMode.NORMAL)
         val rawSilence = prefs.getLong(KEY_SILENCE_TIMEOUT, 3000L)
         val silenceTimeoutMs = if (rawSilence < 2500L) 3000L else rawSilence
         val rawDelay = prefs.getLong(KEY_AUTO_RETURN_DELAY, 2500L)
@@ -148,7 +161,11 @@ class VoiceImePrefs(context: Context) {
             backupDeviceName = prefs.getString(KEY_BACKUP_DEVICE_NAME, Build.MODEL ?: "DxVoice-IME")
                 ?.ifBlank { Build.MODEL ?: "DxVoice-IME" } ?: "DxVoice-IME",
             backupTreeUri = prefs.getString(KEY_BACKUP_TREE_URI, "") ?: "",
-            uiLanguage = uiLanguage
+            uiLanguage = uiLanguage,
+            noiseFilterMode = noiseFilterMode,
+            hardwareNoiseReduction = prefs.getBoolean(KEY_HARDWARE_NR, true),
+            voiceprintLockEnabled = prefs.getBoolean(KEY_VOICEPRINT_LOCK, false),
+            voiceprintThreshold = prefs.getFloat(KEY_VOICEPRINT_THRESHOLD, 0.50f).coerceIn(0.35f, 0.75f)
         )
     }
 
@@ -190,6 +207,10 @@ class VoiceImePrefs(context: Context) {
             .putString(KEY_BACKUP_DEVICE_NAME, updated.backupDeviceName)
             .putString(KEY_BACKUP_TREE_URI, updated.backupTreeUri)
             .putString(KEY_UI_LANGUAGE, updated.uiLanguage.name)
+            .putString(KEY_NOISE_FILTER_MODE, updated.noiseFilterMode.name)
+            .putBoolean(KEY_HARDWARE_NR, updated.hardwareNoiseReduction)
+            .putBoolean(KEY_VOICEPRINT_LOCK, updated.voiceprintLockEnabled)
+            .putFloat(KEY_VOICEPRINT_THRESHOLD, updated.voiceprintThreshold)
             .apply()
         _config.value = updated
     }
@@ -237,5 +258,9 @@ class VoiceImePrefs(context: Context) {
         private const val KEY_BACKUP_DEVICE_NAME = "backup_device_name"
         private const val KEY_BACKUP_TREE_URI = "backup_tree_uri"
         private const val KEY_UI_LANGUAGE = "app_ui_language"
+        private const val KEY_NOISE_FILTER_MODE = "noise_filter_mode"
+        private const val KEY_HARDWARE_NR = "hardware_noise_reduction"
+        private const val KEY_VOICEPRINT_LOCK = "voiceprint_lock_enabled"
+        private const val KEY_VOICEPRINT_THRESHOLD = "voiceprint_threshold"
     }
 }

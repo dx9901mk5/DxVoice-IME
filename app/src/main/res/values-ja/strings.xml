@@ -309,4 +309,36 @@
     <string name="ime_start_cd">音声入力を開始</string>
     <string name="ime_backspace_cd">削除</string>
     <string name="ime_enter_cd">改行・送信</string>
+
+    <!-- Noise Filter (Plan A+B) & Personal Voiceprint (Plan C) -->
+    <string name="noise_card_title">環境ノイズ対策・個人声紋ロック</string>
+    <string name="noise_mode_label">環境ノイズ抑制モード（リアルタイム入力＆オフライン両対応）</string>
+    <string name="noise_mode_normal">標準（室内）</string>
+    <string name="noise_mode_noisy">ノイズ抑制（カフェ・屋外）</string>
+    <string name="noise_mode_near_field">近接マイク専用</string>
+    <string name="hw_nr_title">ハードウェア雑音抑制＆エコーキャンセル</string>
+    <string name="hw_nr_sub">雑音抑制・エコーキャンセル・100Hz ハイパスフィルタを有効化（空調・風切り音・スピーカー音を遮断）</string>
+    <string name="vp_section_title">個人声紋認証（上級・本人の声のみ認識）</string>
+    <string name="vp_section_desc">端末内で声紋ベクトルを照合（約 27 MB・完全オフライン）し、周囲の会話やテレビ音声を除外します。オン時は端末録音照合に切替、オフ時は高速リアルタイム逐次入力を維持します。</string>
+    <string name="vp_download_model_btn">声紋モデルをダウンロード (約 27 MB)</string>
+    <string name="vp_retry_download_btn">声紋モデルを再ダウンロード</string>
+    <string name="vp_btn_start_enroll">声紋を登録（%1$d/3 文完了）</string>
+    <string name="vp_btn_reenroll">声紋を再登録 (3/3 ✓)</string>
+    <string name="vp_btn_clear">声紋を消去</string>
+    <string name="vp_lock_switch_title">個人声紋ロックを有効にする（本人の声のみ）</string>
+    <string name="vp_lock_switch_sub_ready">声紋登録済み：本人以外の声や環境音声を自動的に除外します</string>
+    <string name="vp_lock_switch_sub_need_enroll">先に上の 3 文を読み上げて声紋を登録してください</string>
+    <string name="vp_dialog_title">個人声紋の登録（3 文サンプル）</string>
+    <string name="vp_dialog_guide">静かな場所でスマホから 15〜20 cm 離し、普段通りの声で以下の 3 文を順番に読み上げてください（各約 3 秒・端末内のみ保存）：</string>
+    <string name="vp_step_indicator">第 %1$d / %2$d 文（登録済み %3$d 文）</string>
+    <string name="vp_read_aloud_label">次の文を読み上げてください：</string>
+    <string name="vp_prompt_1">今日はとてもいい天気なので、音声入力で仕事を始めます。</string>
+    <string name="vp_prompt_2">フローティング音声ボタンを開いて、入力後は元のキーボードへ自動で戻してください。</string>
+    <string name="vp_prompt_3">これは周囲の雑音を除外するための私専用の声紋サンプルです。</string>
+    <string name="vp_recording_now">声紋を録音中…（音量 %1$d%%）</string>
+    <string name="vp_btn_recording">録音中、はっきり読み上げてください…</string>
+    <string name="vp_btn_record_step">第 %1$d 文を録音開始</string>
+    <string name="vp_btn_reset">やり直す</string>
+    <string name="vp_enroll_step_ok">✓ 第 %1$d 文の録音完了！次の文へ進んでください。</string>
+    <string name="vp_enroll_all_done">🎉 3 文すべての声紋登録が完了し、個人声紋ロックを有効にしました！</string>
 </resources>

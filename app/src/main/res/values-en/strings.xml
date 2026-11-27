@@ -309,4 +309,36 @@
     <string name="ime_start_cd">Start voice input</string>
     <string name="ime_backspace_cd">Backspace</string>
     <string name="ime_enter_cd">Enter / Send</string>
+
+    <!-- Noise Filter (Plan A+B) & Personal Voiceprint (Plan C) -->
+    <string name="noise_card_title">Noise Filtering &amp; Personal Voiceprint Lock</string>
+    <string name="noise_mode_label">Ambient noise filtering (works with live streaming &amp; offline)</string>
+    <string name="noise_mode_normal">Normal (Indoor)</string>
+    <string name="noise_mode_noisy">Noisy (Cafe / Outdoor)</string>
+    <string name="noise_mode_near_field">Near-Field (Close Mic Only)</string>
+    <string name="hw_nr_title">Hardware Noise Suppression &amp; Echo Canceler</string>
+    <string name="hw_nr_sub">Enables hardware NoiseSuppressor, AcousticEchoCanceler &amp; 100Hz high-pass filter (blocks AC, wind &amp; speaker audio)</string>
+    <string name="vp_section_title">Personal Voiceprint Verification (Advanced)</string>
+    <string name="vp_section_desc">Offline 3D-Speaker voiceprint matching (~27 MB, 100% on-device) to ignore nearby talkers and TV voices. When enabled, captures local PCM for verification; when off, keeps instant Gboard-speed live streaming.</string>
+    <string name="vp_download_model_btn">Download Voiceprint Model (~27 MB)</string>
+    <string name="vp_retry_download_btn">Retry Download Voiceprint Model</string>
+    <string name="vp_btn_start_enroll">Record Voiceprint (%1$d/3 done)</string>
+    <string name="vp_btn_reenroll">Re-record Voiceprint (3/3 ✓)</string>
+    <string name="vp_btn_clear">Clear Voiceprint</string>
+    <string name="vp_lock_switch_title">Enable Personal Voiceprint Lock (My Voice Only)</string>
+    <string name="vp_lock_switch_sub_ready">Voiceprint enrolled — non-matching voices are ignored automatically</string>
+    <string name="vp_lock_switch_sub_need_enroll">Record all 3 sample prompts above to enroll your voiceprint first</string>
+    <string name="vp_dialog_title">Enroll Personal Voiceprint (3 Prompts)</string>
+    <string name="vp_dialog_guide">In a quiet spot, hold the phone 15–20 cm away and read each prompt aloud naturally (~3 sec each). Voiceprints stay 100% on-device:</string>
+    <string name="vp_step_indicator">Prompt %1$d of %2$d (%3$d recorded)</string>
+    <string name="vp_read_aloud_label">Please read aloud:</string>
+    <string name="vp_prompt_1">The weather feels great today and I am ready to start working with voice typing.</string>
+    <string name="vp_prompt_2">Please open the floating microphone button and switch back to my keyboard automatically.</string>
+    <string name="vp_prompt_3">This is my personal voiceprint sample designed to filter out background conversations.</string>
+    <string name="vp_recording_now">Recording sample… (Level %1$d%%)</string>
+    <string name="vp_btn_recording">Recording, speak clearly…</string>
+    <string name="vp_btn_record_step">Record Prompt %1$d</string>
+    <string name="vp_btn_reset">Reset All</string>
+    <string name="vp_enroll_step_ok">✓ Prompt %1$d saved! Please continue to the next prompt.</string>
+    <string name="vp_enroll_all_done">🎉 All 3 voiceprint samples saved! Personal Voiceprint Lock is now enabled.</string>
 </resources>

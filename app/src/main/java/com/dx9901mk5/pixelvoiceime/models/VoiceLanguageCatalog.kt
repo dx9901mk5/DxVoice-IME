@@ -31,6 +31,7 @@ object VoiceLanguageCatalog {
     const val PACK_WHISPER_BASE_MULTI = "whisper-base-multilingual"
     const val PACK_PUNCTUATION_ZH_EN = "punct-ct-transformer-zh-en"
     const val PACK_LOCAL_LLM_QWEN25_05B = "qwen25-0.5b-instruct-q8"
+    const val PACK_SPEAKER_3DSPEAKER = "speaker-3dspeaker-campplus"
     const val LEGACY_PACK_GEMMA3_1B = "gemma3-1b-it-int4"
 
     val modelPacks: Map<String, OfflineModelPack> = linkedMapOf(
@@ -54,6 +55,14 @@ object VoiceLanguageCatalog {
             description = "MediaPipe 裝置端輕量中文 LLM，速度為 Gemma 3 1B 的 2~3 倍且中文更精準（支援 GPU 加速與自動降級 CPU）",
             approxSizeMb = 521,
             downloadUrl = "https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/Qwen2.5-0.5B-Instruct_multi-prefill-seq_q8_ekv1280.task",
+            isArchiveTarBz2 = false
+        ),
+        PACK_SPEAKER_3DSPEAKER to OfflineModelPack(
+            packId = PACK_SPEAKER_3DSPEAKER,
+            title = "3D-Speaker 個人聲紋辨識模型",
+            description = "輕量級離線聲紋向量模型，僅收錄用戶本人聲音並過濾旁人與背景電視聲",
+            approxSizeMb = 27,
+            downloadUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/3dspeaker_speech_campplus_sv_zh-cn_16k-common.onnx",
             isArchiveTarBz2 = false
         ),
         PACK_ZIPFORMER_EN to OfflineModelPack(

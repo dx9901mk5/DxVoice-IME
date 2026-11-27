@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.NoiseSuppressor
+import com.dx9901mk5.pixelvoiceime.data.NoiseFilterMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -37,6 +39,8 @@ class LocalAudioCaptureEngine {
         scope: CoroutineScope,
         silenceTimeoutMs: Long,
         noSpeechTimeoutMs: Long,
+        noiseFilterMode: NoiseFilterMode = NoiseFilterMode.NORMAL,
+        hardwareNoiseReduction: Boolean = true,
         callbacks: Callbacks
     ) {
         stop()
@@ -54,9 +58,15 @@ class LocalAudioCaptureEngine {
                 return@launch
             }
 
+            val audioSource = if (hardwareNoiseReduction && noiseFilterMode != NoiseFilterMode.NORMAL) {
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION
+            } else {
+                MediaRecorder.AudioSource.VOICE_RECOGNITION
+            }
+
             val recorder = try {
                 AudioRecord(
-                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                    audioSource,
                     sampleRate,
                     AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT,
@@ -83,15 +93,32 @@ class LocalAudioCaptureEngine {
             var lastSpeechTime = startTime
             var noiseFloorRms = 180f
             var calibratedFrames = 0
+            // 100Hz 1st-order high-pass filter state (cuts AC hum, wind rumble, traffic bass)
+            var hpPrevIn = 0f
+            var hpPrevOut = 0f
+            val hpAlpha = 0.962f
+
+            val (thresholdMultiplier, thresholdFloor) = when (noiseFilterMode) {
+                NoiseFilterMode.NORMAL -> 2.6f to 380f
+                NoiseFilterMode.NOISY -> 3.2f to 580f
+                NoiseFilterMode.NEAR_FIELD -> 3.8f to 860f
+            }
 
             var noiseSuppressor: NoiseSuppressor? = null
-            try {
-                if (NoiseSuppressor.isAvailable()) {
-                    noiseSuppressor = NoiseSuppressor.create(recorder.audioSessionId)?.apply {
-                        enabled = true
+            var echoCanceler: AcousticEchoCanceler? = null
+            if (hardwareNoiseReduction) {
+                runCatching {
+                    if (NoiseSuppressor.isAvailable()) {
+                        noiseSuppressor = NoiseSuppressor.create(recorder.audioSessionId)?.apply {
+                            enabled = true
+                        }
+                    }
+                    if (AcousticEchoCanceler.isAvailable()) {
+                        echoCanceler = AcousticEchoCanceler.create(recorder.audioSessionId)?.apply {
+                            enabled = true
+                        }
                     }
                 }
-            } catch (_: Exception) {
             }
 
             try {
@@ -99,6 +126,22 @@ class LocalAudioCaptureEngine {
                 while (isActive) {
                     val read = recorder.read(frameBuffer, 0, frameBuffer.size)
                     if (read <= 0) continue
+
+                    if (hardwareNoiseReduction) {
+                        var i = 0
+                        while (i + 1 < read) {
+                            val lo = frameBuffer[i].toInt() and 0xFF
+                            val hi = frameBuffer[i + 1].toInt()
+                            val x = ((hi shl 8) or lo).toFloat()
+                            val y = hpAlpha * (hpPrevOut + x - hpPrevIn)
+                            hpPrevIn = x
+                            hpPrevOut = y
+                            val clamped = y.toInt().coerceIn(-32768, 32767)
+                            frameBuffer[i] = (clamped and 0xFF).toByte()
+                            frameBuffer[i + 1] = ((clamped shr 8) and 0xFF).toByte()
+                            i += 2
+                        }
+                    }
 
                     pcmOut.write(frameBuffer, 0, read)
                     val rms = computeRms(frameBuffer, read)
@@ -115,7 +158,7 @@ class LocalAudioCaptureEngine {
                         noiseFloorRms = (noiseFloorRms * 0.92f + rms * 0.08f).coerceIn(80f, 1600f)
                     }
 
-                    val dynamicThreshold = (noiseFloorRms * 2.6f).coerceIn(380f, 2600f)
+                    val dynamicThreshold = (noiseFloorRms * thresholdMultiplier).coerceIn(thresholdFloor, 3200f)
                     val normalized = (rms / (dynamicThreshold * 2.5f)).coerceIn(0.05f, 1f)
 
                     if (calibratedFrames >= 3 && rms >= dynamicThreshold) {
@@ -160,6 +203,10 @@ class LocalAudioCaptureEngine {
             } finally {
                 try {
                     noiseSuppressor?.release()
+                } catch (_: Exception) {
+                }
+                try {
+                    echoCanceler?.release()
                 } catch (_: Exception) {
                 }
                 try {
