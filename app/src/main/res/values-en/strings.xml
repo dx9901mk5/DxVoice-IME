@@ -334,9 +334,9 @@
     <string name="vp_dialog_guide">In a quiet spot, hold the phone 15–20 cm away and read each prompt aloud naturally (~3 sec each). Voiceprints stay 100% on-device:</string>
     <string name="vp_step_indicator">Prompt %1$d of %2$d (%3$d recorded)</string>
     <string name="vp_read_aloud_label">Please read aloud:</string>
-    <string name="vp_prompt_1">The weather feels great today and I am ready to start working with voice typing.</string>
-    <string name="vp_prompt_2">Please open the floating microphone button and switch back to my keyboard automatically.</string>
-    <string name="vp_prompt_3">This is my personal voiceprint sample designed to filter out background conversations.</string>
+    <string name="vp_prompt_1">Hello, the weather is great today.</string>
+    <string name="vp_prompt_2">Please start voice typing now.</string>
+    <string name="vp_prompt_3">This is my personal voiceprint.</string>
     <string name="vp_recording_now">Recording sample… (Level %1$d%%)</string>
     <string name="vp_btn_recording">Recording, speak clearly…</string>
     <string name="vp_btn_record_step">Record Prompt %1$d</string>

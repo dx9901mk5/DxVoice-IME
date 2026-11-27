@@ -334,9 +334,9 @@
     <string name="vp_dialog_guide">静かな場所でスマホから 15〜20 cm 離し、普段通りの声で以下の 3 文を順番に読み上げてください（各約 3 秒・端末内のみ保存）：</string>
     <string name="vp_step_indicator">第 %1$d / %2$d 文（登録済み %3$d 文）</string>
     <string name="vp_read_aloud_label">次の文を読み上げてください：</string>
-    <string name="vp_prompt_1">今日はとてもいい天気なので、音声入力で仕事を始めます。</string>
-    <string name="vp_prompt_2">フローティング音声ボタンを開いて、入力後は元のキーボードへ自動で戻してください。</string>
-    <string name="vp_prompt_3">これは周囲の雑音を除外するための私専用の声紋サンプルです。</string>
+    <string name="vp_prompt_1">こんにちは、今日はいい天気ですね。</string>
+    <string name="vp_prompt_2">音声入力を開始してください。</string>
+    <string name="vp_prompt_3">これは私の個人声紋です。</string>
     <string name="vp_recording_now">声紋を録音中…（音量 %1$d%%）</string>
     <string name="vp_btn_recording">録音中、はっきり読み上げてください…</string>
     <string name="vp_btn_record_step">第 %1$d 文を録音開始</string>

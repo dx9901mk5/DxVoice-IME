@@ -214,25 +214,131 @@ class GeminiPolisher(
         if (withClauseCommas.isBlank()) return ""
 
         val lastChar = withClauseCommas.last()
-        val alreadyEnded = lastChar in setOf('。', '？', '！', '.', '?', '!')
-        if (alreadyEnded) return withClauseCommas
+        if (lastChar in setOf('？', '！', '?', '!')) {
+            return withClauseCommas
+        }
+        val body = if (lastChar == '。' || lastChar == '.') {
+            withClauseCommas.dropLast(1).trimEnd()
+        } else {
+            withClauseCommas
+        }
+        if (body.isBlank()) return ""
 
         return if (isCjk) {
-            val isQuestion = withClauseCommas.endsWith("嗎") || withClauseCommas.endsWith("呢") ||
-                withClauseCommas.contains("什麼") ||
-                withClauseCommas.contains("怎麼") || withClauseCommas.contains("為什麼") ||
-                withClauseCommas.contains("哪裡") || withClauseCommas.contains("是不是")
-            withClauseCommas + if (isQuestion) "？" else "。"
+            body + detectCjkEndingPunctuation(body)
         } else {
-            val lower = withClauseCommas.lowercase()
-            val isQuestion = lower.startsWith("what ") || lower.startsWith("how ") ||
-                lower.startsWith("why ") || lower.startsWith("where ") ||
-                lower.startsWith("when ") || lower.startsWith("who ") ||
-                lower.startsWith("can ") || lower.startsWith("do ") ||
-                lower.startsWith("is ") || lower.startsWith("are ")
-            val capitalized = withClauseCommas.replaceFirstChar { it.uppercase() }
-            capitalized + if (isQuestion) "?" else "."
+            val capitalized = body.replaceFirstChar { it.uppercase() }
+            capitalized + detectEnglishEndingPunctuation(body)
         }
+    }
+
+    private fun detectCjkEndingPunctuation(text: String): String {
+        val t = text.trim()
+        // Support both Traditional and Simplified Chinese since CT-Transformer runs before S2T conversion
+        val isDeclarativeIdiom = (t.contains("沒什麼") || t.contains("没什么") ||
+            t.contains("沒有什麼") || t.contains("没有什么") ||
+            t.contains("不知道") || t.contains("不曉得") || t.contains("不晓得") ||
+            t.contains("不清楚")) &&
+            !t.endsWith("嗎") && !t.endsWith("吗") && !t.endsWith("呢") && !t.endsWith("吧")
+
+        val endsWithQuestionParticle = t.endsWith("嗎") || t.endsWith("吗") ||
+            t.endsWith("呢") || t.endsWith("嘛") ||
+            t.endsWith("對吧") || t.endsWith("对吧") || t.endsWith("是吧") ||
+            t.endsWith("好嗎") || t.endsWith("好吗") || t.endsWith("行嗎") || t.endsWith("行吗") ||
+            t.endsWith("可以嗎") || t.endsWith("可以吗") ||
+            t.endsWith("對不對") || t.endsWith("对不对") || t.endsWith("是不是") ||
+            t.endsWith("有沒有") || t.endsWith("有没有") || t.endsWith("要不要") ||
+            t.endsWith("會不會") || t.endsWith("会不会") || t.endsWith("能不能") ||
+            t.endsWith("可不可以") || t.endsWith("好不好") || t.endsWith("行不行") ||
+            t.endsWith("該不該") || t.endsWith("该不该") || t.endsWith("懂不懂") ||
+            t.endsWith("知不知道") || t.endsWith("記不記得") || t.endsWith("记不记得") ||
+            t.endsWith("嗎啊") || t.endsWith("吗啊") || t.endsWith("呢啊")
+
+        val hasQuestionWord = !isDeclarativeIdiom && (
+            t.contains("什麼") || t.contains("什么") ||
+                t.contains("怎麼") || t.contains("怎么") ||
+                t.contains("為何") || t.contains("为何") ||
+                t.contains("為什麼") || t.contains("为什么") ||
+                t.contains("哪裡") || t.contains("哪里") ||
+                t.contains("哪邊") || t.contains("哪边") ||
+                t.contains("哪個") || t.contains("哪个") ||
+                t.contains("哪位") || t.contains("哪些") || t.contains("哪天") ||
+                t.contains("幾點") || t.contains("几点") ||
+                t.contains("幾天") || t.contains("几天") ||
+                t.contains("幾個") || t.contains("几个") ||
+                t.contains("幾歲") || t.contains("几岁") ||
+                t.contains("多少") || t.contains("多久") ||
+                t.contains("多遠") || t.contains("多远") ||
+                t.contains("誰") || t.contains("谁") ||
+                t.contains("難道") || t.contains("难道") ||
+                t.contains("是否") || t.contains("何時") || t.contains("何时") ||
+                t.contains("如何") || t.contains("怎樣") || t.contains("怎样") ||
+                t.contains("對不對") || t.contains("对不对") ||
+                t.contains("是不是") || t.contains("有沒有") || t.contains("有没有") ||
+                t.contains("要不要") || t.contains("會不會") || t.contains("会不会") ||
+                t.contains("能不能") || t.contains("可不可以")
+            )
+
+        if (endsWithQuestionParticle || hasQuestionWord) {
+            return "？"
+        }
+
+        val startsExclamation = t.startsWith("哇") || t.startsWith("天啊") || t.startsWith("天哪") ||
+            t.startsWith("我的天") || t.startsWith("老天") || t.startsWith("哎呀") ||
+            t.startsWith("唉呀") || t.startsWith("好耶") || t.startsWith("恭喜") ||
+            t.startsWith("加油") || t.startsWith("小心") ||
+            t.startsWith("快點") || t.startsWith("快点") ||
+            t.startsWith("拜託") || t.startsWith("拜托") || t.startsWith("真的假的")
+
+        val hasStrongExclaimPhrase = t.contains("太好了") || t.contains("太棒了") ||
+            t.contains("太強了") || t.contains("太强了") ||
+            t.contains("太讚了") || t.contains("太赞了") ||
+            t.contains("太扯了") || t.contains("太誇張了") || t.contains("太夸张了") ||
+            t.contains("好厲害") || t.contains("好厉害") || t.contains("好好用") ||
+            t.contains("好讚") || t.contains("好赞") || t.contains("真棒") ||
+            t.contains("真厲害") || t.contains("真厉害") ||
+            t.contains("超讚") || t.contains("超赞") || t.contains("超棒") ||
+            t.contains("超厲害") || t.contains("超厉害") ||
+            t.endsWith("加油") || t.endsWith("恭喜")
+
+        val endsExclaimParticle = t.endsWith("啊") || t.endsWith("呀") || t.endsWith("哇") ||
+            t.endsWith("啦") || t.endsWith("囉") || t.endsWith("啰") ||
+            t.endsWith("喔") || t.endsWith("耶")
+        val hasDegreeBooster = t.contains("太") || t.contains("超") || t.contains("好") ||
+            t.contains("真") || t.contains("非常") ||
+            t.contains("超級") || t.contains("超级") ||
+            t.contains("有夠") || t.contains("有够") ||
+            t.contains("簡直") || t.contains("简直") ||
+            t.contains("居然") || t.contains("竟然")
+
+        if (startsExclamation || hasStrongExclaimPhrase || (endsExclaimParticle && (hasDegreeBooster || t.length <= 10))) {
+            return "！"
+        }
+
+        return "。"
+    }
+
+    private fun detectEnglishEndingPunctuation(text: String): String {
+        val lower = text.trim().lowercase()
+        val isQuestion = lower.startsWith("what ") || lower.startsWith("how ") ||
+            lower.startsWith("why ") || lower.startsWith("where ") ||
+            lower.startsWith("when ") || lower.startsWith("who ") ||
+            lower.startsWith("which ") || lower.startsWith("whose ") ||
+            lower.startsWith("can ") || lower.startsWith("could ") ||
+            lower.startsWith("would ") || lower.startsWith("will ") ||
+            lower.startsWith("do ") || lower.startsWith("does ") ||
+            lower.startsWith("did ") || lower.startsWith("is ") ||
+            lower.startsWith("are ") || lower.startsWith("am ") ||
+            lower.endsWith(" right") || lower.endsWith(" isn't it")
+        if (isQuestion) return "?"
+
+        val isExclaim = lower.startsWith("wow") || lower.startsWith("awesome") ||
+            lower.startsWith("amazing") || lower.startsWith("great") ||
+            lower.startsWith("omg") || lower.startsWith("oh my god") ||
+            lower.startsWith("congrats") || lower.startsWith("congratulations") ||
+            lower.startsWith("watch out") || lower.startsWith("be careful") ||
+            lower.startsWith("hurry")
+        return if (isExclaim) "!" else "."
     }
 
     private suspend fun generateText(

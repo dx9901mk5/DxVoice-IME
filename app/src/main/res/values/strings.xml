@@ -331,12 +331,12 @@
     <string name="vp_lock_switch_sub_ready">已建立個人聲紋，非本人或背景人聲將自動忽略</string>
     <string name="vp_lock_switch_sub_need_enroll">請先完成上方 3 句範本錄製以建立專屬聲紋</string>
     <string name="vp_dialog_title">錄製專屬個人聲紋（3 句範本）</string>
-    <string name="vp_dialog_guide">請在相對安靜處，距離手機麥克風約 15–20 公分，以平常說話的語速依序清晰朗讀以下 3 句範本（每句約 3 秒，所有聲紋僅存於本機）：</string>
+    <string name="vp_dialog_guide">請在安靜處，距離手機約 15–20 公分，以平常語速清晰朗讀以下 3 句短語（每句約 3 秒，聲紋僅存本機）：</string>
     <string name="vp_step_indicator">第 %1$d / %2$d 句（已記錄 %3$d 句）</string>
-    <string name="vp_read_aloud_label">請朗讀以下範本句子：</string>
-    <string name="vp_prompt_1">今天的天氣很不錯，我準備用語音輸入法開始工作。</string>
-    <string name="vp_prompt_2">請幫我開啟懸浮語音按鈕，說完後自動切回原本鍵盤。</string>
-    <string name="vp_prompt_3">這是一段專屬我的個人聲紋樣本，用來過濾周圍的環境雜音。</string>
+    <string name="vp_read_aloud_label">請朗讀以下短語：</string>
+    <string name="vp_prompt_1">你好，今天天氣很好。</string>
+    <string name="vp_prompt_2">請開啟語音輸入法。</string>
+    <string name="vp_prompt_3">這是我的個人聲紋。</string>
     <string name="vp_recording_now">正在錄製聲紋樣本…（目前音量 %1$d%%）</string>
     <string name="vp_btn_recording">錄音中，請清晰朗讀…</string>
     <string name="vp_btn_record_step">開始錄製第 %1$d 句</string>

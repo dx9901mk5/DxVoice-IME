@@ -786,7 +786,12 @@ class PixelVoiceImeService : InputMethodService() {
     private fun processCapturedAudio(pcmBytes: ByteArray) {
         val config = app.prefs.config.value
         if (!app.apiKeyStore.hasApiKey.value) {
-            sessionState.value = VoiceSessionState.Error("音訊精修模式需要先設定 Gemini API Key")
+            val activeLang = VoiceLanguageCatalog.findByTag(config.activeLanguageTag)
+            if (app.localSherpaAsrEngine.isReadyForLanguage(activeLang.bcp47)) {
+                processCapturedAudioWithSherpa(pcmBytes)
+                return
+            }
+            sessionState.value = VoiceSessionState.Error("音訊精修模式需要先設定 Gemini API Key，或至「離線語系」下載本地語音包")
             return
         }
 
