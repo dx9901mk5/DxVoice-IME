@@ -144,6 +144,7 @@
     <string name="offline_search_placeholder">言語を検索（例：日本語、English、繁体字中国語、広東語）</string>
     <string name="offline_set_active">現在の言語に設定</string>
     <string name="offline_installed">導入済み</string>
+    <string name="offline_redownload_pack">再ダウンロード（削除して再取得）</string>
     <string name="offline_delete_pack">パックを削除</string>
     <string name="offline_download_pack">オフラインパックをダウンロード (~%1$dMB)</string>
     <string name="offline_download_failed">ダウンロード失敗：%1$s</string>
@@ -296,11 +297,13 @@
     <!-- IME Keyboard Panel -->
     <string name="ime_switch_lang">言語切替</string>
     <string name="ime_offline_ready">オフライン可</string>
+    <string name="ime_online_download_pack">オンライン・パック取得</string>
     <string name="ime_trans_prefix">訳:%1$s</string>
     <string name="ime_lift_cd">入力パネルを持ち上げる</string>
     <string name="ime_settings_cd">入力設定</string>
     <string name="ime_listening_detected">音声認識中…</string>
     <string name="ime_listening_prompt">お話しください（話し終えると自動補正して入力）</string>
+    <string name="ime_listening_prompt_online">オンライン認識中、お話しください（オフラインパック導入推奨）</string>
     <string name="ime_committed_returning">入力完了、元のキーボードへ戻ります…</string>
     <string name="ime_committed_done">自動補正して入力しました</string>
     <string name="ime_undo_raw">原文</string>

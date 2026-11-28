@@ -244,8 +244,8 @@ class LocalSherpaAsrEngine(
 
         val sortedRms = frameRmsList.sorted()
         val noiseFloor = sortedRms[(sortedRms.size * 0.2f).toInt().coerceIn(0, sortedRms.lastIndex)]
-        val speechThresholdRms = (noiseFloor * 2.4f).coerceIn(340f, 2400f)
-        val minSegmentPeakRms = maxOf(480f, speechThresholdRms * 1.15f)
+        val speechThresholdRms = (noiseFloor * 2.1f).coerceIn(180f, 2000f)
+        val minSegmentPeakRms = maxOf(260f, speechThresholdRms * 1.15f)
 
         val segments = mutableListOf<ByteArray>()
         var segStart = -1
@@ -296,8 +296,8 @@ class LocalSherpaAsrEngine(
         // trim leading/trailing silence around the active region so SenseVoice doesn't hallucinate on long silence.
         if (segments.isEmpty() && pcmBytes.size > 3200) {
             val peakRms = frameRmsList.maxOrNull() ?: 0f
-            if (peakRms >= 420f) {
-                val trimThresh = maxOf(260f, peakRms * 0.35f)
+            if (peakRms >= 220f) {
+                val trimThresh = maxOf(140f, peakRms * 0.35f)
                 val firstActive = frameRmsList.indexOfFirst { it >= trimThresh }
                 val lastActive = frameRmsList.indexOfLast { it >= trimThresh }
                 if (firstActive >= 0 && lastActive >= firstActive) {

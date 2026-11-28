@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,7 +54,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun OfflineLanguagesScreen(
     modelManager: OfflineModelManager,
-    prefs: VoiceImePrefs
+    prefs: VoiceImePrefs,
+    onBeforePackChange: () -> Unit = {}
 ) {
     val packStates by modelManager.packStates.collectAsState()
     val config by prefs.config.collectAsState()
@@ -159,7 +161,12 @@ fun OfflineLanguagesScreen(
                     onDownload = {
                         scope.launch { modelManager.downloadLanguage(lang.bcp47) }
                     },
+                    onRedownloadPack = {
+                        onBeforePackChange()
+                        scope.launch { modelManager.redownloadLanguage(lang.bcp47) }
+                    },
                     onDeletePack = {
+                        onBeforePackChange()
                         scope.launch { modelManager.deletePack(lang.packId) }
                     }
                 )
@@ -178,6 +185,7 @@ private fun LanguageRowCard(
     isActive: Boolean,
     onSelectActive: () -> Unit,
     onDownload: () -> Unit,
+    onRedownloadPack: () -> Unit,
     onDeletePack: () -> Unit
 ) {
     Surface(
@@ -234,6 +242,13 @@ private fun LanguageRowCard(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
+                            IconButton(onClick = onRedownloadPack) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Refresh,
+                                    contentDescription = stringResource(R.string.offline_redownload_pack),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             IconButton(onClick = onDeletePack) {
                                 Icon(
                                     imageVector = Icons.Rounded.DeleteOutline,

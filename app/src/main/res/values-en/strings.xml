@@ -144,6 +144,7 @@
     <string name="offline_search_placeholder">Search language (e.g., English, 日本語, Chinese, Cantonese)</string>
     <string name="offline_set_active">Set as active language</string>
     <string name="offline_installed">Installed</string>
+    <string name="offline_redownload_pack">Re-download offline pack (delete &amp; fetch)</string>
     <string name="offline_delete_pack">Delete offline pack</string>
     <string name="offline_download_pack">Download offline pack (~%1$dMB)</string>
     <string name="offline_download_failed">Download failed: %1$s</string>
@@ -296,11 +297,13 @@
     <!-- IME Keyboard Panel -->
     <string name="ime_switch_lang">Switch Language</string>
     <string name="ime_offline_ready">Offline Ready</string>
+    <string name="ime_online_download_pack">Online · Get Pack</string>
     <string name="ime_trans_prefix">Tr:%1$s</string>
     <string name="ime_lift_cd">Raise keyboard height</string>
     <string name="ime_settings_cd">IME Settings</string>
     <string name="ime_listening_detected">Listening &amp; transcribing…</string>
     <string name="ime_listening_prompt">Speak now (auto-polishes &amp; commits when done)</string>
+    <string name="ime_listening_prompt_online">Online listening — speak now (offline pack recommended)</string>
     <string name="ime_committed_returning">Committed. Returning to previous keyboard…</string>
     <string name="ime_committed_done">Polished &amp; committed</string>
     <string name="ime_undo_raw">Raw</string>

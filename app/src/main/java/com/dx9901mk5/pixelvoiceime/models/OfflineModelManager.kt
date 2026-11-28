@@ -173,6 +173,15 @@ class OfflineModelManager(
         return mainResult
     }
 
+    suspend fun redownloadLanguage(bcp47: String): Result<Unit> {
+        val item = VoiceLanguageCatalog.findByTag(bcp47)
+        deletePack(item.packId)
+        if (item.packId == VoiceLanguageCatalog.PACK_SENSEVOICE_CJK) {
+            deletePack(VoiceLanguageCatalog.PACK_PUNCTUATION_ZH_EN)
+        }
+        return downloadLanguage(bcp47)
+    }
+
     suspend fun downloadPack(packId: String): Result<Unit> = withContext(Dispatchers.IO) {
         val pack = VoiceLanguageCatalog.modelPacks[packId]
             ?: return@withContext Result.failure(IllegalArgumentException("找不到語音包：$packId"))

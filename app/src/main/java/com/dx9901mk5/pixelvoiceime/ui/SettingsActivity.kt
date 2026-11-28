@@ -67,6 +67,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -97,15 +98,19 @@ import com.dx9901mk5.pixelvoiceime.ime.PixelVoiceAccessibilityService
 import com.dx9901mk5.pixelvoiceime.models.PackDownloadState
 import com.dx9901mk5.pixelvoiceime.models.VoiceLanguageCatalog
 import com.dx9901mk5.pixelvoiceime.ui.theme.PixelVoiceTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 class SettingsActivity : ComponentActivity() {
 
+    private val requestedTabFlow = MutableStateFlow<Int?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val app = application as PixelVoiceApp
+        applyRequestedTab(intent)
 
         if (app.prefs.config.value.floatingBallEnabled && Settings.canDrawOverlays(this)) {
             FloatingMicService.start(this)
@@ -113,15 +118,37 @@ class SettingsActivity : ComponentActivity() {
 
         setContent {
             val config by app.prefs.config.collectAsState()
+            val requestedTab by requestedTabFlow.collectAsState()
             ProvideUiLanguage(
                 uiLanguage = config.uiLanguage,
                 hostActivity = this@SettingsActivity
             ) {
                 PixelVoiceTheme(themeMode = config.appThemeMode) {
-                    PixelVoiceSettingsApp(app = app)
+                    PixelVoiceSettingsApp(
+                        app = app,
+                        requestedTab = requestedTab,
+                        onRequestedTabConsumed = { requestedTabFlow.value = null }
+                    )
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        applyRequestedTab(intent)
+    }
+
+    private fun applyRequestedTab(intent: Intent?) {
+        val tab = intent?.getIntExtra(EXTRA_INITIAL_TAB, -1) ?: -1
+        if (tab in 0..4) {
+            requestedTabFlow.value = tab
+        }
+    }
+
+    companion object {
+        const val EXTRA_INITIAL_TAB = "extra_initial_tab"
     }
 }
 
@@ -133,10 +160,23 @@ private data class SettingsNavItem(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
+private fun PixelVoiceSettingsApp(
+    app: PixelVoiceApp,
+    requestedTab: Int? = null,
+    onRequestedTabConsumed: () -> Unit = {}
+) {
     val config by app.prefs.config.collectAsState()
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(requestedTab ?: 0) }
     var companionTab by remember { mutableIntStateOf(2) }
+    LaunchedEffect(requestedTab) {
+        if (requestedTab != null && requestedTab in 0..4) {
+            selectedTab = requestedTab
+            if (companionTab == requestedTab) {
+                companionTab = (requestedTab + 1) % 5
+            }
+            onRequestedTabConsumed()
+        }
+    }
     var userSideBySideOverride by remember { mutableStateOf<Boolean?>(null) }
     var showLangMenu by remember { mutableStateOf(false) }
 
@@ -329,7 +369,11 @@ private fun PixelVoiceSettingsApp(app: PixelVoiceApp) {
 private fun RenderSettingsTab(tabIndex: Int, app: PixelVoiceApp) {
     when (tabIndex) {
         0 -> SetupAndBehaviorTab(app = app)
-        1 -> OfflineLanguagesScreen(modelManager = app.modelManager, prefs = app.prefs)
+        1 -> OfflineLanguagesScreen(
+            modelManager = app.modelManager,
+            prefs = app.prefs,
+            onBeforePackChange = { app.localSherpaAsrEngine.release() }
+        )
         2 -> GeminiSettingsScreen(
             apiKeyStore = app.apiKeyStore,
             polisher = app.geminiPolisher,

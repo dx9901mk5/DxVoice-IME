@@ -147,6 +147,7 @@ class PixelVoiceImeService : InputMethodService() {
                         onCycleTranslation = ::cycleTargetTranslation,
                         onCycleBottomLift = ::cycleImeBottomLift,
                         onOpenSettings = ::openSettingsActivity,
+                        onOpenOfflineLanguages = ::openOfflineLanguagesSettings,
                         onMicPrimaryAction = ::handleMicButtonClick,
                         onSwitchToPreviousIme = ::returnToPreviousInputMethod,
                         onUndoAiPolish = ::undoLastAiPolish,
@@ -312,10 +313,14 @@ class PixelVoiceImeService : InputMethodService() {
         val useGeminiAudioMode = config.geminiPolishEnabled &&
             hasApiKey &&
             (config.polishMode == PolishMode.AUDIO_MULTIMODAL || (!sherpaReady && !speechEngine.isAvailable()))
+        // Voiceprint lock captures raw PCM, so only enter PCM path when a PCM-capable transcriber is ready;
+        // otherwise seamlessly use online SpeechRecognizer so users without offline packs or Gemini keys can still dictate.
+        val canTranscribeCapturedPcm = useCustomOpenAiMode || sherpaReady || (config.geminiPolishEnabled && hasApiKey)
         val voiceprintLockActive = config.voiceprintLockEnabled &&
             app.entitlementManager.hasProAccess() &&
             app.voiceprintManager.isEnrolled() &&
-            app.voiceprintManager.isModelReady()
+            app.voiceprintManager.isModelReady() &&
+            canTranscribeCapturedPcm
         // Prioritize Android's streaming SpeechRecognizer (same live word-by-word engine as Gboard)
         // whenever available and voiceprint lock is off; when voiceprint lock is on, capture raw PCM
         // so 3D-Speaker can verify the user's voiceprint before transcribing.
@@ -447,12 +452,16 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onError(code: Int, message: String) {
-                        val isOfflineOrNetworkErr =
+                        val shouldFallbackToSherpa =
                             code == android.speech.SpeechRecognizer.ERROR_NETWORK ||
                                 code == android.speech.SpeechRecognizer.ERROR_NETWORK_TIMEOUT ||
+                                code == android.speech.SpeechRecognizer.ERROR_SERVER ||
+                                code == android.speech.SpeechRecognizer.ERROR_CLIENT ||
+                                code == android.speech.SpeechRecognizer.ERROR_RECOGNIZER_BUSY ||
+                                code == 11 ||
                                 code == 12 ||
                                 code == 13
-                        if (isOfflineOrNetworkErr && sherpaReady) {
+                        if (shouldFallbackToSherpa && sherpaReady) {
                             currentInputConnection?.setComposingText("", 1)
                             startSherpaOfflineFallback(config)
                             return
@@ -858,7 +867,11 @@ class PixelVoiceImeService : InputMethodService() {
                 processCapturedAudioWithSherpa(pcmBytes)
                 return
             }
-            sessionState.value = VoiceSessionState.Error("音訊精修模式需要先設定 Gemini API Key，或至「離線語系」下載本地語音包")
+            if (speechEngine.isAvailable()) {
+                sessionState.value = VoiceSessionState.Error("尚未下載離線語言包，請點擊麥克風改用線上語音或點上方下載語言包")
+                return
+            }
+            sessionState.value = VoiceSessionState.Error("尚未下載本地語音包且未設定 Gemini API Key，請點上方「下載語言包」")
             return
         }
 
@@ -1084,6 +1097,16 @@ class PixelVoiceImeService : InputMethodService() {
         cancelPendingJobs()
         val intent = Intent(this, SettingsActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    }
+
+    private fun openOfflineLanguagesSettings() {
+        stopAllListening()
+        cancelPendingJobs()
+        val intent = Intent(this, SettingsActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            putExtra(SettingsActivity.EXTRA_INITIAL_TAB, 1)
         }
         startActivity(intent)
     }

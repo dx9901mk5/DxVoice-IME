@@ -144,6 +144,7 @@
     <string name="offline_search_placeholder">搜尋語系（例如：繁體中文、日文、English、粵語）</string>
     <string name="offline_set_active">設為目前語系</string>
     <string name="offline_installed">已下載</string>
+    <string name="offline_redownload_pack">重新下載離線包（刪除並重抓）</string>
     <string name="offline_delete_pack">刪除離線包</string>
     <string name="offline_download_pack">下載離線語音檔 (~%1$dMB)</string>
     <string name="offline_download_failed">下載失敗：%1$s</string>
@@ -296,11 +297,13 @@
     <!-- IME Keyboard Panel -->
     <string name="ime_switch_lang">切換語系</string>
     <string name="ime_offline_ready">離線就緒</string>
+    <string name="ime_online_download_pack">線上・下載語音包</string>
     <string name="ime_trans_prefix">譯:%1$s</string>
     <string name="ime_lift_cd">上抬輸入法面板高度</string>
     <string name="ime_settings_cd">輸入法設定</string>
     <string name="ime_listening_detected">正在聆聽辨識中…</string>
     <string name="ime_listening_prompt">請開始說話（說完自動修潤貼回）</string>
+    <string name="ime_listening_prompt_online">線上辨識中，請開始說話（建議下載離線語言包）</string>
     <string name="ime_committed_returning">已貼回，即將切回原輸入法…</string>
     <string name="ime_committed_done">已自動修正並貼回</string>
     <string name="ime_undo_raw">原文</string>

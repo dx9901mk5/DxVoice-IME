@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardReturn
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Lock
@@ -74,6 +75,7 @@ fun ImeKeyboardPanel(
     onCycleTranslation: () -> Unit,
     onCycleBottomLift: () -> Unit = {},
     onOpenSettings: () -> Unit,
+    onOpenOfflineLanguages: () -> Unit = onOpenSettings,
     onMicPrimaryAction: () -> Unit,
     onSwitchToPreviousIme: () -> Unit,
     onUndoAiPolish: () -> Unit,
@@ -147,6 +149,37 @@ fun ImeKeyboardPanel(
                                         text = stringResource(R.string.ime_offline_ready),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+
+                        if (!isOfflinePackReady) {
+                            Spacer(Modifier.width(6.dp))
+                            Surface(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .clickable(onClick = onOpenOfflineLanguages),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(50)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Download,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(13.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Spacer(Modifier.width(3.dp))
+                                    Text(
+                                        text = stringResource(R.string.ime_online_download_pack),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }
@@ -253,6 +286,8 @@ fun ImeKeyboardPanel(
                                         text = state.partialText.ifBlank {
                                             if (state.speechDetected) {
                                                 stringResource(R.string.ime_listening_detected)
+                                            } else if (!isOfflinePackReady) {
+                                                stringResource(R.string.ime_listening_prompt_online)
                                             } else {
                                                 stringResource(R.string.ime_listening_prompt)
                                             }

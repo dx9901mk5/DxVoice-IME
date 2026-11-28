@@ -42,6 +42,8 @@ class AndroidSpeechEngine(
     private var ambientNoiseDb: Float = 0f
     private var peakUtteranceRmsDb: Float = -10f
     private var rmsCallbackReceived: Boolean = false
+    private var attemptStartedAtMs: Long = 0L
+    private var transientRetryCount: Int = 0
 
     fun isAvailable(): Boolean {
         if (SpeechRecognizer.isRecognitionAvailable(context)) return true
@@ -62,6 +64,7 @@ class AndroidSpeechEngine(
         ambientNoiseDb = 0f
         peakUtteranceRmsDb = -10f
         rmsCallbackReceived = false
+        transientRetryCount = 0
         accumulatedSegments.clear()
         manualFinishRequested = false
         sessionActive = true
@@ -125,6 +128,7 @@ class AndroidSpeechEngine(
         lastPartial = ""
         lastPartialChangeAtMs = 0L
         pauseBreakLengths.clear()
+        attemptStartedAtMs = System.currentTimeMillis()
         active = true
 
         val useOnDevice = !forceStandardRecognizer &&
@@ -236,6 +240,30 @@ class AndroidSpeechEngine(
                     flushAccumulated(callbacks)
                     return
                 }
+                // Auto-retry once on transient mic-handoff / recognizer-busy / rapid spurious timeout right after IME switch
+                val elapsedSinceStart = System.currentTimeMillis() - attemptStartedAtMs
+                val isTransientStartupErr = (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY ||
+                    error == SpeechRecognizer.ERROR_CLIENT ||
+                    error == SpeechRecognizer.ERROR_AUDIO ||
+                    error == 11 ||
+                    ((error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) && elapsedSinceStart < 1500L))
+                if (isTransientStartupErr && transientRetryCount < 1 && !manualFinishRequested) {
+                    transientRetryCount++
+                    destroyRecognizer()
+                    mainHandler.postDelayed({
+                        if (sessionActive && !manualFinishRequested) {
+                            startInternal(
+                                languageTag = languageTag,
+                                preferOffline = false,
+                                silenceTimeoutMs = silenceTimeoutMs,
+                                forceStandardRecognizer = true,
+                                allowOnlineFallback = false,
+                                callbacks = callbacks
+                            )
+                        }
+                    }, 260L)
+                    return
+                }
                 sessionActive = false
                 cancelFinishTimer()
                 val msg = when (error) {
@@ -344,6 +372,10 @@ class AndroidSpeechEngine(
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, preferOffline)
             val srSilenceMs = silenceTimeoutMs.coerceIn(1000L, 1800L)
             putExtra(
+                RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,
+                3000L
+            )
+            putExtra(
                 RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,
                 srSilenceMs
             )
@@ -359,8 +391,8 @@ class AndroidSpeechEngine(
         if (!rmsCallbackReceived) return true
         return when (noiseFilterMode) {
             NoiseFilterMode.NORMAL -> true
-            NoiseFilterMode.NOISY -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 1.2f, 1.5f)
-            NoiseFilterMode.NEAR_FIELD -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 2.2f, 2.8f)
+            NoiseFilterMode.NOISY -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 0.8f, 0.5f)
+            NoiseFilterMode.NEAR_FIELD -> peakUtteranceRmsDb >= maxOf(ambientNoiseDb + 1.6f, 1.8f)
         }
     }
 
