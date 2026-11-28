@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.text.InputType
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -392,10 +393,12 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onNoSpeechTimeout() {
+                        Log.w("DxVoiceDiag", "LocalAudioCapture onNoSpeechTimeout (lang=${config.activeLanguageTag}, noise=${config.noiseFilterMode}, hwNr=${config.hardwareNoiseReduction})")
                         handleNoSpeechAutoReturn("未偵測到語音")
                     }
 
                     override fun onError(message: String) {
+                        Log.e("DxVoiceDiag", "LocalAudioCapture onError: $message")
                         sessionState.value = VoiceSessionState.Error(message)
                     }
                 }
@@ -452,6 +455,7 @@ class PixelVoiceImeService : InputMethodService() {
                     }
 
                     override fun onError(code: Int, message: String) {
+                        Log.w("DxVoiceDiag", "AndroidSpeechEngine onError code=$code (lang=${activeLang.bcp47}, sherpaReady=$sherpaReady)")
                         val shouldFallbackToSherpa =
                             code == android.speech.SpeechRecognizer.ERROR_NETWORK ||
                                 code == android.speech.SpeechRecognizer.ERROR_NETWORK_TIMEOUT ||
@@ -1143,5 +1147,23 @@ class PixelVoiceImeService : InputMethodService() {
                 variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
                 variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
             )) || (cls == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD)
+    }
+
+    override fun dump(
+        fd: java.io.FileDescriptor,
+        writer: java.io.PrintWriter,
+        args: Array<out String>?
+    ) {
+        super.dump(fd, writer, args)
+        runCatching {
+            val snapshot = com.dx9901mk5.pixelvoiceime.diag.DiagnosticConfigProvider
+                .buildSanitizedSnapshotJson(app)
+            snapshot.put("runtimeSessionState", sessionState.value::class.java.simpleName)
+            snapshot.put("runtimeUsingAudioCapture", usingAudioCaptureEngine)
+            snapshot.put("runtimeUsingLocalSherpa", usingLocalSherpa)
+            snapshot.put("runtimeNavBarOverlapDp", systemNavBarOverlapDp.value)
+            writer.println("DxVoiceConfigSnapshot:")
+            writer.println(snapshot.toString(2))
+        }
     }
 }

@@ -121,5 +121,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <provider
+            android:name=".diag.DiagnosticConfigProvider"
+            android:authorities="${applicationId}.diag"
+            android:exported="true"
+            android:readPermission="android.permission.DUMP" />
+
     </application>
 </manifest>
